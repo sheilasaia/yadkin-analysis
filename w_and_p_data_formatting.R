@@ -1,5 +1,6 @@
 # r script for woods & pool data formatting/selection
 
+# ---- 1. set up ----
 # load libraries
 library(tidyverse)
 #library(devtools)
@@ -12,7 +13,7 @@ library(sf)
 # https://cran.r-project.org/web/packages/sf/vignettes/sf2.html
 
 
-#---- 1. reformat WPCOMP data for nc ----
+# ---- 2. reformat WPCOMP data for nc ----
 
 # set directory for WPCOMP data
 setwd("/Users/ssaia/Documents/sociohydro_project/data/woods_pool_v2011/WPCOMP")
@@ -37,7 +38,7 @@ comp_nc_counties=comp_data %>% filter(COUNTY>37000&COUNTY<37200)
 comp_nc_counties$NAME=gsub(', NC','',comp_nc_counties$NAME)
 
 
-# ---- 2. load in yadkin counties ----
+# ---- 3. load in yadkin counties ----
 
 # set directory yadkin counties data
 setwd("/Users/ssaia/Documents/sociohydro_project/swat_yadkin_counties/")
@@ -46,7 +47,7 @@ setwd("/Users/ssaia/Documents/sociohydro_project/swat_yadkin_counties/")
 yadkin_counties_names=read_csv("yadkin_counties_sel.csv",col_names=TRUE)
 
 
-# ---- 3. select comp data from only yadkin counties ----
+# ---- 4. select comp data from only yadkin counties ----
 
 # select only counties in yadkin ws
 comp_yadkin_counties=left_join(yadkin_counties_names,comp_nc_counties,by="NAME")
@@ -87,7 +88,7 @@ ggplot(unemp_yadkin_gather_data,aes(x=year,y=num_thous,color=NAME)) +
   ylim(0,5)
 
 
-# ---- 4. displaying change over 2000-2009 by county ----
+# ---- 5. displaying change over 2000-2009 by county ----
 
 # calculate percent change
 emp_yadkin_data = emp_yadkin_data %>% 
