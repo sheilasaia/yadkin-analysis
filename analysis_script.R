@@ -24,9 +24,6 @@ yadkin_counties_names=read_csv("yadkin_counties_sel.csv",col_names=TRUE)
 
 # ---- 4. select jobs data from only yadkin counties ----
 
-# select only counties in yadkin ws
-jobs_yadkin_counties=left_join(yadkin_counties_names,jobs_nc_counties,by="NAME")
-
 # select employed and unemployed (in thousands)
 emp_yadkin_data=jobs_yadkin_counties %>% select(NAME,EMP_2000:EMP_2009)
 unemp_yadkin_data=jobs_yadkin_counties %>% select(NAME,UE_2000:UE_2009)
