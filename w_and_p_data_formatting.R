@@ -1,16 +1,9 @@
-# r script for woods & pool data formatting/selection
+ # r script for woods & pool data formatting
 
 # ---- 1. set up ----
+
 # load libraries
 library(tidyverse)
-#library(devtools)
-#devtools::install_github("tidyverse/ggplot2") #needed to load geom_sf b/c it's only in the devel. version
-library(ggplot2)
-library(sf)
-
-# for help
-# http://strimas.com/r/tidy-sf/
-# https://cran.r-project.org/web/packages/sf/vignettes/sf2.html
 
 
 # ---- 2. reformat WPCOMP data for nc ----
@@ -20,6 +13,7 @@ setwd("/Users/ssaia/Documents/sociohydro_project/data/woods_pool_v2011/WPCOMP")
 
 # load in data
 comp_data=read_csv("WPCOMP.csv",skip=3,col_names=TRUE,n_max=4246)
+# these data are aggregated by county
 
 # rename column names
 comp_cols_original=colnames(comp_data)
@@ -29,96 +23,83 @@ comp_cols_new=gsub('\\s+', '', comp_cols_original) %>%
 colnames(comp_data)=comp_cols_new
 
 # save general rows
-comp_usa=comp_data %>% filter(NAME=="UNITED STATES")
-comp_se=comp_data %>% filter(REGION==5)
-comp_nc=comp_data %>% filter(NAME=="NORTH CAROLINA")
-comp_nc_counties=comp_data %>% filter(COUNTY>37000&COUNTY<37200)
+comp_usa_data=comp_data %>% filter(NAME=="UNITED STATES") # national
+comp_se_data=comp_data %>% filter(REGION==5) # all of south east
+comp_nc_data=comp_data %>% filter(NAME=="NORTH CAROLINA") # north carolina (statewide)
+comp_nc_county_data=comp_data %>% filter(COUNTY>37000&COUNTY<37200) # north carolina (by county)
 
-# fix name column of comp_nc_counties to remove comma
-comp_nc_counties$NAME=gsub(', NC','',comp_nc_counties$NAME)
+# fix name column of comp_nc_data to remove comma
+comp_nc_county_data$NAME=gsub(', NC','',comp_nc_county_data$NAME)
+
+# 
+
+# set working directory to save data to
+setwd("/Users/ssaia/Documents/sociohydro_project/data/woods_pool_v2011/reformatted_data")
+
+# export data
+write_csv(comp_usa_data,"comp_usa_data.csv")
+write_csv(comp_se_data,"comp_se_data.csv")
+write_csv(comp_nc_data,"comp_nc_data.csv")
+write_csv(comp_nc_county_data,"comp_nc_county_data.csv")
 
 
-# ---- 3. load in yadkin counties ----
+# ---- 3. reformatting WPGEO data for nc ----
 
-# set directory yadkin counties data
+# bring in info on yadkin
+
+# set working directory to save data to
 setwd("/Users/ssaia/Documents/sociohydro_project/swat_yadkin_counties/")
 
-# load data
-yadkin_counties_names=read_csv("yadkin_counties_sel.csv",col_names=TRUE)
+# read in yadkin county names/numbers
+yadkin_counties_sel=read_csv("yadkin_counties_sel.csv",col_names=TRUE)
+yadkin_counties_sel=arrange(yadkin_counties_sel,COUNTY)
 
+# go back to WPGEO data
+setwd("/Users/ssaia/Documents/sociohydro_project/data/woods_pool_v2011/WPGEO")
 
-# ---- 4. select comp data from only yadkin counties ----
+# load in row descriptions to be updated
+my_vars=read_csv("WPGEO_row_rename.csv",col_names=TRUE,col_types=cols(.default = "c")) %>% select(var_name)
 
-# select only counties in yadkin ws
-comp_yadkin_counties=left_join(yadkin_counties_names,comp_nc_counties,by="NAME")
+# set working directory for nc files
+setwd("/Users/ssaia/Documents/sociohydro_project/data/woods_pool_v2011/WPGEO/NC")
 
-# select employed and unemployed (in thousands)
-emp_yadkin_data=comp_yadkin_counties %>% select(NAME,EMP_2000:EMP_2009)
-unemp_yadkin_data=comp_yadkin_counties %>% select(NAME,UE_2000:UE_2009)
+# import and edit only yadkin files from WPGEO nc folder
+my_file_paths=paste("WP5",yadkin_counties_sel$COUNTY,".CSV",sep="")
+my_col_names=c("var_name",paste("yr_",seq(1970,2000,5),sep=""),paste("yr_",seq(2001,2020,1),sep=""),paste("yr_",seq(2025,2040,5),sep=""))
+yadkin_geo_data=data.frame()
+for (i in 1:length(yadkin_counties_sel$NAME))
+  {
+    if (i==1) {
+      my_table=read_csv(my_file_paths[i],skip=2,col_names=TRUE,
+                      n_max=122,col_types=cols(.default = "c"))
+      colnames(my_table)=my_col_names
+      my_table_sel=as.data.frame(select(my_table,yr_2000:yr_2009))
+      my_table_final=my_table_sel %>% 
+        mutate(var_name=my_vars$var_name,
+              NAME=rep(yadkin_counties_sel$NAME[i],length(my_vars)),
+              COUNTY=rep(yadkin_counties_sel$COUNTY[i],length(my_vars))) %>%
+        select(var_name,NAME,COUNTY,yr_2000:yr_2009)
+      assign(yadkin_counties_sel$NAME[i],my_table_final)
+      yadkin_geo_data=my_table_final
+    }
+    
+    else {
+      my_table=read_csv(my_file_paths[i],skip=2,col_names=TRUE,
+                        n_max=122,col_types=cols(.default = "c"))
+      colnames(my_table)=my_col_names
+      my_table_sel=as.data.frame(select(my_table,yr_2000:yr_2009))
+      my_table_final=my_table_sel %>% 
+        mutate(var_name=my_vars$var_name,
+               NAME=rep(yadkin_counties_sel$NAME[i],length(my_vars)),
+               COUNTY=rep(yadkin_counties_sel$COUNTY[i],length(my_vars))) %>%
+        select(var_name,NAME,COUNTY,yr_2000:yr_2009)
+      assign(yadkin_counties_sel$NAME[i],my_table_final)
+      yadkin_geo_data=bind_rows(yadkin_geo_data,eval(as.name(yadkin_counties_sel$NAME[i])))
+    }
+  }
 
-# gather employment and unemployment data by year for each county
-emp_yadkin_to_gather=emp_yadkin_data 
-colnames(emp_yadkin_to_gather)=c("NAME",seq(2000,2009,1))
-emp_yadkin_gather_data=emp_yadkin_to_gather %>% group_by(NAME) %>%
-  gather(key=year,value=num_thous,-NAME)
+# set working directory to save data to
+setwd("/Users/ssaia/Documents/sociohydro_project/data/woods_pool_v2011/reformatted_data")
 
-unemp_yadkin_to_gather=unemp_yadkin_data
-colnames(unemp_yadkin_to_gather)=c("NAME",seq(2000,2009,1))
-unemp_yadkin_gather_data=unemp_yadkin_to_gather %>% group_by(NAME) %>%
-  gather(key=year,value=num_thous,-NAME)
-
-# plot
-ggplot(emp_yadkin_gather_data,aes(x=year,y=num_thous,color=NAME)) +
-  geom_point(size=2) +
-  ylab("number of employed (in thousands)")
-
-ggplot(unemp_yadkin_gather_data,aes(x=year,y=num_thous,color=NAME)) +
-  geom_point(size=2) +
-  ylab("number of unemployed (in thousands)")
-
-# zoom plot
-ggplot(emp_yadkin_gather_data,aes(x=year,y=num_thous,color=NAME)) +
-  geom_point(size=2) +
-  ylab("number of employed (in thousands), zoom") +
-  ylim(0,100)
-
-ggplot(unemp_yadkin_gather_data,aes(x=year,y=num_thous,color=NAME)) +
-  geom_point(size=2) +
-  ylab("number of unemployed (in thousands), zoom") +
-  ylim(0,5)
-
-
-# ---- 5. displaying change over 2000-2009 by county ----
-
-# calculate percent change
-emp_yadkin_data = emp_yadkin_data %>% 
-  mutate(perc_change=((EMP_2000-EMP_2009)/EMP_2000)*100)
-unemp_yadkin_data=unemp_yadkin_data %>%
-  mutate(perc_change=((UE_2000-UE_2009)/UE_2000)*100)
-
-# set directory yadkin counties data
-setwd("/Users/ssaia/Documents/sociohydro_project/swat_yadkin_counties/")
-
-# load in file
-yadkin_counties_shp=st_read("yadkin_counties.shp",quiet=TRUE)
-#glimpse(yadkin_counties_shp$NAME)
-
-# convert name to uppercase
-yadkin_counties_shp$NAME=toupper(yadkin_counties_shp$NAME)
-
-# add in percent change of employed and unemployed to df
-yadkin_counties_shp$emp_perc_change=emp_yadkin_data$perc_change
-yadkin_counties_shp$unemp_perc_change=unemp_yadkin_data$perc_change
-#glimpse(yadkin_counties_shp)
-
-# plot
-ggplot(yadkin_counties_shp) +
-  geom_sf(aes(fill=emp_perc_change)) +
-  scale_fill_gradient2()
-
-ggplot(yadkin_counties_shp) +
-  geom_sf(aes(fill=unemp_perc_change)) +
-  scale_fill_gradient2()
-
-
-#yadkin_counties_geom=st_geometry(yadkin_counties_shp)
+# export data
+write_csv(yadkin_geo_data,"yadkin_geo_data.csv")
