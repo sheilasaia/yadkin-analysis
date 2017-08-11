@@ -17,16 +17,17 @@ setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline
 baseline_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
 
 # CSIRO RCP4.5 data
-
+setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/C_CSIRO45")
+csiro4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 
 # ---- 2. reformat data ----
 
 # column names
-sub_col_names=c("FILE","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
-               "PETmm","ETmm","SWmm","PERCmm","SURQmm","GWQmm","WYLDmm","SYLDt_ha",
-               "ORGNkg_ha","ORGPkg_ha","NSURQkg_ha","SOLPkg_ha","SEDPkg_ha","LATQmm",
-               "LATNO3kg_ha,GWNO3kg_ha","CHOLAmic_l","CBODUmg_l","DOXQmg_l","TNO3kg_ha",
-               "UNKNOWN","SUB_DUPLICATE")
+#sub_col_names=c("FILE","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
+#               "PETmm","ETmm","SWmm","PERCmm","SURQmm","GWQmm","WYLDmm","SYLDt_ha",
+#               "ORGNkg_ha","ORGPkg_ha","NSURQkg_ha","SOLPkg_ha","SEDPkg_ha","LATQmm",
+#               "LATNO3kg_ha,GWNO3kg_ha","CHOLAmic_l","CBODUmg_l","DOXQmg_l","TNO3kg_ha",
+#               "UNKNOWN","SUB_DUPLICATE")
 rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_OUTcms","EVAPcms",
                 "TLOSScms","SED_INtons","SED_OUTtons","SEDCONCmg_kg","ORGN_INkg","ORGN_OUTkg",
                 "ORGP_INkg", "ORGP_OUTkg","NO3_INkg","NO3_OUTkg","NH4_INkg","NH4_OUTkg",
@@ -38,13 +39,16 @@ rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_O
                 "TOTNkg","TOTPkg","NO3_mg_l","WTMPdegc")
 
 # reassign column names
-colnames(baseline_sub_data_raw)=sub_col_names
+#colnames(baseline_sub_data_raw)=sub_col_names
 colnames(baseline_rch_data_raw)=rch_col_names
+colnames(csiro4_5_rch_data_raw)=rch_col_names
 
 # remove unnecessary columns
-baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
+#baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
 baseline_rch_data=baseline_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH) # add column so can join later if needed
+csiro4_5_rch_data=csiro4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
+  mutate(SUB=RCH)
 
 
 # ---- 3. observation function ----
