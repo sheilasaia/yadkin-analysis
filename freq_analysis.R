@@ -1,57 +1,68 @@
-# yadkin frequency-duration analysis
+# yadkin frequency analysis
 
 # ---- 1. set up -----
 
 # clear ws
-
+rm(list = ls())
 
 # load libraries
 library(tidyverse)
 library(stringr)
 
-# set directory
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
+# set directory and load data
 
-# load data
-baseline_data_raw=read_table("output.sub",col_names=FALSE,skip=9)
+# baseline data
+setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
+#baseline_sub_data_raw=read_table("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
+baseline_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
+
+# CSIRO RCP4.5 data
 
 
 # ---- 2. reformat data ----
 
 # column names
-my_col_names=c("NAME","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
+sub_col_names=c("FILE","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
                "PETmm","ETmm","SWmm","PERCmm","SURQmm","GWQmm","WYLDmm","SYLDt_ha",
                "ORGNkg_ha","ORGPkg_ha","NSURQkg_ha","SOLPkg_ha","SEDPkg_ha","LATQmm",
                "LATNO3kg_ha,GWNO3kg_ha","CHOLAmic_l","CBODUmg_l","DOXQmg_l","TNO3kg_ha",
                "UNKNOWN","SUB_DUPLICATE")
+rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_OUTcms","EVAPcms",
+                "TLOSScms","SED_INtons","SED_OUTtons","SEDCONCmg_kg","ORGN_INkg","ORGN_OUTkg",
+                "ORGP_INkg", "ORGP_OUTkg","NO3_INkg","NO3_OUTkg","NH4_INkg","NH4_OUTkg",
+                "NO2_INkg", "NO2_OUTkg","MINP_INkg","MINP_OUTkg","CHLA_INkg","CHLA_OUTkg",
+                "CBOD_INkg","CBOD_OUTkg","DISOX_INkg","DISOX_OUTkg","SOLPST_INmg",
+                "SOLPST_OUTmg","SORPST_INmg","SORPST_OUTmg","REACTPSTmg","VOLPSTmg",
+                "SETTLPSTmg","RESUSP_PSTmg","DIFFUSEPSTmg","REACBEDPSTmg","BURYPSTmg",
+                "BED_PSTmg","BACTP_OUTct","BACTLP_OUTct","CMETAL_1kg","CMETAL_2kg","CMETAL_3kg",
+                "TOTNkg","TOTPkg","NO3_mg_l","WTMPdegc")
 
 # reassign column names
-colnames(baseline_data_raw)=my_col_names
+colnames(baseline_sub_data_raw)=sub_col_names
+colnames(baseline_rch_data_raw)=rch_col_names
 
 # remove unnecessary columns
-baseline_data=baseline_data_raw %>% select(SUB,MO:TNO3kg_ha)
+baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
+baseline_rch_data=baseline_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
+  mutate(SUB=RCH) # add column so can join later if needed
 
 
 # ---- 3. observation function ----
 
 # define function
-obs_freq_calcs=function(baseline_data) { 
-  # baseline data is df with all flow data for 1 subbasin for period of study
-  # includes fields: SUB, MO, DA, YR, AREAkm2, PRECIPmm, SNOMELTmm,
-  # PETmm, ETmm, SWmm, PERCmm, SURQmm, GWQmm, WYLDmm, SYLDt_ha,
-  # ORGNkg_ha, ORGPkg_ha, NSURQkg_ha, SOLPkg_ha, SEDPkg_ha, LATQmm,
-  # LATNO3kg_ha, GWNO3kg_ha, CHOLAmic_l, CBODUmg_l, DOXQmg_l, TNO3kg_ha,
+obs_rch_freq_calcs=function(rch_data) { 
+  # rch_data is df with all reach data for ONLY 1 subbasin
   
   # calculate number of years
-  num_yrs=length(unique(baseline_data$YR))
+  num_yrs=length(unique(rch_data$YR))
   
   # find max, sort descending, and adjust
-  obs_df_temp=baseline_data %>% 
+  obs_df_temp=rch_data %>% 
     group_by(SUB,YR) %>% 
-    summarise(max_surfq=max(SURQmm)) %>%
-    arrange(SUB,desc(max_surfq)) %>%
-    mutate(max_surfq_adj=max_surfq*1.13) %>% # adjust using standard window shift
-    mutate(max_surfq_adj_log=log(max_surfq_adj)) # take log
+    summarise(obs_max_flow_cms=max(FLOW_OUTcms)) %>%
+    arrange(SUB,desc(obs_max_flow_cms)) %>%
+    mutate(obs_max_flow_cms_adj=obs_max_flow_cms*1.13) %>% # adjust using standard window shift
+    mutate(obs_max_flow_cms_adj_log=log(obs_max_flow_cms_adj)) # take log
   
   # rank data
   obs_df_temp$obs_rank_num=seq(1,num_yrs,1)
@@ -60,7 +71,8 @@ obs_freq_calcs=function(baseline_data) {
   obs_df_temp$obs_return_period=(num_yrs+1)/obs_df_temp$obs_rank_num
   
   # select only necessary fields
-  obs_df=obs_df_temp %>% select(SUB,obs_return_period,max_surfq_adj,max_surfq_adj_log)
+  obs_df=obs_df_temp %>% select(SUB,obs_return_period,obs_max_flow_cms_adj) %>%
+    mutate(data_type=rep("obs",num_yrs))
   
   # return
   return(obs_df)
@@ -69,43 +81,50 @@ obs_freq_calcs=function(baseline_data) {
 
 # ---- 4. model function ----
 
-# define function
-model_freq_calcs=function(obs_freq_calcs_surfq_adj_log,num_yrs,model_p_list) {
+# define function for log-Pearson tyoe III test
+model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
+  # obs_rch_freq_calcs_df is the output dataframe from running obs_rch_freq_calcs function
   
-  # basic stats
-  my_mean=mean(obs_freq_calcs_surfq_adj_log)
-  my_stdev=sd(obs_freq_calcs_surfq_adj_log)
-  my_cv=my_stdev/my_mean
+  # save some of input data as temporary variable
+  obs_flow_unlog=obs_rch_freq_calcs_df$obs_max_flow_cms_adj
+  obs_flow_log=log(obs_flow_unlog)
+  obs_sub=unique(obs_rch_freq_calcs_df$SUB)
+  num_yrs=dim(obs_rch_freq_calcs_df)[1]
   
+  # calculate mean
+  obs_mean=mean(obs_flow_log)
+    
   # calculate difference from mean
-  my_mean_diff=obs_freq_calcs_surfq_adj_log-my_mean
-  my_mean_diff_sqrd=my_mean_diff^2
-  my_mean_diff_sqrd_sum=sum(my_mean_diff_sqrd)
-  my_mean_diff_cubed=my_mean_diff^3
-  my_mean_diff_cubed_sum=sum(my_mean_diff_cubed)
+  obs_mean_diff=obs_flow_log-obs_mean
+  obs_mean_diff_sqrd=obs_mean_diff^2
+  obs_mean_diff_sqrd_sum=sum(obs_mean_diff_sqrd)
+  obs_mean_diff_cubed=obs_mean_diff^3
+  obs_mean_diff_cubed_sum=sum(obs_mean_diff_cubed)
   
   # calculate coefficient of skew (cskew)
-  s_term=(1/(num_yrs-1)*my_mean_diff_sqrd_sum
-  s_term_cubed=s_term^3
-  cskew=(num_yrs*my_mean_diff_cubed_sum)/((num_yrs-1)*(num_yrs-2)*s_term_cubed)
-  k_term=cskew/6
-  
+  # source: http://streamflow.engr.oregonstate.edu/analysis/floodfreq/meandaily_tutorial.htm
+  obs_variance=(1/(num_yrs-1))*obs_mean_diff_sqrd_sum
+  obs_stdev=sqrt(obs_variance)
+  obs_cskew=(num_yrs*obs_mean_diff_cubed_sum)/((num_yrs-1)*(num_yrs-2)*(obs_stdev^3))
+
   # find return period
   num_p=length(model_p_list)
   model_rank_num=seq(1,num_p,1)
   model_return_period=1/model_p_list
   
   # calculate frequency factors
+  # source: BEE 4730 Watershed Engineering: Hydrological Risk Analysis PDF
   # w
   model_w_term=1/(model_p_list^2)
-  model_w=log(model_w_term)^(1/2)
+  model_w=sqrt(log(model_w_term))
   
-  # z
+  # z statistic
   model_z_term2=2.515517+0.802853*model_w+0.010328*(model_w^2)
   model_z_term3=1+1.432788*model_w+0.189269*(model_w^2)+0.001308*(model_w^3)
   model_z=model_w-(model_z_term2/model_z_term3)
   
-  # kt
+  # log-Person type III frequency factor (kt)
+  k_term=obs_cskew/6
   model_kt_term2=((model_z^2)-1)*k_term
   model_kt_term3=(1/3)*((model_z^3)-6*model_z)*(k_term^2)
   model_kt_term4=((model_z^2)-1)*(k_term^3)
@@ -113,43 +132,77 @@ model_freq_calcs=function(obs_freq_calcs_surfq_adj_log,num_yrs,model_p_list) {
   model_kt_term6=(1/3)*(k_term^5)
   model_kt=model_z+model_kt_term2+model_kt_term3-model_kt_term4+model_kt_term5+model_kt_term6
   
-  # calculate final modeled surfq values
-  model_surfq_unlog=exp(my_mean+my_stdev*model_kt)
+  # calculate final modeled flow values
+  model_flow_unlog=exp(obs_mean+obs_stdev*model_kt)
   
   # make output dataframe with results
-  model_df=data.frame(model_return_period=model_return_period,
-                      model_surfq_unlog=model_surfq_unlog)
+  model_df=data.frame(SUB=rep(obs_sub,num_p), model_return_period=model_return_period, 
+                      model_flow_cms=model_flow_unlog, data_type=rep("model",num_p))
   
   # return output
   return(model_df)
 }
 
 
-# ---- 5. calculate obs and model ouptuts for each subbasin ----
+# ---- 5. freq analysis by subbasin function ----
 
-# observation calcs
-my_sub_baseline_data=baseline_data %>% filter(SUB==1)
-my_obs_freq_calcs=obs_freq_calcs(my_sub_baseline_data)
+# observation for all subbasins in .rch file (uses obs_rch_freq_calcs function) 
+obs_rch_freq_calcs_all_subs=function(rch_data) {
+  
+  # calculate number of subbasins for for loop
+  num_subs=length(unique(rch_data$SUB))
+  
+  # make dataframe for all outputs
+  obs_df_all_subs=data.frame(SUB=as.integer(),obs_return_period=as.numeric(),
+                             obs_max_flow_cms_adj=as.numeric(),data_type=as.character())
+  
+  for (i in 1:num_subs) {
+    sel_rch_data=rch_data %>% filter(SUB==i)
+    obs_df_all_temp=obs_rch_freq_calcs(sel_rch_data)
+    obs_df_all_subs=bind_rows(obs_df_all_subs,obs_df_all_temp)
+  }
+  
+  return(obs_df_all_subs)
+}
 
-# model calcs
+# models for all subbasins in .rch file (uses model_rch_freq_calcs function) 
+model_rch_freq_calcs_all_subs=function(obs_rch_freq_calcs_all_subs_df,model_p_list) {
+  
+  # calculate number of subbasins for for loop
+  num_subs=length(unique(obs_rch_freq_calcs_all_subs_df$SUB))
+  
+  # make dataframe for all outputs
+  model_df_all_subs=data.frame(SUB=as.integer(),model_return_period=as.numeric(),
+                             model_flow_cms=as.numeric(),data_type=as.character())
+  
+  for (i in 1:num_subs) {
+    sel_rch_data=obs_rch_freq_calcs_all_subs_df %>% filter(SUB==i)
+    model_df_all_temp=model_rch_freq_calcs(sel_rch_data,model_p_list)
+    model_df_all_subs=bind_rows(model_df_all_subs,model_df_all_temp)
+  }
+  
+  return(model_df_all_subs)
+}
+
+# ---- 6. calculate obs and model ouptuts for each subbasin ----
+
+baseline_obs_calcs=obs_rch_freq_calcs_all_subs(baseline_rch_data)
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-my_num_yrs=length(unique(my_sub_baseline_data$YR))
-my_model_freq_calcs=model_freq_calcs(my_obs_freq_calcs$max_surfq_adj_log,my_num_yrs,my_model_p_list)
+baseline_model_calcs=model_rch_freq_calcs_all_subs(baseline_obs_calcs,my_model_p_list)
 
-# plot
-plot(my_obs_freq_calcs$obs_return_period,my_obs_freq_calcs$max_surfq_adj,
-     pch=16,xlim=c(0,100),ylim=c(0,500))
-points(my_model_freq_calcs$model_return_period,my_model_freq_calcs$model_surfq_unlog)
+# ---- 7. plot results for each subbasin ----
+
+# plot observations and models together
+ggplot() +
+  geom_point(aes(x=obs_return_period,y=obs_max_flow_cms_adj),baseline_obs_calcs,size=1) +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs) +
+  facet_wrap(~SUB,ncol=7,nrow=4) +
+  xlab("return period") + 
+  ylab("flow out (cms)") +
+  theme_bw()
 
 
-
-#
-
-
-# ---- reformat data ----
-
-# reformat using function swat_outputsub_function
-baseline_data=swat_outputsub_reformat(baseline_data_raw)
+# ---- X.? reformat data ----
 
 # write output to folder
-write_csv(baseline_data,"baseline_data.csv")
+#write_csv(baseline_data,"baseline_data.csv")
