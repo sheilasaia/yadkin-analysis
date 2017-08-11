@@ -3,14 +3,14 @@
 # ---- 1. set up ----
 
 # load libraries
-library(dplyr)
+library(tidyverse)
 library(readr)
 library(stringr)
 
 # ---- 2. reformat county data yadkin ----
 
 # set directory yadkin counties
-setwd("/Users/ssaia/Documents/sociohydro_project/swat_yadkin_counties/")
+setwd("/Users/ssaia/Documents/sociohydro_project/swat_yadkin_analysis/")
 
 # load in data
 yadkin_county_data=read_csv("yadkin_counties.txt",col_names=TRUE)
