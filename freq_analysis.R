@@ -11,23 +11,28 @@ library(stringr)
 
 # set directory and load data
 
-# baseline data
+# baseline data & river network
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
-#baseline_sub_data_raw=read_table("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
+baseline_sub_data_raw=read_table("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
 baseline_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
+yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
 # CSIRO RCP4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/C_CSIRO45")
 csiro4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 
+# CSIRO RCP8.5 data
+setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/B_CSIRO85")
+csiro8_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
+
 # ---- 2. reformat data ----
 
 # column names
-#sub_col_names=c("FILE","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
-#               "PETmm","ETmm","SWmm","PERCmm","SURQmm","GWQmm","WYLDmm","SYLDt_ha",
-#               "ORGNkg_ha","ORGPkg_ha","NSURQkg_ha","SOLPkg_ha","SEDPkg_ha","LATQmm",
-#               "LATNO3kg_ha,GWNO3kg_ha","CHOLAmic_l","CBODUmg_l","DOXQmg_l","TNO3kg_ha",
-#               "UNKNOWN","SUB_DUPLICATE")
+sub_col_names=c("FILE","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
+               "PETmm","ETmm","SWmm","PERCmm","SURQmm","GWQmm","WYLDmm","SYLDt_ha",
+               "ORGNkg_ha","ORGPkg_ha","NSURQkg_ha","SOLPkg_ha","SEDPkg_ha","LATQmm",
+               "LATNO3kg_ha,GWNO3kg_ha","CHOLAmic_l","CBODUmg_l","DOXQmg_l","TNO3kg_ha",
+               "UNKNOWN","SUB_DUPLICATE")
 rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_OUTcms","EVAPcms",
                 "TLOSScms","SED_INtons","SED_OUTtons","SEDCONCmg_kg","ORGN_INkg","ORGN_OUTkg",
                 "ORGP_INkg", "ORGP_OUTkg","NO3_INkg","NO3_OUTkg","NH4_INkg","NH4_OUTkg",
@@ -39,19 +44,28 @@ rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_O
                 "TOTNkg","TOTPkg","NO3_mg_l","WTMPdegc")
 
 # reassign column names
-#colnames(baseline_sub_data_raw)=sub_col_names
+colnames(baseline_sub_data_raw)=sub_col_names
 colnames(baseline_rch_data_raw)=rch_col_names
 colnames(csiro4_5_rch_data_raw)=rch_col_names
+colnames(csiro8_5_rch_data_raw)=rch_col_names
 
 # remove unnecessary columns
-#baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
+baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
 baseline_rch_data=baseline_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH) # add column so can join later if needed
+yadkin_net_data_sel=yadkin_net_data_raw %>% mutate(SUB=Subbasin) %>% select(SUB,FROM_NODE,TO_NODE)
 csiro4_5_rch_data=csiro4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH)
+csiro8_5_rch_data=csiro8_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
+  mutate(SUB=RCH)
+
+# join areas for yadkin_net_data (=weights)
+yadkin_sub_areas=baseline_sub_data %>% select(SUB,AREAkm2) %>% distinct()
+yadkin_net_data=left_join(yadkin_net_data_sel,yadkin_sub_areas,by="SUB") %>%
+  select(FROM_NODE,TO_NODE,AREAkm2) # remove SUB b/c FROM_NODE=SUB
 
 
-# ---- 3. observation function ----
+# ---- 3. function: observation freq analysis (one subbasin) ----
 
 # define function
 obs_rch_freq_calcs=function(rch_data) { 
@@ -83,7 +97,7 @@ obs_rch_freq_calcs=function(rch_data) {
 }
 
 
-# ---- 4. model function ----
+# ---- 4. fuction: model freq analysis (one subbasin) ----
 
 # define function for log-Pearson tyoe III test
 model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
@@ -148,7 +162,7 @@ model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
 }
 
 
-# ---- 5. freq analysis by subbasin function ----
+# ---- 5. function: freq analysis by subbasin ----
 
 # observation for all subbasins in .rch file (uses obs_rch_freq_calcs function) 
 obs_rch_freq_calcs_all_subs=function(rch_data) {
@@ -194,17 +208,114 @@ baseline_obs_calcs=obs_rch_freq_calcs_all_subs(baseline_rch_data)
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 baseline_model_calcs=model_rch_freq_calcs_all_subs(baseline_obs_calcs,my_model_p_list)
 
+csiro4_5_obs_calcs=obs_rch_freq_calcs_all_subs(csiro4_5_rch_data)
+#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+csiro4_5_model_calcs=model_rch_freq_calcs_all_subs(csiro4_5_obs_calcs,my_model_p_list)
+
+csiro8_5_obs_calcs=obs_rch_freq_calcs_all_subs(csiro8_5_rch_data)
+#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+csiro8_5_model_calcs=model_rch_freq_calcs_all_subs(csiro8_5_obs_calcs,my_model_p_list)
+
 # ---- 7. plot results for each subbasin ----
 
 # plot observations and models together
 ggplot() +
   geom_point(aes(x=obs_return_period,y=obs_max_flow_cms_adj),baseline_obs_calcs,size=1) +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs) +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs,color="black") +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
   facet_wrap(~SUB,ncol=7,nrow=4) +
   xlab("return period") + 
   ylab("flow out (cms)") +
   theme_bw()
 
+
+# ---- 8. function: find projection return period for baseline flow of a specified return period ----
+
+# define function
+return_period_diff=function(return_period,num_decimal_places,baseline_model_calcs,projection_model_calcs) {
+  # return_period must be an entry in the modeled data
+  
+  # select only data for return period of interest
+  baseline_return_period_sel=baseline_model_calcs %>% filter(model_return_period==return_period)
+  projection_return_period_sel=projection_model_calcs %>% filter(model_return_period==return_period)
+  
+  # define variables and output dataframe
+  return_period_range=seq(floor(min(baseline_model_calcs$model_return_period)),
+                          floor(max(baseline_model_calcs$model_return_period)),1)
+  num_subs=length(unique(baseline_model_calcs$SUB))
+  diff_df=data.frame(SUB=as.integer(),baseline_return_period=as.numeric(),
+                     baseline_model_flow_cms=as.numeric(),
+                     projection_return_period=as.numeric(),
+                     projection_model_flow_cms=as.numeric(),
+                     note=as.character())
+  
+  # for loop for each subbasin
+  for (i in 1:num_subs) {
+    # use spline rather than analytical solution to approx. result
+    baseline_funct_temp=as.data.frame(spline(baseline_model_calcs$model_return_period[baseline_model_calcs$SUB==i],
+                             baseline_model_calcs$model_flow_cms[baseline_model_calcs$SUB==i],
+                             n=length(return_period_range)*(10^num_decimal_places), method="natural"))
+    projection_funct_temp=as.data.frame(spline(projection_model_calcs$model_return_period[projection_model_calcs$SUB==i],
+                          projection_model_calcs$model_flow_cms[projection_model_calcs$SUB==i],
+                          n=length(return_period_range)*(10^num_decimal_places), method="natural"))
+    
+    # baseline data for specified return period and subbasin
+    baseline_sub_temp=baseline_return_period_sel %>% filter(SUB==i)
+    baseline_sub_flow_temp=baseline_sub_temp$model_flow_cms
+    
+    # find projection return period for corresponding baseline flow
+    diff_temp=abs(baseline_sub_flow_temp-projection_funct_temp$y)
+    projection_return_period_temp=round(projection_funct_temp$x[match(min(diff_temp),diff_temp)],num_decimal_places)
+    projection_flow_temp=round(projection_funct_temp$y[match(min(diff_temp),diff_temp)],num_decimal_places)
+    
+    # note potential error
+    if (projection_return_period_temp>=return_period) {
+      note_temp="check model"
+    }
+    else note_temp=""
+    
+    # save results to data frame
+    diff_df_temp=data.frame(SUB=i,baseline_return_period=return_period,
+                            baseline_model_flow_cms=baseline_sub_flow_temp,
+                            projection_return_period=projection_return_period_temp,
+                            projection_model_flow_cms=projection_flow_temp,
+                            note=note_temp)
+    
+    # bind results to diff_df
+    diff_df=bind_rows(diff_df,diff_df_temp)
+  }
+  
+  # return output
+  return(diff_df)
+}
+
+
+# ---- 9. calculate return period difference ----
+
+# csiro 4.5
+csiro4_5_10years=return_period_diff(10,2,baseline_model_calcs,csiro4_5_model_calcs)
+csiro4_5_100years=return_period_diff(100,2,baseline_model_calcs,csiro4_5_model_calcs)
+
+# csiro 8.5
+csiro8_5_10years=return_period_diff(10,2,baseline_model_calcs,csiro8_5_model_calcs)
+csiro8_5_100years=return_period_diff(100,2,baseline_model_calcs,csiro8_5_model_calcs)
+
+
+# ---- 10. function: 
+
+sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
+  transmute(SUB=SUB,sub_AREAkm2=round(AREAkm2,0)) %>% distinct()
+rch_area=baseline_rch_data_raw %>% select(RCH,AREAkm2) %>% 
+  transmute(RCH=RCH,rch_AREAkm2=round(AREAkm2,0)) %>% distinct()
+
+subs_equal_rch=bind_cols(sub_area,rch_area) %>% filter(sub_AREAkm2==rch_AREAkm2)
+
+test=bind_cols(sub_area,rch_area)
+
+
+# network analysis help: http://www.shizukalab.com/toolkits/sna/plotting-directed-networks
+# use network analysis graph to automate subbasin contributions of runoff?
 
 # ---- X.? reformat data ----
 
