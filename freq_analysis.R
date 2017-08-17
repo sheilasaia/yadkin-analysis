@@ -8,6 +8,7 @@ rm(list = ls())
 # load libraries
 library(tidyverse)
 library(stringr)
+library(sf)
 
 # set directory and load data
 
@@ -25,8 +26,18 @@ csiro4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/B_CSIRO85")
 csiro8_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 
-# gis data
+# Hadley RCP4.5 data
+setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/D_Hadley45")
+hadley4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 
+# MIROC RCP8.5 data
+setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/A_MIROC8.5")
+miroc8_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
+
+# gis data
+# set directory and load county bounds (.shp file)
+setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/gis_data")
+yadkin_subs_shp=st_read("subs1.shp",quiet=TRUE)
 
 # ---- 2. reformat data ----
 
@@ -51,6 +62,8 @@ colnames(baseline_sub_data_raw)=sub_col_names
 colnames(baseline_rch_data_raw)=rch_col_names
 colnames(csiro4_5_rch_data_raw)=rch_col_names
 colnames(csiro8_5_rch_data_raw)=rch_col_names
+colnames(hadley4_5_rch_data_raw)=rch_col_names
+colnames(miroc8_5_rch_data_raw)=rch_col_names
 
 # remove unnecessary columns
 baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
@@ -61,11 +74,19 @@ csiro4_5_rch_data=csiro4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH)
 csiro8_5_rch_data=csiro8_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH)
+hadley4_5_rch_data=hadley4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
+  mutate(SUB=RCH)
+miroc8_5_rch_data=miroc8_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
+  mutate(SUB=RCH)
 
 # join areas for yadkin_net_data (=weights)
 #yadkin_sub_areas=baseline_sub_data %>% select(SUB,AREAkm2) %>% distinct()
 #yadkin_net_data=left_join(yadkin_net_data_sel,yadkin_sub_areas,by="SUB") %>%
 #  select(FROM_NODE,TO_NODE,AREAkm2) # remove SUB b/c FROM_NODE=SUB
+
+# add SUB column to .shp file
+yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
+#glimpse(yadkin_subs_shp)
 
 
 # ---- 3. function: observation freq analysis (one subbasin) ----
@@ -219,6 +240,15 @@ csiro8_5_obs_calcs=obs_rch_freq_calcs_all_subs(csiro8_5_rch_data)
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 csiro8_5_model_calcs=model_rch_freq_calcs_all_subs(csiro8_5_obs_calcs,my_model_p_list)
 
+hadley4_5_obs_calcs=obs_rch_freq_calcs_all_subs(hadley4_5_rch_data)
+#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+hadley4_5_model_calcs=model_rch_freq_calcs_all_subs(hadley4_5_obs_calcs,my_model_p_list)
+
+miroc8_5_obs_calcs=obs_rch_freq_calcs_all_subs(miroc8_5_rch_data)
+#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+miroc8_5_model_calcs=model_rch_freq_calcs_all_subs(miroc8_5_obs_calcs,my_model_p_list)
+
+
 # ---- 7. plot results for each subbasin ----
 
 # plot observations and models together
@@ -227,6 +257,8 @@ ggplot() +
   geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs,color="black") +
   geom_line(aes(x=model_return_period,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
   geom_line(aes(x=model_return_period,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),hadley4_5_model_calcs,color="blue") +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),miroc8_5_model_calcs,color="green") +
   facet_wrap(~SUB,ncol=7,nrow=4) +
   xlab("return period") + 
   ylab("flow out (cms)") +
@@ -369,8 +401,66 @@ csiro8_5_10yr_flow=flow_diff(10,baseline_model_calcs,csiro8_5_model_calcs)
 csiro8_5_100yr_flow=flow_diff(100,baseline_model_calcs,csiro8_5_model_calcs)
 
 
+# ---- 12. plot flow differences on map ----
+
+# csiro 4.5 vs baseline 10 yr flow
+# select only necessary down data
+csiro4_5_10yr_flow_sel=csiro4_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, csiro4_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_10yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=csiro4_5_10yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 10yr Flow")
 
 
+# csiro 4.5 vs baseline 100 yr flow
+# select only necessary down data
+csiro4_5_10yr_flow_sel=csiro4_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, csiro4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_10yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=csiro4_5_100yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 100yr Flow")
+
+
+# csiro 8.5 vs baseline 10 yr flow
+# select only necessary down data
+csiro8_5_10yr_flow_sel=csiro8_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, csiro8_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_10yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=csiro8_5_10yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 10yr Flow")
+
+
+# csiro 8.5 vs baseline 100 yr flow
+# select only necessary down data
+csiro8_5_10yr_flow_sel=csiro8_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, csiro8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_10yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=csiro8_5_100yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 100yr Flow")
 
 
 
