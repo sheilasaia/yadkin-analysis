@@ -25,6 +25,9 @@ csiro4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/B_CSIRO85")
 csiro8_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
 
+# gis data
+
+
 # ---- 2. reformat data ----
 
 # column names
@@ -358,17 +361,21 @@ flow_diff=function(return_period,baseline_model_calcs,projection_model_calcs) {
 # ---- 11. calculate flow difference ----
 
 # csiro 4.5
-csiro4_5_10years=flow_diff(10,baseline_model_calcs,csiro4_5_model_calcs)
-csiro4_5_100years=flow_diff(100,baseline_model_calcs,csiro4_5_model_calcs)
+csiro4_5_10yr_flow=flow_diff(10,baseline_model_calcs,csiro4_5_model_calcs)
+csiro4_5_100yr_flow=flow_diff(100,baseline_model_calcs,csiro4_5_model_calcs)
 
 # csiro 8.5
-csiro8_5_10years=flow_diff(10,baseline_model_calcs,csiro8_5_model_calcs)
-csiro8_5_100years=flow_diff(100,baseline_model_calcs,csiro8_5_model_calcs)
+csiro8_5_10yr_flow=flow_diff(10,baseline_model_calcs,csiro8_5_model_calcs)
+csiro8_5_100yr_flow=flow_diff(100,baseline_model_calcs,csiro8_5_model_calcs)
 
 
 
 
 
+
+
+
+#
 
 sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
   transmute(SUB=SUB,sub_AREAkm2=round(AREAkm2,0)) %>% distinct()
