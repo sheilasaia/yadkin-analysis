@@ -15,7 +15,7 @@ library(stringr)
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
 baseline_sub_data_raw=read_table("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
 baseline_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
-yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
+#yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
 # CSIRO RCP4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/C_CSIRO45")
@@ -53,16 +53,16 @@ colnames(csiro8_5_rch_data_raw)=rch_col_names
 baseline_sub_data=baseline_sub_data_raw %>% select(SUB,MO:WYLDmm)
 baseline_rch_data=baseline_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH) # add column so can join later if needed
-yadkin_net_data_sel=yadkin_net_data_raw %>% mutate(SUB=Subbasin) %>% select(SUB,FROM_NODE,TO_NODE)
+#yadkin_net_data_sel=yadkin_net_data_raw %>% mutate(SUB=Subbasin) %>% select(SUB,FROM_NODE,TO_NODE)
 csiro4_5_rch_data=csiro4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH)
 csiro8_5_rch_data=csiro8_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
   mutate(SUB=RCH)
 
 # join areas for yadkin_net_data (=weights)
-yadkin_sub_areas=baseline_sub_data %>% select(SUB,AREAkm2) %>% distinct()
-yadkin_net_data=left_join(yadkin_net_data_sel,yadkin_sub_areas,by="SUB") %>%
-  select(FROM_NODE,TO_NODE,AREAkm2) # remove SUB b/c FROM_NODE=SUB
+#yadkin_sub_areas=baseline_sub_data %>% select(SUB,AREAkm2) %>% distinct()
+#yadkin_net_data=left_join(yadkin_net_data_sel,yadkin_sub_areas,by="SUB") %>%
+#  select(FROM_NODE,TO_NODE,AREAkm2) # remove SUB b/c FROM_NODE=SUB
 
 
 # ---- 3. function: observation freq analysis (one subbasin) ----
@@ -248,6 +248,7 @@ return_period_diff=function(return_period,num_decimal_places,baseline_model_calc
                      baseline_model_flow_cms=as.numeric(),
                      projection_return_period=as.numeric(),
                      projection_model_flow_cms=as.numeric(),
+                     base_minus_proj_return_period=as.numeric(),
                      note=as.character())
   
   # for loop for each subbasin
@@ -269,17 +270,21 @@ return_period_diff=function(return_period,num_decimal_places,baseline_model_calc
     projection_return_period_temp=round(projection_funct_temp$x[match(min(diff_temp),diff_temp)],num_decimal_places)
     projection_flow_temp=round(projection_funct_temp$y[match(min(diff_temp),diff_temp)],num_decimal_places)
     
-    # note potential error
+    # note potential error and calculate difference for those without error
     if (projection_return_period_temp>=return_period) {
+      base_minus_proj_return_period_temp=NA
       note_temp="check model"
+    } else {
+      base_minus_proj_return_period_temp=return_period-projection_return_period_temp
+      note_temp=""
     }
-    else note_temp=""
     
     # save results to data frame
     diff_df_temp=data.frame(SUB=i,baseline_return_period=return_period,
                             baseline_model_flow_cms=baseline_sub_flow_temp,
                             projection_return_period=projection_return_period_temp,
                             projection_model_flow_cms=projection_flow_temp,
+                            base_minus_proj_return_period=base_minus_proj_return_period_temp,
                             note=note_temp)
     
     # bind results to diff_df
@@ -302,7 +307,68 @@ csiro8_5_10years=return_period_diff(10,2,baseline_model_calcs,csiro8_5_model_cal
 csiro8_5_100years=return_period_diff(100,2,baseline_model_calcs,csiro8_5_model_calcs)
 
 
-# ---- 10. function: 
+# ---- 10. function: find baseline and projection flows for same return period ----
+
+flow_diff=function(return_period,baseline_model_calcs,projection_model_calcs) {
+  # return_period must be an entry in the modeled data
+  
+  # select only data for return period of interest
+  baseline_return_period_sel=baseline_model_calcs %>% filter(model_return_period==return_period)
+  projection_return_period_sel=projection_model_calcs %>% filter(model_return_period==return_period)
+  
+  # define variables and output dataframe
+  num_subs=length(unique(baseline_model_calcs$SUB))
+  diff_df=data.frame(SUB=as.integer(),return_period=as.numeric(),
+                     baseline_model_flow_cms=as.numeric(),
+                     projection_model_flow_cms=as.numeric(),
+                     proj_minus_base_flow_cms=as.numeric(),
+                     proj_minus_base_flow_percchange=as.numeric())
+  
+  # for loop for each subbasin
+  for (i in 1:num_subs) {
+    
+    # baseline data for specified return period and subbasin
+    baseline_sub_temp=baseline_return_period_sel %>% filter(SUB==i)
+    baseline_sub_flow_temp=baseline_sub_temp$model_flow_cms
+    
+    # projection data for specified return period and subbasin
+    projection_sub_temp=projection_return_period_sel %>% filter(SUB==i)
+    projection_sub_flow_temp=projection_sub_temp$model_flow_cms
+    
+    # find difference
+    proj_minus_base_flow_cms_temp=projection_sub_flow_temp-baseline_sub_flow_temp
+    proj_minus_base_flow_percchange_temp=(proj_minus_base_flow_cms_temp/baseline_sub_flow_temp)*100
+    
+    # save results to data frame
+    diff_df_temp=data.frame(SUB=i,return_period=return_period,
+                            baseline_model_flow_cms=baseline_sub_flow_temp,
+                            projection_model_flow_cms=projection_sub_flow_temp,
+                            proj_minus_base_flow_cms=proj_minus_base_flow_cms_temp,
+                            proj_minus_base_flow_percchange=proj_minus_base_flow_percchange_temp)
+    
+    # bind results to diff_df
+    diff_df=bind_rows(diff_df,diff_df_temp)
+  }
+ 
+  # return output
+  return(diff_df) 
+}
+
+
+# ---- 11. calculate flow difference ----
+
+# csiro 4.5
+csiro4_5_10years=flow_diff(10,baseline_model_calcs,csiro4_5_model_calcs)
+csiro4_5_100years=flow_diff(100,baseline_model_calcs,csiro4_5_model_calcs)
+
+# csiro 8.5
+csiro8_5_10years=flow_diff(10,baseline_model_calcs,csiro8_5_model_calcs)
+csiro8_5_100years=flow_diff(100,baseline_model_calcs,csiro8_5_model_calcs)
+
+
+
+
+
 
 sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
   transmute(SUB=SUB,sub_AREAkm2=round(AREAkm2,0)) %>% distinct()
@@ -316,6 +382,8 @@ test=bind_cols(sub_area,rch_area)
 
 # network analysis help: http://www.shizukalab.com/toolkits/sna/plotting-directed-networks
 # use network analysis graph to automate subbasin contributions of runoff?
+
+
 
 # ---- X.? reformat data ----
 
