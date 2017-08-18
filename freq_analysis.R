@@ -341,6 +341,14 @@ csiro4_5_100years=return_period_diff(100,2,baseline_model_calcs,csiro4_5_model_c
 csiro8_5_10years=return_period_diff(10,2,baseline_model_calcs,csiro8_5_model_calcs)
 csiro8_5_100years=return_period_diff(100,2,baseline_model_calcs,csiro8_5_model_calcs)
 
+# hadley 4.5
+hadley4_5_10years=return_period_diff(10,2,baseline_model_calcs,hadley4_5_model_calcs)
+hadley4_5_100years=return_period_diff(100,2,baseline_model_calcs,hadley4_5_model_calcs)
+
+# miroc 8.5
+miroc8_5_10years=return_period_diff(10,2,baseline_model_calcs,miroc8_5_model_calcs)
+miroc8_5_100years=return_period_diff(100,2,baseline_model_calcs,miroc8_5_model_calcs)
+
 
 # ---- 10. function: find baseline and projection flows for same return period ----
 
@@ -400,6 +408,14 @@ csiro4_5_100yr_flow=flow_diff(100,baseline_model_calcs,csiro4_5_model_calcs)
 csiro8_5_10yr_flow=flow_diff(10,baseline_model_calcs,csiro8_5_model_calcs)
 csiro8_5_100yr_flow=flow_diff(100,baseline_model_calcs,csiro8_5_model_calcs)
 
+# hadley 4.5
+hadley4_5_10yr_flow=flow_diff(10,baseline_model_calcs,hadley4_5_model_calcs)
+hadley4_5_100yr_flow=flow_diff(100,baseline_model_calcs,hadley4_5_model_calcs)
+
+# miroc 8.5
+miroc8_5_10yr_flow=flow_diff(10,baseline_model_calcs,miroc8_5_model_calcs)
+miroc8_5_100yr_flow=flow_diff(100,baseline_model_calcs,miroc8_5_model_calcs)
+
 
 # ---- 12. plot flow differences on map ----
 
@@ -413,18 +429,18 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_10yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
-ggplot(yadkin_subs_shp) +
+p1=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro4_5_10yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 10yr Flow")
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
 
 
 # csiro 4.5 vs baseline 100 yr flow
 # select only necessary down data
-csiro4_5_10yr_flow_sel=csiro4_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+csiro4_5_100yr_flow_sel=csiro4_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
   transmute(SUB=SUB, csiro4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_10yr_flow_sel,by="SUB")
+yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_100yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
@@ -443,18 +459,18 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_10yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
-ggplot(yadkin_subs_shp) +
+p2=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro8_5_10yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 10yr Flow")
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
 
 
 # csiro 8.5 vs baseline 100 yr flow
 # select only necessary down data
-csiro8_5_10yr_flow_sel=csiro8_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+csiro8_5_100yr_flow_sel=csiro8_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
   transmute(SUB=SUB, csiro8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_10yr_flow_sel,by="SUB")
+yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_100yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
@@ -463,9 +479,80 @@ ggplot(yadkin_subs_shp) +
   scale_fill_gradient2(name="% Change 100yr Flow")
 
 
+# hadley 4.5 vs baseline 10 yr flow
+# select only necessary down data
+hadley4_5_10yr_flow_sel=hadley4_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, hadley4_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_10yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+p3=ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=hadley4_5_10yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
 
 
-#
+# hadley 4.5 vs baseline 100 yr flow
+# select only necessary down data
+hadley4_5_100yr_flow_sel=hadley4_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, hadley4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_100yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=hadley4_5_100yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 100yr Flow")
+
+
+# miroc 8.5 vs baseline 10 yr flow
+# select only necessary down data
+miroc8_5_10yr_flow_sel=miroc8_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, miroc8_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_10yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+p4=ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=miroc8_5_10yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
+
+
+# miroc 8.5 vs baseline 100 yr flow
+# select only necessary down data
+miroc8_5_100yr_flow_sel=miroc8_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=SUB, miroc8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+
+# add to shp file
+yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_100yr_flow_sel,by="SUB")
+#glimpse(yadkin_subs_shp)
+
+# plot
+ggplot(yadkin_subs_shp) +
+  geom_sf(aes(fill=miroc8_5_100yr_flow_perc)) +
+  scale_fill_gradient2(name="% Change 100yr Flow")
+
+
+
+# plot 10yr figures
+setwd("/Users/ssaia/Desktop")
+pdf("test.pdf",width=11,height=8.5)
+multiplot(p1, p2, p3, p4, cols=2)
+dev.off()
+
+
+
+
+
+
+
+
 
 sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
   transmute(SUB=SUB,sub_AREAkm2=round(AREAkm2,0)) %>% distinct()
@@ -486,3 +573,42 @@ test=bind_cols(sub_area,rch_area)
 
 # write output to folder
 #write_csv(baseline_data,"baseline_data.csv")
+
+# ---- function: multiplot ----
+# from: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+  
+  numPlots = length(plots)
+  
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+  
+  if (numPlots==1) {
+    print(plots[[1]])
+    
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+    
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+      
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
