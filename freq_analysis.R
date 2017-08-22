@@ -14,25 +14,25 @@ library(sf)
 
 # baseline data & river network
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
-baseline_sub_data_raw=read_table("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
-baseline_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
+baseline_sub_data_raw=read_table2("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
+baseline_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
 #yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
 # CSIRO RCP4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/C_CSIRO45")
-csiro4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
+csiro4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # CSIRO RCP8.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/B_CSIRO85")
-csiro8_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
+csiro8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # Hadley RCP4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/D_Hadley45")
-hadley4_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
+hadley4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # MIROC RCP8.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/A_MIROC8.5")
-miroc8_5_rch_data_raw=read_table("output.rch",col_names=FALSE,skip=9)
+miroc8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # gis data
 # set directory and load county bounds (.shp file)
