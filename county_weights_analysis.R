@@ -41,6 +41,7 @@ subbasins_shp=st_read("yadkin_subs1_utm17N.shp",quiet=TRUE)
 # use python scrip: https://gis.stackexchange.com/questions/19928/batch-clipping-in-arcgis-desktop-using-arcpy
 # use split in analysis tools (toolbox) but then have to merge for all counties
 # do this in a for loop... use https://gis.stackexchange.com/questions/63577/joining-polygons-in-r
+# raster data in r: http://neondataskills.org/R/Raster-Data-In-R/
 
 # first delete fields from shape file
 subbasins_shp_simp=dplyr::select(subbasins_shp,Subbasin)
