@@ -265,7 +265,7 @@ ggplot() +
   theme_bw()
 
 
-# ---- 8. function: find projection return period for baseline flow of a specified return period ----
+# ---- x8. function: find projection return period for baseline flow of a specified return period ----
 
 # define function
 return_period_diff=function(return_period,num_decimal_places,baseline_model_calcs,projection_model_calcs) {
@@ -331,7 +331,7 @@ return_period_diff=function(return_period,num_decimal_places,baseline_model_calc
 }
 
 
-# ---- 9. calculate return period difference ----
+# ---- x9. calculate return period difference ----
 
 # csiro 4.5
 csiro4_5_10years=return_period_diff(10,2,baseline_model_calcs,csiro4_5_model_calcs)
@@ -444,9 +444,9 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_100yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
-ggplot(yadkin_subs_shp) +
+p5=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro4_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow")
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
 
 
 # csiro 8.5 vs baseline 10 yr flow
@@ -474,9 +474,9 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_100yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
-ggplot(yadkin_subs_shp) +
+p6=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro8_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow")
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
 
 
 # hadley 4.5 vs baseline 10 yr flow
@@ -504,9 +504,9 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_100yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
-ggplot(yadkin_subs_shp) +
+p7=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=hadley4_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow")
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
 
 
 # miroc 8.5 vs baseline 10 yr flow
@@ -534,10 +534,9 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_100yr_flow_sel,by="SUB")
 #glimpse(yadkin_subs_shp)
 
 # plot
-ggplot(yadkin_subs_shp) +
+p8=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=miroc8_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow")
-
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
 
 
 # plot 10yr figures
@@ -546,7 +545,11 @@ pdf("test.pdf",width=11,height=8.5)
 multiplot(p1, p2, p3, p4, cols=2)
 dev.off()
 
-
+# plot 100yr figures
+setwd("/Users/ssaia/Desktop")
+pdf("test2.pdf",width=11,height=8.5)
+multiplot(p5, p6, p7, p8, cols=2)
+dev.off()
 
 
 
