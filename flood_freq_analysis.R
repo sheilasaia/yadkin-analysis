@@ -1,4 +1,4 @@
-# yadkin frequency analysis
+# yadkin flood frequency analysis
 
 # ---- 1. set up -----
 
@@ -89,7 +89,7 @@ yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
 
-# ---- 3. function: observation freq analysis (one subbasin) ----
+# ---- 3. function: observation flood freq analysis (one subbasin) ----
 
 # define function
 obs_rch_freq_calcs=function(rch_data) { 
@@ -121,7 +121,7 @@ obs_rch_freq_calcs=function(rch_data) {
 }
 
 
-# ---- 4. fuction: model freq analysis (one subbasin) ----
+# ---- 4. function: model flood freq analysis (one subbasin) ----
 
 # define function for log-Pearson tyoe III test
 model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
@@ -186,7 +186,7 @@ model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
 }
 
 
-# ---- 5. function: freq analysis by subbasin ----
+# ---- 5. function: flood freq analysis by subbasin ----
 
 # observation for all subbasins in .rch file (uses obs_rch_freq_calcs function) 
 obs_rch_freq_calcs_all_subs=function(rch_data) {
@@ -207,6 +207,7 @@ obs_rch_freq_calcs_all_subs=function(rch_data) {
   return(obs_df_all_subs)
 }
 
+
 # models for all subbasins in .rch file (uses model_rch_freq_calcs function) 
 model_rch_freq_calcs_all_subs=function(obs_rch_freq_calcs_all_subs_df,model_p_list) {
   
@@ -225,6 +226,7 @@ model_rch_freq_calcs_all_subs=function(obs_rch_freq_calcs_all_subs_df,model_p_li
   
   return(model_df_all_subs)
 }
+
 
 # ---- 6. calculate obs and model ouptuts for each subbasin ----
 
@@ -552,32 +554,7 @@ multiplot(p5, p6, p7, p8, cols=2)
 dev.off()
 
 
-
-
-
-
-
-sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
-  transmute(SUB=SUB,sub_AREAkm2=round(AREAkm2,0)) %>% distinct()
-rch_area=baseline_rch_data_raw %>% select(RCH,AREAkm2) %>% 
-  transmute(RCH=RCH,rch_AREAkm2=round(AREAkm2,0)) %>% distinct()
-
-subs_equal_rch=bind_cols(sub_area,rch_area) %>% filter(sub_AREAkm2==rch_AREAkm2)
-
-test=bind_cols(sub_area,rch_area)
-
-
-# network analysis help: http://www.shizukalab.com/toolkits/sna/plotting-directed-networks
-# use network analysis graph to automate subbasin contributions of runoff?
-
-
-
-# ---- X.? reformat data ----
-
-# write output to folder
-#write_csv(baseline_data,"baseline_data.csv")
-
-# ---- function: multiplot ----
+# ---- 13. function: multiplot ----
 # from: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
 
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
@@ -615,3 +592,21 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
     }
   }
 }
+
+
+
+# ---- X. Extra ----
+
+sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
+  transmute(SUB=SUB,sub_AREAkm2=round(AREAkm2,0)) %>% distinct()
+rch_area=baseline_rch_data_raw %>% select(RCH,AREAkm2) %>% 
+  transmute(RCH=RCH,rch_AREAkm2=round(AREAkm2,0)) %>% distinct()
+
+subs_equal_rch=bind_cols(sub_area,rch_area) %>% filter(sub_AREAkm2==rch_AREAkm2)
+
+test=bind_cols(sub_area,rch_area)
+
+
+# network analysis help: http://www.shizukalab.com/toolkits/sna/plotting-directed-networks
+# use network analysis graph to automate subbasin contributions of runoff?
+
