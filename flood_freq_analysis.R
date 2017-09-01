@@ -13,25 +13,25 @@ library(sf)
 # set directory and load data
 
 # baseline data & river network
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
-baseline_sub_data_raw=read_table2("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/baseline82-08_daily")
+#baseline_sub_data_raw=read_table2("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
 baseline_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
 #yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
 # CSIRO RCP4.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/C_CSIRO45")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/C_CSIRO45")
 csiro4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # CSIRO RCP8.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/B_CSIRO85")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/B_CSIRO85")
 csiro8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # Hadley RCP4.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/D_Hadley45")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/D_Hadley45")
 hadley4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # MIROC RCP8.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/A_MIROC8.5")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/A_MIROC8.5")
 miroc8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # gis data
@@ -104,16 +104,19 @@ obs_rch_freq_calcs=function(rch_data) {
     summarise(obs_max_flow_cms=max(FLOW_OUTcms)) %>%
     arrange(SUB,desc(obs_max_flow_cms)) %>%
     mutate(obs_max_flow_cms_adj=obs_max_flow_cms*1.13) %>% # adjust using standard window shift
-    mutate(obs_max_flow_cms_adj_log=log(obs_max_flow_cms_adj)) # take log
+    mutate(obs_max_flow_log_cms_adj=log(obs_max_flow_cms_adj)) # take log
   
   # rank data
   obs_df_temp$obs_rank_num=seq(1,num_yrs,1)
   
   # define return period
-  obs_df_temp$obs_return_period=(num_yrs+1)/obs_df_temp$obs_rank_num
+  obs_df_temp$obs_return_period_yr=(num_yrs+1)/obs_df_temp$obs_rank_num
   
   # select only necessary fields
-  obs_df=obs_df_temp %>% select(SUB,obs_return_period,obs_max_flow_cms_adj) %>%
+  obs_df=obs_df_temp %>% select(SUB,
+                                obs_return_period_yr,
+                                obs_max_flow_cms_adj,
+                                obs_max_flow_log_cms_adj) %>%
     mutate(data_type=rep("obs",num_yrs))
   
   # return
@@ -129,7 +132,7 @@ model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
   
   # save some of input data as temporary variable
   obs_flow_unlog=obs_rch_freq_calcs_df$obs_max_flow_cms_adj
-  obs_flow_log=log(obs_flow_unlog)
+  obs_flow_log=obs_rch_freq_calcs_df$obs_max_flow_log_cms_adj
   obs_sub=unique(obs_rch_freq_calcs_df$SUB)
   num_yrs=dim(obs_rch_freq_calcs_df)[1]
   
@@ -175,11 +178,15 @@ model_rch_freq_calcs=function(obs_rch_freq_calcs_df,model_p_list) {
   model_kt=model_z+model_kt_term2+model_kt_term3-model_kt_term4+model_kt_term5+model_kt_term6
   
   # calculate final modeled flow values
+  model_flow_log=obs_mean+obs_stdev*model_kt
   model_flow_unlog=exp(obs_mean+obs_stdev*model_kt)
   
   # make output dataframe with results
-  model_df=data.frame(SUB=rep(obs_sub,num_p), model_return_period=model_return_period, 
-                      model_flow_cms=model_flow_unlog, data_type=rep("model",num_p))
+  model_df=data.frame(SUB=rep(obs_sub,num_p),
+                      model_return_period_yr=model_return_period, 
+                      model_flow_cms=model_flow_unlog,
+                      model_flow_log_cms=model_flow_log,
+                      data_type=rep("model",num_p))
   
   # return output
   return(model_df)
@@ -195,8 +202,11 @@ obs_rch_freq_calcs_all_subs=function(rch_data) {
   num_subs=length(unique(rch_data$SUB))
   
   # make dataframe for all outputs
-  obs_df_all_subs=data.frame(SUB=as.integer(),obs_return_period=as.numeric(),
-                             obs_max_flow_cms_adj=as.numeric(),data_type=as.character())
+  obs_df_all_subs=data.frame(SUB=as.integer(),
+                             obs_return_period_yr=as.numeric(),
+                             obs_max_flow_cms_adj=as.numeric(),
+                             obs_max_flow_log_cms_adj=as.numeric(),
+                             data_type=as.character())
   
   for (i in 1:num_subs) {
     sel_rch_data=rch_data %>% filter(SUB==i)
@@ -215,8 +225,11 @@ model_rch_freq_calcs_all_subs=function(obs_rch_freq_calcs_all_subs_df,model_p_li
   num_subs=length(unique(obs_rch_freq_calcs_all_subs_df$SUB))
   
   # make dataframe for all outputs
-  model_df_all_subs=data.frame(SUB=as.integer(),model_return_period=as.numeric(),
-                             model_flow_cms=as.numeric(),data_type=as.character())
+  model_df_all_subs=data.frame(SUB=as.integer(),
+                               model_return_period=as.numeric(),
+                               model_flow_cms=as.numeric(),
+                               model_flow_cms_log=as.numeric(),
+                               data_type=as.character())
   
   for (i in 1:num_subs) {
     sel_rch_data=obs_rch_freq_calcs_all_subs_df %>% filter(SUB==i)
@@ -281,7 +294,8 @@ return_period_diff=function(return_period,num_decimal_places,baseline_model_calc
   return_period_range=seq(floor(min(baseline_model_calcs$model_return_period)),
                           floor(max(baseline_model_calcs$model_return_period)),1)
   num_subs=length(unique(baseline_model_calcs$SUB))
-  diff_df=data.frame(SUB=as.integer(),baseline_return_period=as.numeric(),
+  diff_df=data.frame(SUB=as.integer(),
+                     baseline_return_period=as.numeric(),
                      baseline_model_flow_cms=as.numeric(),
                      projection_return_period=as.numeric(),
                      projection_model_flow_cms=as.numeric(),

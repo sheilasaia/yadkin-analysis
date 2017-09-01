@@ -14,29 +14,29 @@ library(smwrBase)
 # set directory and load data
 
 # baseline data & river network
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/baseline82-08_daily")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/baseline82-08_daily")
 baseline_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
 #yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
 # CSIRO RCP4.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/C_CSIRO45")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/C_CSIRO45")
 csiro4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # CSIRO RCP8.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/B_CSIRO85")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/B_CSIRO85")
 csiro8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # Hadley RCP4.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/D_Hadley45")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/D_Hadley45")
 hadley4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # MIROC RCP8.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/A_MIROC8.5")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/A_MIROC8.5")
 miroc8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # gis data
 # set directory and load county bounds (.shp file)
-setwd("/Users/ssaia/Documents/sociohydro_project/raw_data/kelly_results/gis_data")
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/gis_data")
 yadkin_subs_shp=st_read("subs1.shp",quiet=TRUE)
 
 # ---- 2. reformat data ----
@@ -84,7 +84,7 @@ obs_rch_lowflow_freq_calcs=function(rch_data) {
   # calculate number of years
   num_yrs=length(unique(rch_data$YR))
   
-  # find max, sort descending, and adjust
+  # find min, sort descending, and adjust
   obs_df_temp=rch_data %>% 
     group_by(SUB,YR) %>% 
     summarise(obs_min_flow_cms=min(FLOW_OUTcms)) %>%
@@ -111,7 +111,8 @@ obs_rch_lowflow_freq_calcs=function(rch_data) {
 
 #see methods here: https://pubs.usgs.gov/sir/2008/5126/section3.html
 #see riggs 1972: https://pubs.usgs.gov/twri/twri4b1/pdf/twri_4-B1_a.pdf
-#see bulletin 17b: https://water.usgs.gov/osw/bulletin17b/dl_flow.pdf
+#see bulletin 17b 1982: https://water.usgs.gov/osw/bulletin17b/dl_flow.pdf
+#see more detailed explanation here: https://water.usgs.gov/osw/pubs/TM_4-B4/
 
 # define function for log-Pearson tyoe III test
 model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list) {
@@ -122,7 +123,10 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
   obs_flow_unlog_pos=obs_flow_unlog[obs_flow_unlog>0] # select only positive values
   obs_flow_log_pos=log(obs_flow_unlog_pos)
   obs_sub=unique(obs_rch_lowflow_freq_calcs_df$SUB)
-  num_yrs=length(obs_flow_log_pos)
+  num_obs_above_zero=length(obs_flow_unlog_pos)
+  num_yrs=length(obs_flow_unlog)
+  #num_yrs=length(obs_flow_log_pos)
+  prob_conditional=num_obs_above_zero/num_yrs
   
   # calculate mean
   obs_mean=log(mean(obs_flow_unlog))
@@ -143,22 +147,22 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
   # find return period
   num_p=length(model_p_list)
   model_rank_num=seq(1,num_p,1)
-  model_return_period=1/(1-model_p_list) 
+  model_return_period=1/(1-(model_p_list)) 
   # note only difference here between low flow and flood frequency analysis is
   # return period is based on 1-p (i.e., T=1/(1-p))
   
-  # calculate frequency factors
+  # calculate log-Person type III frequency factor (kt)
   # source: BEE 4730 Watershed Engineering: Hydrological Risk Analysis PDF
-  # w
+  # w term
   model_w_term=1/(model_p_list^2)
   model_w=sqrt(log(model_w_term))
   
-  # z statistic
+  # standard normal z statistic
   model_z_term2=2.515517+0.802853*model_w+0.010328*(model_w^2)
   model_z_term3=1+1.432788*model_w+0.189269*(model_w^2)+0.001308*(model_w^3)
   model_z=model_w-(model_z_term2/model_z_term3)
   
-  # log-Person type III frequency factor (kt)
+  # kt
   k_term=obs_cskew/6
   model_kt_term2=((model_z^2)-1)*k_term
   model_kt_term3=(1/3)*((model_z^3)-6*model_z)*(k_term^2)
@@ -169,7 +173,7 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
   
   # calculate final modeled flow values
   model_flow_log=obs_mean+obs_stdev*model_kt
-  model_flow_unlog=exp(obs_mean+obs_stdev*model_kt)
+  model_flow_unlog=exp(model_flow_log)
   
   # make output dataframe with results
   model_df=data.frame(SUB=rep(obs_sub,num_p), model_return_period=model_return_period, 
@@ -191,7 +195,7 @@ obs_rch_lowflow_freq_calcs_all_subs=function(rch_data) {
   
   # make dataframe for all outputs
   obs_df_all_subs=data.frame(SUB=as.integer(),obs_return_period=as.numeric(),
-                             obs_max_flow_cms_adj=as.numeric(),data_type=as.character())
+                             obs_min_flow_cms_adj=as.numeric(),data_type=as.character())
   
   for (i in 1:num_subs) {
     sel_rch_data=rch_data %>% filter(SUB==i)
@@ -281,9 +285,13 @@ ggplot() +
   ylab("flow out (cms)") +
   theme_bw()
 
+# ---- X. count number of low flow frequency obs = zero ----
 
-
-
+num_yrs=length(unique(baseline_rch_data$YR))
+baseline_obs_lowflow_calcs_zero_count=baseline_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_cms_adj==0) %>%
+  group_by(SUB) %>% summarize(num_zero_entries=n()) %>%
+  mutate(percent_zero=num_zero_entries/num_yrs)
 
 
 # ---- 6. calculate lowflow counts ----
