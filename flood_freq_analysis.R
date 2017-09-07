@@ -228,7 +228,7 @@ model_rch_freq_calcs_all_subs=function(obs_rch_freq_calcs_all_subs_df,model_p_li
   model_df_all_subs=data.frame(SUB=as.integer(),
                                model_return_period=as.numeric(),
                                model_flow_cms=as.numeric(),
-                               model_flow_cms_log=as.numeric(),
+                               model_flow_log_cms=as.numeric(),
                                data_type=as.character())
   
   for (i in 1:num_subs) {
