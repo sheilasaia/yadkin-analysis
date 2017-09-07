@@ -254,12 +254,12 @@ miroc8_5_model_lowflow_calcs=model_rch_lowflow_freq_calcs_all_subs(miroc8_5_obs_
 
 # plot observations and models together
 ggplot() +
-  geom_point(aes(x=obs_return_period,y=obs_min_flow_cms_adj),baseline_obs_lowflow_calcs,size=1) +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_lowflow_calcs,color="black") +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),csiro4_5_model_lowflow_calcs,color="orange") +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),csiro8_5_model_lowflow_calcs,color="red") +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),hadley4_5_model_lowflow_calcs,color="blue") +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),miroc8_5_model_lowflow_calcs,color="green") +
+  geom_point(aes(x=obs_return_period,y=obs_max_flow_cms_adj),baseline_obs_calcs,size=1) +
+  geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs,color="black") +
+  #geom_line(aes(x=model_return_period,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
+  #geom_line(aes(x=model_return_period,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
+  #geom_line(aes(x=model_return_period,y=model_flow_cms),hadley4_5_model_calcs,color="blue") +
+  #geom_line(aes(x=model_return_period,y=model_flow_cms),miroc8_5_model_calcs,color="green") +
   facet_wrap(~SUB,ncol=7,nrow=4) +
   xlab("return period") + 
   ylab("flow out (cms)") +
@@ -275,7 +275,7 @@ baseline_model_calcs=model_rch_lowflow_freq_calcs(baseline_obs_calcs,my_model_p_
 
 ggplot() +
   geom_point(aes(x=obs_return_period,y=obs_min_flow_cms_adj),baseline_obs_calcs,size=1) +
-  geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs,color="black") +
+  #geom_line(aes(x=model_return_period,y=model_flow_cms),baseline_model_calcs,color="black") +
   #geom_line(aes(x=model_return_period,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
   #geom_line(aes(x=model_return_period,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
   #geom_line(aes(x=model_return_period,y=model_flow_cms),hadley4_5_model_calcs,color="blue") +
