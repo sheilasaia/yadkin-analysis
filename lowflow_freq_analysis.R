@@ -100,6 +100,7 @@ obs_rch_lowflow_freq_calcs=function(rch_data) {
   
   # select only necessary fields
   obs_df=obs_df_temp %>% select(SUB,
+                                obs_rank_num,
                                 obs_return_period_yr,
                                 obs_min_flow_cms_adj,
                                 obs_min_flow_log_cms_adj) %>%
@@ -121,27 +122,34 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
   # USGS Riggs, 1972
   # USGS Bulletin 17B, 1982
   # https://water.usgs.gov/osw/pubs/TM_4-B4/
+  # pdf: https://water.usgs.gov/osw/TRB/Bulletin17B_Computations_TRB_010909.pdf
   
   # save temporary variables
   current_sub=unique(obs_rch_lowflow_freq_calcs_df$SUB)
   num_p=length(model_p_list)
   num_yrs=dim(obs_rch_lowflow_freq_calcs_df)[1]
+  obs_rank_num=obs_rch_lowflow_freq_calcs_df$obs_rank_num
+  obs_return_period=obs_rch_lowflow_freq_calcs_df$obs_return_period_yr
   obs_flow_unlog=obs_rch_lowflow_freq_calcs_df$obs_min_flow_cms_adj
   
   # just data > zero
-  obs_overzero_flow_unlog=obs_flow_unlog[obs_flow_unlog>0] # select only data > zero
+  obs_overzero_rank_num=obs_rank_num[obs_flow_unlog>0] # select only data > zero
+  obs_overzero_return_period=obs_return_period[obs_flow_unlog>0]
+  obs_overzero_flow_unlog=obs_flow_unlog[obs_flow_unlog>0]
   num_overzero_yrs=length(obs_overzero_flow_unlog)
-  perc_zeros_check=(num_yrs-num_overzero_yrs)/num_yrs # only proceed if 25% or less
+  
+  # percent of data = zero
+  num_zero_yrs=num_yrs-num_overzero_yrs
+  perc_zeros_check=num_zero_yrs/num_yrs # only proceed if 25% or less
   
   # make output dataframe to hold results
   model_df=data.frame(SUB=as.integer(),
                       model_return_period_yr=as.numeric(),
-                      model_probability=as.numeric(),
                       model_flow_cms=as.numeric(),
                       model_flow_log_cms=as.numeric(),
                       data_type=as.character())
   
-  if (perc_zeros_check==0) { #<0.25) {
+  if (perc_zeros_check<=0.25) {
     if (perc_zeros_check==0) {
       # low flow analysis without conditional probability adjustment
       
@@ -186,7 +194,6 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       # final output dataframe
       model_df=data.frame(SUB=rep(current_sub,num_p),
                           model_return_period_yr=1/(1-(model_p_list)),
-                          model_probability=model_p_list,
                           model_flow_log_cms=model_flow_log,
                           model_flow_cms=model_flow_unlog,
                           data_type=rep("model",num_p))
@@ -215,6 +222,11 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       
       # calculate flow outliers...threshold pg 136/142
       
+      # adj probability
+      obs_overzero_prob=1/obs_overzero_return_period
+      obs_overzero_prob_adj=1-(num_overzero_yrs/num_yrs)*(1-obs_overzero_prob)
+      obs_overzero_return_perdo_adj_yr=1/obs_overzero_prob_adj
+      
       # caculate log-Person type III frequency factor (kt) for conditional probability adjustment
       # w term
       con_w_term=1/((model_p_list)^2)
@@ -235,19 +247,20 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       con_kt=con_z+con_kt_term2+con_kt_term3-con_kt_term4+con_kt_term5+con_kt_term6
       
       # other conditional probability adjustment calculations
-      con_prob_adj=1-perc_zeros_check
       con_flow_log=obs_overzero_mean+obs_overzero_stdev*con_kt
       con_flow_unlog=exp(obs_overzero_mean+obs_overzero_stdev*con_kt)
+      con_prob_adj=1-perc_zeros_check
       con_p_list=model_p_list*con_prob_adj
+      con_return_period_no_adj=1/(1-model_p_list)
+      con_return_period_adj=1/(1-con_p_list)
       
       # fit smooth and predict
       con_smooth=loess(con_flow_log~con_p_list)
       con_predict=predict(con_smooth,c(0.01,0.1,0.5)) # predictions for p=0.01, p=0.1, p=0.5
       
-      
       # caculate log-Person type III frequency factor (kt) for synthetic curve
       # coefficient of skew
-      syn_cskew=-2.50+3.12*((con_predict[1]/con_predict[2])/(con_predict[2]/con_predict[3]))
+      syn_cskew=-2.50+3.12*((con_predict[1]-con_predict[2])/(con_predict[2]-con_predict[3]))
       # only ok for obs_overzero_cskew between +2.5 and -2.0
       
       # w term
@@ -270,7 +283,7 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       syn_kt=syn_z+syn_kt_term2+syn_kt_term3-syn_kt_term4+syn_kt_term5+syn_kt_term6
       
       # standard deviation and mean
-      syn_stdev=(con_predict[1]/con_predict[3])/(syn_kt[1]-syn_kt[2])
+      syn_stdev=(con_predict[1]-con_predict[3])/(syn_kt[1]-syn_kt[2])
       syn_mean=(con_predict[3])-syn_kt[2]*syn_stdev
       
       # calculate weighted coefficient of skew
@@ -313,9 +326,17 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       # final output dataframe
       model_df=data.frame(SUB=rep(current_sub,num_p),
                           model_return_period_yr=1/(1-model_p_list),
-                          model_flow_log_cms=syn_mean+obs_overzero_stdev*fin_kt,#syn_stdev*fin_kt,
-                          model_flow_cms=exp(syn_mean+0.1*fin_kt),#=exp(syn_mean+syn_stdev*fin_kt),
+                          model_flow_log_cms=syn_mean+syn_stdev*fin_kt,#syn_stdev*fin_kt,
+                          model_flow_cms=exp(syn_mean+syn_stdev*fin_kt),#=exp(syn_mean+syn_stdev*fin_kt),
                           data_type=rep("model",num_p))
+      
+      # plotting (just to check)
+      #plot(obs_flow_unlog~obs_return_period,pch=16)
+      #lines(con_flow_unlog~con_return_period_no_adj,col="black")
+      #lines(con_flow_unlog~con_return_period_adj,col="red")
+      #lines(model_flow_cms~model_return_period_yr,col="green")
+      
+      return(model_df)
     }
   } 
   else {
@@ -367,7 +388,6 @@ model_rch_lowflow_freq_calcs_all_subs=function(obs_rch_lowflow_freq_calcs_all_su
   # make dataframe for all outputs
   model_df_all_subs=data.frame(SUB=as.integer(),
                       model_return_period_yr=as.numeric(),
-                      model_probability=as.numeric(),
                       model_flow_cms=as.numeric(),
                       model_flow_log_cms=as.numeric(),
                       data_type=as.character())
@@ -417,23 +437,27 @@ miroc8_5_model_lowflow_calcs_noNAa=miroc8_5_model_lowflow_calcs %>% na.omit()
 ggplot() +
   geom_point(aes(x=obs_return_period_yr,y=obs_min_flow_cms_adj),baseline_obs_lowflow_calcs,size=1) +
   geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_lowflow_calcs_noNAa,color="black") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro4_5_model_lowflow_calcs_noNAa,color="orange") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro8_5_model_lowflow_calcs_noNAa,color="red") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley4_5_model_lowflow_calcs_noNAa,color="blue") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_lowflow_calcs_noNAa,color="green") +
+  #geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro4_5_model_lowflow_calcs_noNAa,color="orange") +
+  #geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro8_5_model_lowflow_calcs_noNAa,color="red") +
+  #geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley4_5_model_lowflow_calcs_noNAa,color="blue") +
+  #geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_lowflow_calcs_noNAa,color="green") +
   facet_wrap(~SUB,ncol=7,nrow=4) +
   xlab("return period") + 
   ylab("flow out (cms)") +
+  ylim(0,max(baseline_obs_lowflow_calcs$obs_min_flow_cms_adj)+50) +
   theme_bw()
 
 
 # ---- X. one subbasin test ----
 
-baseline_rch_data_sel=baseline_rch_data %>% filter(RCH==10)
+baseline_rch_data_sel=baseline_rch_data %>% filter(RCH==8)
 baseline_obs_calcs=obs_rch_lowflow_freq_calcs(baseline_rch_data_sel)
 #obs_rch_lowflow_freq_calcs_df=baseline_obs_calcs
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 baseline_model_calcs=model_rch_lowflow_freq_calcs(baseline_obs_calcs,my_model_p_list,0.4)
+
+# plotting
+plot(obs_min_flow_cms_adj~obs_return_period_yr,data=obs_rch_lowflow_freq_calcs_df,pch=16)
 
 # use moving average
 baseline_rch_data_sel_blah=baseline_rch_data_sel %>% 
