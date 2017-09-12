@@ -11,74 +11,74 @@ library(stringr)
 library(sf)
 library(smwrBase)
 
+# load home-made functions 
+functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
+source(paste0(functions_path,"reformat_rch_file.R")) # reformat SWAT .rch file
+source(paste0(functions_path,"logpearson3_factor_calc.R")) # calculate log-Pearson III frequency factors
+source(paste0(functions_path,"obs_lowflow_freq_calcs_one_rch.R")) # select observations for one reach
+source(paste0(functions_path,"obs_lowflow_freq_calcs_all_rchs.R")) # selects observations for all reaches
+source(paste0(functions_path,"model_lowflow_freq_calcs_one_rch.R")) # determines low-flow model for one reach
+source(paste0(functions_path,"model_lowflow_freq_calcs_all_rchs.R")) # determines low-flow model for all reaches
+
+
 # set directory and load data
 
 # baseline data & river network
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/baseline82-08_daily")
-baseline_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
+baseline_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
 #yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
 # CSIRO RCP4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/C_CSIRO45")
-csiro4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
+csiro4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # CSIRO RCP8.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/B_CSIRO85")
-csiro8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
+csiro8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # Hadley RCP4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/D_Hadley45")
-hadley4_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
+hadley4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # MIROC RCP8.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/A_MIROC8.5")
-miroc8_5_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
+miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # gis data
 # set directory and load county bounds (.shp file)
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/gis_data")
 yadkin_subs_shp=st_read("subs1.shp",quiet=TRUE)
 
+# kn table for outliers
+setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis")
+kn_table=read_csv("kn_table_appendix4_usgsbulletin17b.csv",col_names=TRUE)
+
 # ---- 2. reformat data ----
 
-# column names
-rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_OUTcms","EVAPcms",
-                "TLOSScms","SED_INtons","SED_OUTtons","SEDCONCmg_kg","ORGN_INkg","ORGN_OUTkg",
-                "ORGP_INkg", "ORGP_OUTkg","NO3_INkg","NO3_OUTkg","NH4_INkg","NH4_OUTkg",
-                "NO2_INkg", "NO2_OUTkg","MINP_INkg","MINP_OUTkg","CHLA_INkg","CHLA_OUTkg",
-                "CBOD_INkg","CBOD_OUTkg","DISOX_INkg","DISOX_OUTkg","SOLPST_INmg",
-                "SOLPST_OUTmg","SORPST_INmg","SORPST_OUTmg","REACTPSTmg","VOLPSTmg",
-                "SETTLPSTmg","RESUSP_PSTmg","DIFFUSEPSTmg","REACBEDPSTmg","BURYPSTmg",
-                "BED_PSTmg","BACTP_OUTct","BACTLP_OUTct","CMETAL_1kg","CMETAL_2kg","CMETAL_3kg",
-                "TOTNkg","TOTPkg","NO3_mg_l","WTMPdegc")
+# baseline data
+baseline_rch_data=reformat_rch_file(baseline_rch_raw_data)
 
-# reassign column names
-colnames(baseline_rch_data_raw)=rch_col_names
-colnames(csiro4_5_rch_data_raw)=rch_col_names
-colnames(csiro8_5_rch_data_raw)=rch_col_names
-colnames(hadley4_5_rch_data_raw)=rch_col_names
-colnames(miroc8_5_rch_data_raw)=rch_col_names
+# CSIRO 4.5 data
+csiro4_5_rch_data=reformat_rch_file(csiro4_5_rch_raw_data)
 
-# remove unnecessary columns
-baseline_rch_data=baseline_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
-  mutate(SUB=RCH) # add column so can join later if needed
-csiro4_5_rch_data=csiro4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
-  mutate(SUB=RCH)
-csiro8_5_rch_data=csiro8_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
-  mutate(SUB=RCH)
-hadley4_5_rch_data=hadley4_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
-  mutate(SUB=RCH)
-miroc8_5_rch_data=miroc8_5_rch_data_raw %>% select(RCH,MO:FLOW_OUTcms) %>%
-  mutate(SUB=RCH)
+# CSIRO 8.5 data
+csiro8_5_rch_data=reformat_rch_file(csiro8_5_rch_raw_data)
+
+# HADLEY 4.5 data
+hadley4_5_rch_data=reformat_rch_file(hadley4_5_rch_raw_data)
+
+# MIROC 8.5 data
+miroc8_5_rch_data=reformat_rch_file(miroc8_5_rch_raw_data)
 
 # add SUB column to .shp file
 yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
+
 # ---- 3. function: observation 1-day, low flow freq analysis (one subbasin) ----
 
 # define function
-obs_rch_lowflow_freq_calcs=function(rch_data) { 
+obs_rch_lowflow_freq_calcs=function(rch_data,span) { 
   # rch_data is df with all reach data for ONLY 1 subbasin
   
   # calculate number of years
@@ -220,6 +220,19 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       obs_overzero_stdev=sqrt(obs_overzero_variance)
       obs_overzero_cskew=(num_yrs*obs_overzero_mean_diff_cubed_sum)/((num_yrs-1)*(num_yrs-2)*(obs_overzero_stdev^3))
       
+      # if skew is between -0.4 and +0.4 then no need to remove outliers, otherwise, need to
+      if (obs_overzero_cskew<-0.4) {
+        #kn=
+        obs_flow_low_limit=obs_overzero_mean-kn*obs_overzero_stdev
+        #output new df w/in limits
+      }
+      
+      if (obs_overzero_cskew>0.4) {
+        #kn=
+        obs_flow_low_limit=obs_overzero_mean+kn*obs_overzero_stdev
+        #output new df w/in limits
+      }
+      
       # calculate flow outliers...threshold pg 136/142
       
       # adj probability
@@ -335,6 +348,10 @@ model_rch_lowflow_freq_calcs=function(obs_rch_lowflow_freq_calcs_df,model_p_list
       #lines(con_flow_unlog~con_return_period_no_adj,col="black")
       #lines(con_flow_unlog~con_return_period_adj,col="red")
       #lines(model_flow_cms~model_return_period_yr,col="green")
+      #plot(obs_overzero_flow_log~obs_overzero_return_period,pch=16)
+      #lines(con_flow_log~con_return_period_no_adj,col="black")
+      #lines(con_flow_log~con_return_period_adj,col="red")
+      #lines(model_flow_log_cms~model_return_period_yr,col="green")
       
       return(model_df)
     }
@@ -450,7 +467,7 @@ ggplot() +
 
 # ---- X. one subbasin test ----
 
-baseline_rch_data_sel=baseline_rch_data %>% filter(RCH==8)
+baseline_rch_data_sel=baseline_rch_data %>% filter(RCH==22)
 baseline_obs_calcs=obs_rch_lowflow_freq_calcs(baseline_rch_data_sel)
 #obs_rch_lowflow_freq_calcs_df=baseline_obs_calcs
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
