@@ -10,6 +10,9 @@ reformat_rch_file=function(raw_rch_data) {
   # import raw_rch_data into R session using: 
   # raw_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
   
+  # load libraries
+  library(tidyverse) # data management
+  
   # column names
   rch_col_names=c("FILE","RCH","GIS","MO","DA","YR","AREAkm2","FLOW_INcms","FLOW_OUTcms","EVAPcms",
                   "TLOSScms","SED_INtons","SED_OUTtons","SEDCONCmg_kg","ORGN_INkg","ORGN_OUTkg",
@@ -25,7 +28,7 @@ reformat_rch_file=function(raw_rch_data) {
   colnames(raw_rch_data)=rch_col_names
   
   # remove unnecessary columns
-  final_rch_data=raw_rch_data %>% select(RCH,MO:FLOW_OUTcms)
+  rch_data=raw_rch_data %>% select(RCH,MO:FLOW_OUTcms)
   
-  return(final_rch_data)
+  return(rch_data)
 }
