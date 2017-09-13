@@ -5,7 +5,7 @@
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
-model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,model_p_list,general_cskew) {
+model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,model_p_list,general_cskew,flow_option) {
   # obs_freq_calcs_all_rchs_df is formatted using obs_freq_calcs_all_rchs()
   # model_p_list is a list of desired probabilities of exceedance or non-exceedance (for flooding and low-flow analysis, respectively)
   # flow_option equal to "flood" or "lowflow" depending on which analysis type
@@ -27,7 +27,7 @@ model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,model_p_list,gener
       # fill data frame
       model_df_all_temp=model_rch_flood_freq_calcs_one_rch(sel_rch_data,model_p_list,general_cskew)
       
-      } else (flow_option=="lowflow") {
+      } else { # must be "lowflow"
       # fill data frame
       model_df_all_temp=model_rch_lowflow_freq_calcs_one_rch(sel_rch_data,model_p_list,general_cskew)
       }
