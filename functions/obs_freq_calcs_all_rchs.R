@@ -12,7 +12,7 @@ obs_freq_calcs_all_rchs=function(rch_data,span_days,flow_option) {
   # flow_option equal to "flood" or "lowflow" depending on which analysis type
   
   # load libraries
-  library(smwrBase) # for movingAve()
+  #library(smwrBase) # for movingAve()
   library(tidyverse) # data management
   
   # calculate number of reaches for for loop
@@ -33,7 +33,7 @@ obs_freq_calcs_all_rchs=function(rch_data,span_days,flow_option) {
       # fill data frame
       obs_df_all_temp=obs_flood_freq_calcs_one_rch(sel_rch_data,span)
       
-    } else (flow_option=="lowflow") {
+    } else if (flow_option=="lowflow") {
       # make data frame for all outputs
       obs_df_all_rchs=data.frame(RCH=as.integer(),
                                  YR=as.integer(),
@@ -44,6 +44,10 @@ obs_freq_calcs_all_rchs=function(rch_data,span_days,flow_option) {
       
       # fill data frame
       obs_df_all_temp=obs_lowflow_freq_calcs_one_rch(sel_rch_data,span)
+    } else {
+      
+      print("The flow_otion used was not valid.")
+      
     }
     
     obs_df_all_rchs=bind_rows(obs_df_all_rchs,obs_df_all_temp)
