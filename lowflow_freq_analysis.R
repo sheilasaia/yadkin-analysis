@@ -7,22 +7,28 @@ rm(list = ls())
 
 # load libraries
 library(tidyverse)
-library(stringr)
-library(sf)
-library(smwrBase)
+#library(stringr)
+#library(sf)
+#library(smwrBase)
 
 # load home-made functions 
 functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
 source(paste0(functions_path,"reformat_rch_file.R")) # reformat SWAT .rch file
 source(paste0(functions_path,"logpearson3_factor_calc.R")) # calculate log-Pearson III frequency factors
+source(paste0(functions_path,"remove_outliers.R")) # removes low and high flows deemed as outliers
 source(paste0(functions_path,"obs_lowflow_freq_calcs_one_rch.R")) # select observations for one reach
-source(paste0(functions_path,"obs_lowflow_freq_calcs_all_rchs.R")) # selects observations for all reaches
+#source(paste0(functions_path,"obs_flood_freq_calcs_one_rch.R")) # select observations for one reach
+source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observations for all reaches
 source(paste0(functions_path,"model_lowflow_freq_calcs_one_rch.R")) # determines low-flow model for one reach
-source(paste0(functions_path,"model_lowflow_freq_calcs_all_rchs.R")) # determines low-flow model for all reaches
+#source(paste0(functions_path,"model_flood_freq_calcs_one_rch.R")) # determines low-flow model for one reach
+source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines low-flow model for all reaches
+source(paste0(functions_path,"movingAve.R")) # from smwrBase with edits (add here for now)
 
+# download kn_table
+setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
+kn_table=read_csv("kn_table_appendix4_usgsbulletin17b.csv",col_names=TRUE)
 
 # set directory and load data
-
 # baseline data & river network
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/baseline82-08_daily")
 baseline_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
@@ -52,6 +58,7 @@ yadkin_subs_shp=st_read("subs1.shp",quiet=TRUE)
 # kn table for outliers
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis")
 kn_table=read_csv("kn_table_appendix4_usgsbulletin17b.csv",col_names=TRUE)
+
 
 # ---- 2. reformat data ----
 
@@ -467,36 +474,16 @@ ggplot() +
 
 # ---- X. one subbasin test ----
 
-baseline_rch_data_sel=baseline_rch_data %>% filter(RCH==22)
-baseline_obs_calcs=obs_rch_lowflow_freq_calcs(baseline_rch_data_sel)
-#obs_rch_lowflow_freq_calcs_df=baseline_obs_calcs
+# run for one reach
+baseline_rch_data_sel=baseline_rch_data %>% filter(RCH==8)
+baseline_obs_lowflow_calcs_one_rch=obs_lowflow_freq_calcs_one_rch(baseline_rch_data_sel,1)
+baseline_obs_lowflow_calcs_one_rch_nozeros=baseline_obs_lowflow_calcs_one_rch %>% filter(obs_min_flow_cms_adj>0)
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-baseline_model_calcs=model_rch_lowflow_freq_calcs(baseline_obs_calcs,my_model_p_list,0.4)
+baseline_model_lowflow_calcs_one_rch=model_lowflow_freq_calcs_one_rch(baseline_obs_lowflow_calcs_one_rch,kn_table,my_model_p_list,0.4)
 
 # plotting
-plot(obs_min_flow_cms_adj~obs_return_period_yr,data=obs_rch_lowflow_freq_calcs_df,pch=16)
-
-# use moving average
-baseline_rch_data_sel_blah=baseline_rch_data_sel %>% 
-  mutate(blah=movingAve(baseline_rch_data_sel$FLOW_OUTcms,span=7,pos="end")) %>%
-  na.omit()
-baseline_obs_calcs_blah=obs_rch_lowflow_freq_calcs(baseline_rch_data_sel_blah)
-
-
-ggplot() +
-  geom_point(aes(x=obs_return_period_yr,y=obs_min_flow_cms_adj),baseline_obs_calcs,size=1) +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_calcs,color="black") +
-  #geom_line(aes(x=model_return_period,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
-  #geom_line(aes(x=model_return_period,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
-  #geom_line(aes(x=model_return_period,y=model_flow_cms),hadley4_5_model_calcs,color="blue") +
-  #geom_line(aes(x=model_return_period,y=model_flow_cms),miroc8_5_model_calcs,color="green") +
-  facet_wrap(~SUB,ncol=7,nrow=4) +
-  xlab("return period") + 
-  ylab("flow out (cms)") +
-  theme_bw()
-
-
-# ---- 8. ----
+plot(obs_min_flow_cms_adj~obs_return_period_yr,data=baseline_obs_lowflow_calcs_one_rch_nozeros,pch=16,xlim=c(0,105))
+lines(baseline_model_lowflow_calcs_one_rch$model_return_period_yr,baseline_model_lowflow_calcs_one_rch$model_flow_cms,col="green")
 
 
 # ---- X. count number of low flow frequency obs = zero ----
@@ -545,45 +532,3 @@ ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=num_lowflow_days)) +
   scale_fill_gradient(name=paste("total # days <",my_lowflow,"cms \n from 1982-2008"),limits=c(100,200),
                       low="white",high="red",na.value="grey75")
-
-
-
-
-
-
-
-
-movingAve <- function(x, span=3, order=0, pos="center") {
-  ## Coding history:
-  ##    2009Aug17 DLLorenz Original Coding
-  ##    2012May24 DLLorenz Conversion to R
-  ##    2012Aug11 DLLorenz Integer fixes
-  ##    2013Feb03 DLLorenz Prep for gitHub
-  ##
-  ## get the correct position
-  pos <- match.arg(pos, c("center", "begin", "end", "leading", "trailing"))
-  if(pos == "leading")
-    pos <- "begin"
-  else if(pos == "trailing")
-    pos <- "end"
-  if(order >= span)
-    stop("the value for order must be less than the value for span")
-  ## Construct the filter matrix
-  ## Note that for order greater than 0, the construction of the matrix is
-  ##  based on linear model theory
-  if(order > 0) {
-    X <- cbind(1, poly(seq(span), order))
-    filMat <- X %*% solve(crossprod(X)) %*% t(X)
-  }
-  else
-    filMat <- matrix(1/span, ncol=span, nrow=span)
-  if(span > length(x)) # need to protect against failure in filter
-    retval <- rep(NA_real_, length(x))
-  else if(pos == "center")
-    retval <- stats::filter(x, filMat[span + 1 - trunc((span + 1)/2),])
-  else if(pos == "begin")
-    retval <- rev(stats::filter(rev(x), filMat[1L,], sides=1))
-  else # Must be end
-    retval <- stats::filter(x, filMat[1L,], sides=1)
-  return(as.vector(retval))
-}
