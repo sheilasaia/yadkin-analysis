@@ -7,49 +7,60 @@
 
 # references: USGS bulletin 17b
 
-remove_outliers=function(obs_input_df,kn_table) {
-  # example obs_input_df is the output from obs_lowflow_freq_calcs_one_rch()
+remove_outliers=function(obs_flow_input_df,kn_table) {
+  # example obs_flow_input_df is the output from obs_lowflow_freq_calcs_one_rch()
   
   # log inputs and find mean
-  input_flow_unlog=obs_input_df$obs_min_flow
-  temp_flow_log=log(input_flow_unlog)
-  temp_mean=mean(temp_flow_log)
+  input_flow_log=obs_flow_input_df$obs_min_flow_log_cms_adj
+  input_mean=mean(input_flow_log)
   
   # calculate difference from mean
-  temp_mean_diff=temp_flow_log-temp_mean
-  temp_mean_diff_sqrd=temp_mean_diff^2
-  temp_mean_diff_sqrd_sum=sum(temp_mean_diff_sqrd)
-  temp_mean_diff_cubed=temp_mean_diff^3
-  temp_mean_diff_cubed_sum=sum(temp_mean_diff_cubed)
+  input_mean_diff=input_flow_log-input_mean
+  input_mean_diff_sqrd=input_mean_diff^2
+  input_mean_diff_sqrd_sum=sum(input_mean_diff_sqrd)
+  input_mean_diff_cubed=input_mean_diff^3
+  input_mean_diff_cubed_sum=sum(input_mean_diff_cubed)
   
   # calculate coefficient of skew (cskew)
-  num_yrs=length(input_flow_unlog)
-  temp_variance=(1/(num_yrs-1))*temp_mean_diff_sqrd_sum
-  temp_stdev=sqrt(temp_variance)
-  temp_cskew=(num_yrs*temp_mean_diff_cubed_sum)/((num_yrs-1)*(num_yrs-2)*(temp_stdev^3))
+  num_yrs=dim(obs_flow_input_df)[1]
+  input_variance=(1/(num_yrs-1))*input_mean_diff_sqrd_sum
+  input_stdev=sqrt(input_variance)
+  input_cskew=(num_yrs*input_mean_diff_cubed_sum)/((num_yrs-1)*(num_yrs-2)*(input_stdev^3))
   
-  # if skew is between -0.4 and +0.4 then no need to remove outliers, otherwise, need to
-  if (temp_cskew<-0.4) {
+  if (input_cskew>=-0.4 & input_cskew<=0.4) {
     
-    if (num_yrs<10 | num_yrs>140) {
-      print("Sample size is not between 10 and 140. Cannot run outlier analysis.")
-    } else {
-      # look up kn value
+    # if skew is between -0.4 and +0.4 then no need to remove outliers, otherwise, need to
+    return(obs_flow_input_df)
+    
+  } else {
+    if (input_cskew<-0.4) {
+      
+      # look up kn value (only defined for 10-140 samples)
       kn_value=kn_table$kn_value[kn_table$sample_size==num_yrs]
       
-      temp_flow_low_limit=temp_mean-kn_value*temp_stdev
+      # calculate kn value
+      input_lowflow_limit=input_mean-kn_value*input_stdev
+      
+      #output new df
+      obs_output_df=obs_flow_input_df %>% filter(obs_min_flow_log_cms_adj>input_lowflow_limit)
+      
+      return(obs_output_df)
+      
+    } else {
+      # case when (input_cskew>0.4)
+      # look up kn value (only defined for 10-140 samples)
+      kn_value=kn_table$kn_value[kn_table$sample_size==num_yrs]
+      
+      input_highflow_limit=input_mean+kn_value*input_stdev
       #output new df w/in limits
+      
+      #output new df
+      obs_output_df=obs_flow_input_df %>% filter(obs_min_flow_log_cms_adj<input_highflow_limit)
+      
+      return(obs_output_df)
     }
   }
   
-  if (temp_overzero_cskew>0.4) {
-    
-    # look up kn value
-    kn_value=kn_table$kn_value[kn_table$sample_size==num_yrs]
-    
-    temp_flow_low_limit=temp_overzero_mean+kn_value*temp_overzero_stdev
-    #output new df w/in limits
-  }
   
 }
 
