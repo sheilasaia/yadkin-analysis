@@ -54,6 +54,7 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
       # log inputs and find mean
       obs_flow_log=obs_temp_data$obs_min_flow_log_cms_adj
       obs_mean=mean(obs_flow_log)
+      
       # calculate difference from mean
       obs_mean_diff=obs_flow_log-obs_mean
       obs_mean_diff_sqrd=obs_mean_diff^2
@@ -83,6 +84,8 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
       # model_rank_num=seq(1,num_p,1)
       # note only difference here between low flow and flood frequency analysis is
       # return period is based on 1-p (i.e., T=1/(1-p))
+      
+      return(model_df)
     }
     else {
       
@@ -140,13 +143,15 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
       # calculate weighted coefficient of skew
       if (abs(syn_cskew)<=0.9) {
         mse_syn_cskew_A=-0.33+0.08*abs(syn_cskew)
-      } else {
+      }
+      else {
         mse_syn_cskew_A=-0.52+0.30*abs(syn_cskew)
       }
       
       if (abs(syn_cskew)<=1.5) {
         mse_syn_cskew_B=0.94-0.26*abs(syn_cskew)
-      } else {
+      }
+      else {
         mse_syn_cskew_B=0.55
       }
       
@@ -166,19 +171,10 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
                           data_type=rep("model",num_p)) %>%
         filter(model_flow_cms<(round(max(obs_lowflow_freq_calcs_one_rch_df$obs_min_flow_cms_adj))+5)) # remove flow estimations beyond observations
       
-      # plotting (just to check)
-      #plot(obs_flow_unlog~obs_return_period,pch=16)
-      #lines(con_flow_unlog~con_return_period_no_adj,col="black")
-      #lines(con_flow_unlog~con_return_period_adj,col="red")
-      #lines(model_flow_cms~model_return_period_yr,col="green")
-      #plot(obs_overzero_flow_log~obs_overzero_return_period,pch=16)
-      #lines(con_flow_log~con_return_period_no_adj,col="black")
-      #lines(con_flow_log~con_return_period_adj,col="red")
-      #lines(model_flow_log_cms~model_return_period_yr,col="green")
-      
+      # return output
       return(model_df)
     }
-  } 
+  }
   else {
     
     # return df without completing any calculations
