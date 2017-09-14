@@ -447,7 +447,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_10yr_flow_sel,by="SUB")
 # plot
 p1=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro4_5_10yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60),na.value="grey75")
 
 
 # csiro 4.5 vs baseline 100 yr flow
@@ -462,7 +462,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_100yr_flow_sel,by="SUB")
 # plot
 p5=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro4_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315),na.value="grey75")
 
 
 # csiro 8.5 vs baseline 10 yr flow
@@ -477,7 +477,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_10yr_flow_sel,by="SUB")
 # plot
 p2=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro8_5_10yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60),na.value="grey75")
 
 
 # csiro 8.5 vs baseline 100 yr flow
@@ -492,7 +492,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_100yr_flow_sel,by="SUB")
 # plot
 p6=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=csiro8_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315),na.value="grey75")
 
 
 # hadley 4.5 vs baseline 10 yr flow
@@ -507,7 +507,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_10yr_flow_sel,by="SUB")
 # plot
 p3=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=hadley4_5_10yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60),na.value="grey75")
 
 
 # hadley 4.5 vs baseline 100 yr flow
@@ -522,7 +522,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_100yr_flow_sel,by="SUB")
 # plot
 p7=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=hadley4_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315),na.value="grey75")
 
 
 # miroc 8.5 vs baseline 10 yr flow
@@ -537,7 +537,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_10yr_flow_sel,by="SUB")
 # plot
 p4=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=miroc8_5_10yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60))
+  scale_fill_gradient2(name="% Change 10yr Flow",limits=c(-60,60),na.value="grey75")
 
 
 # miroc 8.5 vs baseline 100 yr flow
@@ -552,7 +552,7 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_100yr_flow_sel,by="SUB")
 # plot
 p8=ggplot(yadkin_subs_shp) +
   geom_sf(aes(fill=miroc8_5_100yr_flow_perc)) +
-  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315))
+  scale_fill_gradient2(name="% Change 100yr Flow",limits=c(-100,315),na.value="grey75")
 
 
 # plot 10yr figures
