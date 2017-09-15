@@ -79,7 +79,7 @@ yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
 
-# ---- 3. calculate obs and model ouptuts for each subbasin ----
+# ---- 3.1. calculate obs and model ouptuts for each subbasin ----
 
 #baseline_rch_data_test=baseline_rch_data %>% filter(RCH<11)
 #baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(baseline_rch_data_test,span_days=1,flow_option="lowflow")
@@ -104,7 +104,7 @@ miroc8_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(miroc8_5_rch_data,span_days=1
 miroc8_5_model_lowflow_calcs=model_freq_calcs_all_rchs(miroc8_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,flow_option="lowflow")
 
 
-# ---- 4. plot results for each subbasin ----
+# ---- 3.2. plot results for each subbasin ----
 
 # omit zero values from observations
 baseline_obs_lowflow_calcs_nozeros=baseline_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
@@ -150,7 +150,7 @@ ggplot() +
   theme_bw()
 
 
-# ---- 10. function: find baseline and projection flows for same return period ----
+# ---- 4.1. function: find baseline and projection flows for same return period ----
 
 flow_diff=function(return_period,baseline_model_calcs,projection_model_calcs) {
   # return_period must be an entry in the modeled data
@@ -200,7 +200,7 @@ flow_diff=function(return_period,baseline_model_calcs,projection_model_calcs) {
 }
 
 
-# ---- 11. calculate flow difference ----
+# ---- 4.2. calculate flow difference ----
 
 # csiro 4.5
 csiro4_5_10yr_flow=flow_diff(10,baseline_model_lowflow_calcs,csiro4_5_model_lowflow_calcs)
@@ -219,7 +219,7 @@ miroc8_5_10yr_flow=flow_diff(10,baseline_model_lowflow_calcs,miroc8_5_model_lowf
 miroc8_5_100yr_flow=flow_diff(100,baseline_model_lowflow_calcs,miroc8_5_model_lowflow_calcs)
 
 
-# ---- 12. plot flow differences on map ----
+# ---- 4.3. plot flow differences on map ----
 
 # csiro 4.5 vs baseline 10 yr flow
 # select only necessary down data
@@ -362,7 +362,7 @@ multiplot(p5, p6, p7, p8, cols=2)
 dev.off()
 
 
-# ---- 13. function: multiplot ----
+# ---- 4.4. function: multiplot ----
 # from: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
 
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
@@ -402,16 +402,73 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 }
 
 
-# ---- X. count number of low flow frequency obs = zero ----
+# ---- 5.1. count number of low flow frequency obs = zero ----
 
-num_yrs=length(unique(baseline_rch_data$YR))
-baseline_obs_lowflow_calcs_zero_count=baseline_obs_lowflow_calcs %>% 
+# baseline
+baseline_num_yrs=length(unique(baseline_rch_data$YR))
+baseline_obs_lowflow_calcs_zero_count=baseline_obs_lowflow_calcs %>%
+  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
+  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+         dataset="baseline")
+
+# don't pad with zeros for other subbasins
+#baseline_obs_lowflow_calcs_zero_count=baseline_obs_lowflow_calcs %>% 
+#  filter(obs_min_flow_cms_adj==0) %>%
+#  group_by(RCH) %>% summarize(cum_num_zero_entries=n()) %>%
+#  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+#         dataset="baseline")
+
+# csiro 4.5
+csiro4_5_num_yrs=length(unique(csiro4_5_rch_data$YR))
+csiro4_5_obs_lowflow_calcs_zero_count=csiro4_5_obs_lowflow_calcs %>%
+  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
+  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+         dataset="csiro_4_5")
+
+# csiro 8.5
+csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
+csiro8_5_obs_lowflow_calcs_zero_count=csiro8_5_obs_lowflow_calcs %>%
+  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
+  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+         dataset="csiro_8_5")
+
+# hadley 4.5
+hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
+hadley4_5_obs_lowflow_calcs_zero_count=hadley4_5_obs_lowflow_calcs %>%
+  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
+  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+         dataset="hadley_4_5")
+
+# miroc 8.5
+miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR))
+miroc8_5_obs_lowflow_calcs_zero_count=miroc8_5_obs_lowflow_calcs %>% 
   filter(obs_min_flow_cms_adj==0) %>%
-  group_by(SUB) %>% summarize(num_zero_entries=n()) %>%
-  mutate(percent_zero=num_zero_entries/num_yrs)
+  group_by(RCH) %>% summarize(cum_num_zero_entries=n()) %>%
+  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+         dataset="miroc_8_5")
+
+# bind all together
+all_models_zero_counts=bind_rows(baseline_obs_lowflow_calcs_zero_count,
+                                 csiro4_5_obs_lowflow_calcs_zero_count,
+                                 csiro8_5_obs_lowflow_calcs_zero_count,
+                                 hadley4_5_obs_lowflow_calcs_zero_count,
+                                 miroc8_5_obs_lowflow_calcs_zero_count)
 
 
-# ---- X. calculate lowflow counts ----
+# ---- 5.2. export results ----
+
+# export to results
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(all_models_zero_counts,"zero_flow_counts.csv")
+
+
+# ---- 5.3. calculate percent change in zero flow count ----
+
+
+
+
+
+# ---- 6.1. calculate lowflow counts ----
 
 # find days where flow_out equals lowflow
 my_lowflow=0.01 # in cms
@@ -425,7 +482,7 @@ baseline_lowflow_tally=baseline_lowflow_data %>% group_by(SUB,YR) %>%
   arrange(YR,SUB)
 
 
-# ---- X. plot lowflow counts (scatter plot and on map) ----
+# ---- 6.2. plot lowflow counts (scatter plot and on map) ----
 
 # scatter plot vs time
 ggplot(baseline_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(SUB))) +
