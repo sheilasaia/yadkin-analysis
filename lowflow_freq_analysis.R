@@ -348,16 +348,16 @@ p8=ggplot(yadkin_subs_shp) +
 
 
 # plot 10yr figures
-setwd("/Users/ssaia/Desktop")
-pdf("test.pdf",width=11,height=8.5)
+#setwd("/Users/ssaia/Desktop")
+#pdf("test.pdf",width=11,height=8.5)
 multiplot(p1, p2, p3, p4, cols=2)
-dev.off()
+#dev.off()
 
 # plot 100yr figures
-setwd("/Users/ssaia/Desktop")
-pdf("test2.pdf",width=11,height=8.5)
+#setwd("/Users/ssaia/Desktop")
+#pdf("test2.pdf",width=11,height=8.5)
 multiplot(p5, p6, p7, p8, cols=2)
-dev.off()
+#dev.off()
 
 
 # ---- 4.4. function: multiplot ----
@@ -470,26 +470,131 @@ all_models_zero_counts=bind_rows(baseline_obs_lowflow_calcs_zero_count,
 
 # find days where flow_out equals lowflow
 my_lowflow=0.01 # in cms
-baseline_lowflow_data=baseline_rch_data %>% filter(FLOW_OUTcms<my_lowflow)
 
-# count number of days for each basin (for each year) where flow equals zero
-baseline_lowflow_tally=baseline_lowflow_data %>% group_by(SUB,YR) %>% 
+# baseline padded with zeros
+#baseline_lowflow_data=baseline_rch_data %>% filter(FLOW_OUTcms<my_lowflow)
+#baseline_lowflow_tally=baseline_rch_data %>% group_by(RCH,YR) %>% 
+#  summarise(num_lowflow_days=sum(FLOW_OUTcms<my_lowflow),
+#            avg_FLOW_INcms=mean(FLOW_INcms),
+#            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
+#  arrange(YR,RCH)
+
+# all baseline data
+baseline_lowflow_data=baseline_rch_data %>% filter(FLOW_OUTcms<my_lowflow)
+baseline_lowflow_tally=baseline_lowflow_data %>% group_by(RCH,YR) %>% 
   summarize(num_lowflow_days=n(),
             avg_FLOW_INcms=mean(FLOW_INcms),
             avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
-  arrange(YR,SUB)
+  arrange(YR,RCH)
+
+# look at specific subbasin
+my_subbasin=18
+
+# baseline select
+baseline_lowflow_data_sel=baseline_rch_data %>% filter(RCH==my_subbasin) %>%
+  filter(FLOW_OUTcms<my_lowflow)
+baseline_lowflow_tally_sel=baseline_lowflow_data_sel %>% group_by(RCH,YR) %>% 
+  summarize(num_lowflow_days=n(),
+            avg_FLOW_INcms=mean(FLOW_INcms),
+            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
+  arrange(YR,RCH)
+
+# csiro 4.5 select
+csiro4_5_lowflow_data=csiro4_5_rch_data %>% filter(RCH==my_subbasin) %>%
+  filter(FLOW_OUTcms<my_lowflow)
+csiro4_5_lowflow_tally=csiro4_5_lowflow_data %>% group_by(RCH,YR) %>% 
+  summarize(num_lowflow_days=n(),
+            avg_FLOW_INcms=mean(FLOW_INcms),
+            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
+  arrange(YR,RCH)
+
+# csiro 8.5 select
+csiro8_5_lowflow_data=csiro8_5_rch_data %>% filter(RCH==my_subbasin) %>%
+  filter(FLOW_OUTcms<my_lowflow)
+csiro8_5_lowflow_tally=csiro8_5_lowflow_data %>% group_by(RCH,YR) %>% 
+  summarize(num_lowflow_days=n(),
+            avg_FLOW_INcms=mean(FLOW_INcms),
+            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
+  arrange(YR,RCH)
+
+# hadley 4.5 select
+hadley4_5_lowflow_data=hadley4_5_rch_data %>% filter(RCH==my_subbasin) %>%
+  filter(FLOW_OUTcms<my_lowflow)
+hadley4_5_lowflow_tally=hadley4_5_lowflow_data %>% group_by(RCH,YR) %>% 
+  summarize(num_lowflow_days=n(),
+            avg_FLOW_INcms=mean(FLOW_INcms),
+            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
+  arrange(YR,RCH)
+
+# miroc 8.5 select
+miroc8_5_lowflow_data=miroc8_5_rch_data %>% filter(RCH==my_subbasin) %>%
+  filter(FLOW_OUTcms<my_lowflow)
+miroc8_5_lowflow_tally=miroc8_5_lowflow_data %>% group_by(RCH,YR) %>% 
+  summarize(num_lowflow_days=n(),
+            avg_FLOW_INcms=mean(FLOW_INcms),
+            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
+  arrange(YR,RCH)
 
 
-# ---- 6.2. plot lowflow counts (scatter plot and on map) ----
+# ---- 6.2. plot lowflow counts vs time (scatter plot) ----
 
-# scatter plot vs time
-ggplot(baseline_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(SUB))) +
-  geom_point(size=3) +
+# baseline
+ggplot(baseline_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
+  geom_point(size=2) +
   xlab("year") + 
   ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
+  ylim(0,100) +
   theme_bw()
 
-# spatial distrubution
+# baseline select
+p9=ggplot(baseline_lowflow_tally_sel,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
+  geom_point(size=2) +
+  xlab("year") + 
+  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
+  ylim(0,100) +
+  theme_bw()
+
+# csiro 4.5
+p10=ggplot(csiro4_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
+  geom_point(size=2) +
+  xlab("year") + 
+  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
+  ylim(0,100) +
+  theme_bw()
+
+# csiro 8.5
+p11=ggplot(csiro8_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
+  geom_point(size=2) +
+  xlab("year") + 
+  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
+  ylim(0,100) +
+  theme_bw()
+
+# hadley 4.5
+p12=ggplot(hadley4_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
+  geom_point(size=2) +
+  xlab("year") + 
+  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
+  ylim(0,100) +
+  theme_bw()
+
+# miroc 8.5
+p13=ggplot(miroc8_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
+  geom_point(size=2) +
+  xlab("year") + 
+  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
+  ylim(0,100) +
+  theme_bw()
+
+# plot together
+#setwd("/Users/ssaia/Desktop")
+#pdf("test.pdf",width=11,height=8.5)
+multiplot(p10,p11,p12,p13,cols=2)
+#dev.off()
+
+
+# ---- 6.3 plot lowflow counts in space (map)
+
 # select only necessary down data
 baseline_lowflow_tally_sel=baseline_lowflow_tally %>% select(SUB,num_lowflow_days) %>%
   group_by(SUB) %>% summarize(num_lowflow_days=sum(num_lowflow_days))
