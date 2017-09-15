@@ -22,7 +22,7 @@ obs_flood_freq_calcs_one_rch=function(sel_rch_data,span_days) {
     na.omit() %>% # omit NA rows from movingAve()
     group_by(RCH,YR) %>% 
     summarise(obs_max_flow_cms=max(FLOW_OUTcms_avg)) %>%
-    arrange(RCH,obs_max_flow_cms) %>%
+    arrange(RCH,desc(obs_max_flow_cms)) %>%
     mutate(obs_max_flow_cms_adj=obs_max_flow_cms*1.13) %>% # adjust using standard window shift
     mutate(obs_max_flow_log_cms_adj=log(obs_max_flow_cms_adj))
   
