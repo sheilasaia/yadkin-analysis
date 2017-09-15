@@ -18,10 +18,8 @@ source(paste0(functions_path,"reformat_rch_file.R")) # reformat SWAT .rch file
 source(paste0(functions_path,"logpearson3_factor_calc.R")) # calculate log-Pearson III frequency factors
 source(paste0(functions_path,"remove_outliers.R")) # removes low and high flows deemed as outliers
 source(paste0(functions_path,"obs_lowflow_freq_calcs_one_rch.R")) # select observations for one reach
-#source(paste0(functions_path,"obs_flood_freq_calcs_one_rch.R")) # select observations for one reach
 source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observations for all reaches
 source(paste0(functions_path,"model_lowflow_freq_calcs_one_rch.R")) # determines low-flow model for one reach
-#source(paste0(functions_path,"model_flood_freq_calcs_one_rch.R")) # determines low-flow model for one reach
 source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines low-flow model for all reaches
 source(paste0(functions_path,"movingAve.R")) # from smwrBase with edits (add here for now)
 
