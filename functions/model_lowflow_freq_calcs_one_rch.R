@@ -9,7 +9,7 @@
 model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_table,model_p_list,general_cskew) {
   # obs_lowflow_freq_calcs_df is the output dataframe from obs_lowflow_freq_calcs_one_rch()
   # kn value comes from appendix 4 of the USGS bulletin 17b
-  # model_p_list is a list of desired probabilities of exceedance or non-exceedance (for flooding and low-flow analysis, respectively)
+  # model_p_list is a list of desired probabilities of non-exceedance
   # gernal_cskew is a parameter derived from Plate I in USGS bulletin 17B (pg 184)
   
   # references:
@@ -26,6 +26,7 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
   num_yrs=dim(obs_lowflow_freq_calcs_one_rch_df)[1]
   obs_return_period=obs_lowflow_freq_calcs_one_rch_df$obs_return_period_yr
   obs_flow_unlog=obs_lowflow_freq_calcs_one_rch_df$obs_min_flow_cms_adj
+  flow_option="lowflow"
   
   # save data frame with data > zero
   obs_overzero_data=obs_lowflow_freq_calcs_one_rch_df %>% filter(obs_min_flow_cms_adj>0)
@@ -49,7 +50,7 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
       # low flow analysis without conditional probability adjustment
       
       # remove outliers
-      obs_temp_data=remove_outliers(obs_lowflow_freq_calcs_one_rch_df,kn_table)
+      obs_temp_data=remove_outliers(obs_lowflow_freq_calcs_one_rch_df,kn_table,flow_option)
       
       # log inputs and find mean
       obs_flow_log=obs_temp_data$obs_min_flow_log_cms_adj
@@ -92,7 +93,7 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
       # if there are any flows=0 then do conditional probability adjustment
       
       # remove outliers
-      obs_temp_data=remove_outliers(obs_overzero_data,kn_table)
+      obs_temp_data=remove_outliers(obs_overzero_data,kn_table,flow_option)
       
       # log inputs > zero and calculate mean
       obs_overzero_flow_log=obs_temp_data$obs_min_flow_log_cms_adj

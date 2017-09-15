@@ -25,9 +25,10 @@ model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,kn_table,model_p_l
     
     if (flow_option=="flood") {
       # fill data frame
-      model_df_all_temp=model_flood_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list,general_cskew)
-      
-      } else { # must be "lowflow"
+      model_df_all_temp=model_flood_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list)
+      }
+    else { # must be "lowflow"
+        
       # fill data frame
       model_df_all_temp=model_lowflow_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list,general_cskew)
       }
