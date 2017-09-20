@@ -51,8 +51,8 @@ miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # gis data
 # set directory and load county bounds (.shp file)
-setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/gis_data")
-yadkin_subs_shp=st_read("subs1.shp",quiet=TRUE)
+setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis/")
+yadkin_subs_shp=st_read("yadkin_subclip_nc.shp",quiet=TRUE) #utm17N only NC
 
 
 # ---- 2. reformat data ----
