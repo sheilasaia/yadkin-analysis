@@ -8,9 +8,9 @@ rm(list = ls())
 # load libraries
 library(tidyverse)
 library(sf)
-#library(smwrBase)
+library(smwrBase)
 #devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
-library(ggplot2)
+#library(ggplot2)
 
 # load home-made functions 
 functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
@@ -21,7 +21,6 @@ source(paste0(functions_path,"obs_lowflow_freq_calcs_one_rch.R")) # select obser
 source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observations for all reaches
 source(paste0(functions_path,"model_lowflow_freq_calcs_one_rch.R")) # determines low-flow model for one reach
 source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines low-flow model for all reaches
-source(paste0(functions_path,"movingAve.R")) # from smwrBase with edits (add here for now)
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -51,8 +50,8 @@ miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
 # gis data
 # set directory and load county bounds (.shp file)
-setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis/")
-yadkin_subs_shp=st_read("yadkin_subclip_nc.shp",quiet=TRUE) #utm17N only NC
+setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
+yadkin_subs_shp=st_read("yadkin_subs_albers.shp",quiet=TRUE)
 
 
 # ---- 2. reformat data ----
