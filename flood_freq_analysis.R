@@ -54,20 +54,6 @@ yadkin_subs_shp=st_read("yadkin_subs_albers.shp",quiet=TRUE)
 
 # ---- 2. reformat data ----
 
-# subbasin file (.sub)
-# column names
-sub_col_names=c("FILE","SUB","GIS","MO","DA","YR","AREAkm2","PRECIPmm","SNOMELTmm",
-               "PETmm","ETmm","SWmm","PERCmm","SURQmm","GWQmm","WYLDmm","SYLDt_ha",
-               "ORGNkg_ha","ORGPkg_ha","NSURQkg_ha","SOLPkg_ha","SEDPkg_ha","LATQmm",
-               "LATNO3kg_ha,GWNO3kg_ha","CHOLAmic_l","CBODUmg_l","DOXQmg_l","TNO3kg_ha",
-               "UNKNOWN","SUB_DUPLICATE")
-
-# reassign column names
-colnames(baseline_sub_raw_data)=sub_col_names
-
-# remove unnecessary columns
-baseline_sub_data=baseline_sub_raw_data %>% select(SUB,MO:WYLDmm)
-
 # reach file (.rch) 
 # baseline data
 baseline_rch_data=reformat_rch_file(baseline_rch_raw_data)
