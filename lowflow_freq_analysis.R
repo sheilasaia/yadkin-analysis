@@ -51,7 +51,7 @@ miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 # gis data
 # set directory and load county bounds (.shp file)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
-yadkin_subs_shp=st_read("yadkin_subs_albers.shp",quiet=TRUE)
+yadkin_subs_shp=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
 
 
 # ---- 2. reformat data ----
