@@ -8,6 +8,8 @@ rm(list = ls())
 # load libraries
 library(tidyverse)
 library(smwrBase)
+#devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
+#library(ggplot2)
 library(sf)
 
 # load home-made functions 
@@ -50,7 +52,11 @@ miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 # gis data
 # set directory and load county bounds (.shp file)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
-yadkin_subs_shp=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
+yadkin_subs_shp_albers=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
+yadkin_subs_shp_utm=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
+
+st_geometry(yadkin_subs_shp)
+attributes(yadkin_subs_shp)
 
 # ---- 2. reformat data ----
 
@@ -72,8 +78,11 @@ miroc8_5_rch_data=reformat_rch_file(miroc8_5_rch_raw_data)
 
 # shape file (.shp)
 # add SUB column to .shp file
-yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
+yadkin_subs_shp=yadkin_subs_shp_utm %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
+#st_geometry(yadkin_subs_shp)
+#attributes(yadkin_subs_shp)
+
 
 # join areas for yadkin_net_data (=weights)
 #yadkin_sub_areas=baseline_sub_data %>% select(SUB,AREAkm2) %>% distinct()
@@ -277,6 +286,9 @@ miroc8_5_100yr_flow=flow_diff(100,baseline_model_calcs,miroc8_5_model_calcs)
 
 # ---- 4.3. plot flow differences on map ----
 
+# need to add column with name of dataset so can use facet
+
+
 # csiro 4.5 vs baseline 10 yr flow
 # select only necessary down data
 csiro4_5_10yr_flow_sel=csiro4_5_10yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
@@ -295,8 +307,8 @@ p1=ggplot(yadkin_subs_shp) +
 
 # csiro 4.5 vs baseline 100 yr flow
 # select only necessary down data
-csiro4_5_100yr_flow_sel=csiro4_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, csiro4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+csiro4_5_100yr_flow_sel=csiro4_5_100yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, csiro4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_100yr_flow_sel,by="SUB")
@@ -310,8 +322,8 @@ p5=ggplot(yadkin_subs_shp) +
 
 # csiro 8.5 vs baseline 10 yr flow
 # select only necessary down data
-csiro8_5_10yr_flow_sel=csiro8_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, csiro8_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+csiro8_5_10yr_flow_sel=csiro8_5_10yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, csiro8_5_10yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_10yr_flow_sel,by="SUB")
@@ -325,8 +337,8 @@ p2=ggplot(yadkin_subs_shp) +
 
 # csiro 8.5 vs baseline 100 yr flow
 # select only necessary down data
-csiro8_5_100yr_flow_sel=csiro8_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, csiro8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+csiro8_5_100yr_flow_sel=csiro8_5_100yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, csiro8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_100yr_flow_sel,by="SUB")
@@ -340,8 +352,8 @@ p6=ggplot(yadkin_subs_shp) +
 
 # hadley 4.5 vs baseline 10 yr flow
 # select only necessary down data
-hadley4_5_10yr_flow_sel=hadley4_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, hadley4_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+hadley4_5_10yr_flow_sel=hadley4_5_10yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, hadley4_5_10yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_10yr_flow_sel,by="SUB")
@@ -355,8 +367,8 @@ p3=ggplot(yadkin_subs_shp) +
 
 # hadley 4.5 vs baseline 100 yr flow
 # select only necessary down data
-hadley4_5_100yr_flow_sel=hadley4_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, hadley4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+hadley4_5_100yr_flow_sel=hadley4_5_100yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, hadley4_5_100yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_100yr_flow_sel,by="SUB")
@@ -370,8 +382,8 @@ p7=ggplot(yadkin_subs_shp) +
 
 # miroc 8.5 vs baseline 10 yr flow
 # select only necessary down data
-miroc8_5_10yr_flow_sel=miroc8_5_10yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, miroc8_5_10yr_flow_perc=proj_minus_base_flow_percchange)
+miroc8_5_10yr_flow_sel=miroc8_5_10yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, miroc8_5_10yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_10yr_flow_sel,by="SUB")
@@ -385,8 +397,8 @@ p4=ggplot(yadkin_subs_shp) +
 
 # miroc 8.5 vs baseline 100 yr flow
 # select only necessary down data
-miroc8_5_100yr_flow_sel=miroc8_5_100yr_flow %>% select(SUB,proj_minus_base_flow_percchange) %>%
-  transmute(SUB=SUB, miroc8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
+miroc8_5_100yr_flow_sel=miroc8_5_100yr_flow %>% select(RCH,proj_minus_base_flow_percchange) %>%
+  transmute(SUB=RCH, miroc8_5_100yr_flow_perc=proj_minus_base_flow_percchange)
 
 # add to shp file
 yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_100yr_flow_sel,by="SUB")
@@ -401,7 +413,12 @@ p8=ggplot(yadkin_subs_shp) +
 # plot 10yr figures
 setwd("/Users/ssaia/Desktop")
 pdf("test.pdf",width=11,height=8.5)
-multiplot(p1, p2, p3, p4, cols=2)
+multiplot(p1, p2, p3, p4, cols=2) # this is taking forever to load...
+#library(gridExtra)
+#grid.arrange(p1,p2,nrow=2)
+#library(tmap)
+#library(ggpubr)
+#ggarrange(p1,p2,p3,p4,ncol=2,nrow=2)
 dev.off()
 
 # plot 100yr figures

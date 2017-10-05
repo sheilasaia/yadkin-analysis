@@ -8,9 +8,10 @@ rm(list = ls())
 # load libraries
 library(tidyverse)
 library(sf)
-library(smwrBase)
 #devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
 #library(ggplot2)
+library(smwrBase)
+
 
 # load home-made functions 
 functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
