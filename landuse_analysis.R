@@ -8,8 +8,10 @@ rm(list = ls())
 # load libraries
 library(tidyverse)
 library(sf)
-library(ggpubr)
-library(gridExtra)
+#library(ggpubr)
+#library(gridExtra)
+#library(tmap)
+#vignette("tmap-nutshell")
 
 # set directory and load watershed wide percent use
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers")
@@ -76,7 +78,15 @@ hadley4_5_lu_temp=read_csv("luD2060_allsubs.csv",col_names=TRUE) %>%
 # gis data
 # set directory and load county bounds (.shp file)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
-yadkin_subs_shp=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
+yadkin_subs_shp_albers=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
+yadkin_subs_shp=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
+
+# just looking at gis data
+yadkin_subs_shp_albers_geom=st_geometry(yadkin_subs_shp_albers)
+attributes(yadkin_subs_shp_albers_geom) # there is no epsg code for this projection so maybe this is why it's plotting so slow?
+yadkin_subs_shp_geom=st_geometry(yadkin_subs_shp)
+attributes(yadkin_subs_shp_geom) # this has an epsg code!
+
 
 # ---- 2. reformatting data ----
 
@@ -244,21 +254,29 @@ lu_diff=function(input_sublu_data) {
 
 # ----- 5.2 calculate % diff betw. baseline and projection landuses ----
 
+# calculate % difference between 1992 baseline and 2060 projections
 all_models_lu_diff=lu_diff(sublu_reclass_data)
 
 # forested
+# select data to add to shp file
 csiro4_5_forest_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="forested") %>% filter(dataset=="csiro4_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, csiro4_5_forest_perc=perc_diff)
+  select(SUB,dataset,perc_diff) 
 csiro8_5_forest_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="forested") %>% filter(dataset=="csiro8_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, csiro8_5_forest_perc=perc_diff)
+  select(SUB,dataset,perc_diff) 
 miroc8_5_forest_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="forested") %>% filter(dataset=="miroc8_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, miroc8_5_forest_perc=perc_diff)
+  select(SUB,dataset,perc_diff) 
 hadley4_5_forest_lu_diff=all_models_lu_diff %>% 
   filter(DESCRIPTION=="forested") %>% filter(dataset=="hadley4_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, hadley4_5_forest_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
+
+# gather projections
+forest_projections=bind_rows(csiro4_5_forest_lu_diff,
+                             csiro8_5_forest_lu_diff,
+                             miroc8_5_forest_lu_diff,
+                             hadley4_5_forest_lu_diff)
 
 # ag
 csiro4_5_ag_lu_diff=all_models_lu_diff %>%
@@ -294,10 +312,8 @@ hadley4_5_dev_lu_diff=all_models_lu_diff %>%
 # add to shp file
 
 # forest
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_forest_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_forest_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_forest_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_forest_lu_diff,by="SUB")
+yadkin_subs_shp_forest=left_join(yadkin_subs_shp,forest_projections,by="SUB")
+#glimpse(yadkin_subs_shp_forest)
 
 # ag
 yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_ag_lu_diff,by="SUB")
@@ -310,27 +326,15 @@ yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_dev_lu_diff,by="SUB")
 yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_dev_lu_diff,by="SUB")
 yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_dev_lu_diff,by="SUB")
 yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_dev_lu_diff,by="SUB")
-#glimpse(yadkin_subs_shp)
 
 
-
-# forest plots
-p1=ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=csiro4_5_forest_perc),show.legend=FALSE) +
-  scale_fill_gradient2(name="% Change Forest",limit=c(-65,0)) +
+# forest plot
+ggplot(yadkin_subs_shp_forest,aes(fill=perc_diff)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_forest is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change Forest") +
   theme_bw()
-
-p2=ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=csiro8_5_forest_perc)) +
-  scale_fill_gradient2(name="% Change Forest",limit=c(-65,0))
-
-p3=ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=miroc8_5_forest_perc)) +
-  scale_fill_gradient2(name="% Change Forest",limit=c(-65,0))
-
-p4=ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=hadley4_5_forest_perc)) +
-  scale_fill_gradient2(name="% Change Forest",limit=c(-65,0))
 
 
 # ag plots
@@ -352,9 +356,7 @@ blah=sublu_reclass_data %>% filter(DESCRIPTION=="developed") %>% filter(dataset=
 # plot forest figures
 setwd("/Users/ssaia/Desktop")
 pdf("forest_lu_diff.pdf",width=11,height=8.5)
-ggarrange(p1, p2, p3, p4, ncols=2, nrow=2)
 multiplot(p1, p2, p3, p4, cols=2)
-
 dev.off()
 
 # plot ag figures
