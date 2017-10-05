@@ -279,139 +279,104 @@ forest_projections=bind_rows(csiro4_5_forest_lu_diff,
                              hadley4_5_forest_lu_diff)
 
 # ag
+# select data to add to shp file
 csiro4_5_ag_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="agriculture") %>% filter(dataset=="csiro4_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, csiro4_5_ag_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
 csiro8_5_ag_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="agriculture") %>% filter(dataset=="csiro8_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, csiro8_5_ag_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
 miroc8_5_ag_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="agriculture") %>% filter(dataset=="miroc8_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, miroc8_5_ag_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
 hadley4_5_ag_lu_diff=all_models_lu_diff %>% 
   filter(DESCRIPTION=="agriculture") %>% filter(dataset=="hadley4_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, hadley4_5_ag_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
+
+# gather projections
+ag_projections=bind_rows(csiro4_5_ag_lu_diff,
+                         csiro8_5_ag_lu_diff,
+                         miroc8_5_ag_lu_diff,
+                         hadley4_5_ag_lu_diff)
 
 # developed
 csiro4_5_dev_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="developed") %>% filter(dataset=="csiro4_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, csiro4_5_dev_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
 csiro8_5_dev_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="developed") %>% filter(dataset=="csiro8_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, csiro8_5_dev_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
 miroc8_5_dev_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="developed") %>% filter(dataset=="miroc8_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, miroc8_5_dev_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
 hadley4_5_dev_lu_diff=all_models_lu_diff %>% 
   filter(DESCRIPTION=="developed") %>% filter(dataset=="hadley4_5") %>% 
-  select(SUB,perc_diff) %>% transmute(SUB=SUB, hadley4_5_dev_perc=perc_diff)
+  select(SUB,dataset,perc_diff)
+
+# gather projections
+dev_projections=bind_rows(csiro4_5_dev_lu_diff,
+                          csiro8_5_dev_lu_diff,
+                          miroc8_5_dev_lu_diff,
+                          hadley4_5_dev_lu_diff)
 
 
 # ---- 5.3 plot landuse differences on map ----
 
 # add to shp file
-
 # forest
 yadkin_subs_shp_forest=left_join(yadkin_subs_shp,forest_projections,by="SUB")
 #glimpse(yadkin_subs_shp_forest)
 
 # ag
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_ag_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_ag_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_ag_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_ag_lu_diff,by="SUB")
+yadkin_subs_shp_ag=left_join(yadkin_subs_shp,ag_projections,by="SUB")
+#glimpse(yadkin_subs_shp_ag)
 
 # developed
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro4_5_dev_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,csiro8_5_dev_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,miroc8_5_dev_lu_diff,by="SUB")
-yadkin_subs_shp=left_join(yadkin_subs_shp,hadley4_5_dev_lu_diff,by="SUB")
+yadkin_subs_shp_dev=left_join(yadkin_subs_shp,dev_projections,by="SUB")
+#glimpse(yadkin_subs_shp_dev)
 
 
-# forest plot
+# plot and save figures
+# forest
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lu_diff_forest.pdf",width=11,height=8.5)
 ggplot(yadkin_subs_shp_forest,aes(fill=perc_diff)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_forest is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change Forest") +
   theme_bw()
-
-
-# ag plots
-p5=ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=hadley4_5_ag_perc)) +
-  scale_fill_gradient2(name="% Change Ag")
-
-
-# developed plots
-hist(yadkin_subs_shp$hadley4_5_devel_perc) # just to see
-p9=ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=hadley4_5_devel_perc)) +
-  scale_fill_gradient2(name="% Change Developed",limit=c(0,2000),na.value="darkblue")
-
-# looks weird for developed...
-blah=sublu_reclass_data %>% filter(DESCRIPTION=="developed") %>% filter(dataset=="hadley4_5" | dataset=="baseline")
-
-
-# plot forest figures
-setwd("/Users/ssaia/Desktop")
-pdf("forest_lu_diff.pdf",width=11,height=8.5)
-multiplot(p1, p2, p3, p4, cols=2)
 dev.off()
 
-# plot ag figures
+# ag
 setwd("/Users/ssaia/Desktop")
-pdf("ag_lu_diff.pdf",width=11,height=8.5)
-
-multiplot(p5, p6, p7, p8, cols=2)
+cairo_pdf("lu_diff_ag.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_ag,aes(fill=perc_diff)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_ag is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change Ag") +
+  theme_bw()
 dev.off()
 
-# plot developed figures
+# developed
+# replace high values with NA for plotting
+hist(yadkin_subs_shp_dev$perc_diff)
+cutoff_dev=2500
+yadkin_subs_shp_dev=yadkin_subs_shp_dev %>% 
+  mutate(perc_diff_na=replace(perc_diff,perc_diff>=cutoff_dev,NA))
+hist(yadkin_subs_shp_dev$perc_diff_na)
+#glimpse(yadkin_subs_shp_dev)
+
+# plot
 setwd("/Users/ssaia/Desktop")
-pdf("developed_lu_diff.pdf",width=11,height=8.5)
-multiplot(p9, p10, p11, p12, cols=2)
+cairo_pdf("lu_diff_dev.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_dev,aes(fill=perc_diff_na)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  #lims(0,cutoff_dev+100)
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_dev is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change Developed",na.value="darkblue") +
+  theme_bw()
 dev.off()
-
-
-
-# ---- x. function: multiplot ----
-# from: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
-
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-  library(grid)
-  
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-  
-  numPlots = length(plots)
-  
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                     ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-  
-  if (numPlots==1) {
-    print(plots[[1]])
-    
-  } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-    
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-      
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}
-
-
 
