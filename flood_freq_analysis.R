@@ -6,8 +6,8 @@
 rm(list = ls())
 
 # load libraries
-library(tidyverse)
 library(smwrBase)
+library(tidyverse)
 #devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
 #library(ggplot2)
 library(sf)
@@ -19,8 +19,8 @@ source(paste0(functions_path,"logpearson3_factor_calc.R")) # calculate log-Pears
 source(paste0(functions_path,"remove_outliers.R")) # removes low and high flows deemed as outliers
 source(paste0(functions_path,"obs_flood_freq_calcs_one_rch.R")) # select observations for one reach
 source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observations for all reaches
-source(paste0(functions_path,"model_flood_freq_calcs_one_rch.R")) # determines low-flow model for one reach
-source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines low-flow model for all reaches
+source(paste0(functions_path,"model_flood_freq_calcs_one_rch.R")) # determines flood flow model for one reach
+source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines flow model for all reaches
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -33,30 +33,36 @@ setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results
 baseline_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
 #yadkin_net_raw_data=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
-# CSIRO RCP4.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/C_CSIRO45")
-csiro4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
+# miroc rcp 8.5 data
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/A_MIROC8.5")
+miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
-# CSIRO RCP8.5 data
+# csiro rcp 8.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/B_CSIRO85")
 csiro8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
-# Hadley RCP4.5 data
+# csiro rcp 4.5 data
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/C_CSIRO45")
+csiro4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
+
+# hadley rcp 4.5 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/D_Hadley45")
 hadley4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
-# MIROC RCP8.5 data
-setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/A_MIROC8.5")
-miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
+
 
 # gis data
 # set directory and load county bounds (.shp file)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
 yadkin_subs_shp_albers=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
-yadkin_subs_shp_utm=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
+yadkin_subs_shp=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
 
-st_geometry(yadkin_subs_shp)
-attributes(yadkin_subs_shp)
+# looking at gis data
+yadkin_subs_shp_albers_geom=st_geometry(yadkin_subs_shp_albers)
+attributes(yadkin_subs_shp_albers_geom) # there is no epsg code for this projection so maybe this is why it's plotting so slow?
+yadkin_subs_shp_geom=st_geometry(yadkin_subs_shp)
+attributes(yadkin_subs_shp_geom) # this has an epsg code!
+
 
 # ---- 2. reformat data ----
 
@@ -80,9 +86,6 @@ miroc8_5_rch_data=reformat_rch_file(miroc8_5_rch_raw_data)
 # add SUB column to .shp file
 yadkin_subs_shp=yadkin_subs_shp_utm %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
-#st_geometry(yadkin_subs_shp)
-#attributes(yadkin_subs_shp)
-
 
 # join areas for yadkin_net_data (=weights)
 #yadkin_sub_areas=baseline_sub_data %>% select(SUB,AREAkm2) %>% distinct()
