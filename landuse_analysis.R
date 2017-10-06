@@ -207,7 +207,7 @@ ggplot(sublu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
 
 
-# ----- 5.1 function: find % diff betwn. baseline and projection landuses ----
+# ----- 5.1 function: find % change in landuse betwn. baseline and projection ----
 
 lu_diff=function(input_sublu_data) {
   
@@ -252,7 +252,7 @@ lu_diff=function(input_sublu_data) {
 }
 
 
-# ----- 5.2 calculate % diff betw. baseline and projection landuses ----
+# ----- 5.2 calculate % change in landuse and reformat data ----
 
 # calculate % difference between 1992 baseline and 2060 projections
 all_models_lu_diff=lu_diff(sublu_reclass_data)
@@ -278,6 +278,11 @@ forest_projections=bind_rows(csiro4_5_forest_lu_diff,
                              miroc8_5_forest_lu_diff,
                              hadley4_5_forest_lu_diff)
 
+# add to shp file
+yadkin_subs_shp_forest=left_join(yadkin_subs_shp,forest_projections,by="SUB")
+#glimpse(yadkin_subs_shp_forest)
+
+
 # ag
 # select data to add to shp file
 csiro4_5_ag_lu_diff=all_models_lu_diff %>%
@@ -299,6 +304,11 @@ ag_projections=bind_rows(csiro4_5_ag_lu_diff,
                          miroc8_5_ag_lu_diff,
                          hadley4_5_ag_lu_diff)
 
+# add to shp file
+yadkin_subs_shp_ag=left_join(yadkin_subs_shp,ag_projections,by="SUB")
+#glimpse(yadkin_subs_shp_ag)
+
+
 # developed
 csiro4_5_dev_lu_diff=all_models_lu_diff %>%
   filter(DESCRIPTION=="developed") %>% filter(dataset=="csiro4_5") %>% 
@@ -319,22 +329,12 @@ dev_projections=bind_rows(csiro4_5_dev_lu_diff,
                           miroc8_5_dev_lu_diff,
                           hadley4_5_dev_lu_diff)
 
-
-# ---- 5.3 plot landuse differences on map ----
-
 # add to shp file
-# forest
-yadkin_subs_shp_forest=left_join(yadkin_subs_shp,forest_projections,by="SUB")
-#glimpse(yadkin_subs_shp_forest)
-
-# ag
-yadkin_subs_shp_ag=left_join(yadkin_subs_shp,ag_projections,by="SUB")
-#glimpse(yadkin_subs_shp_ag)
-
-# developed
 yadkin_subs_shp_dev=left_join(yadkin_subs_shp,dev_projections,by="SUB")
 #glimpse(yadkin_subs_shp_dev)
 
+
+# ---- 5.3 plot landuse differences on map ----
 
 # plot and save figures
 # forest
