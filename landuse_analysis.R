@@ -1,6 +1,6 @@
 # yadkin land use analysis
 
-# ---- 1. set up -----
+# ---- 1 set up -----
 
 # clear ws
 rm(list = ls())
@@ -88,7 +88,7 @@ yadkin_subs_shp_geom=st_geometry(yadkin_subs_shp)
 attributes(yadkin_subs_shp_geom) # this has an epsg code!
 
 
-# ---- 2. reformatting data ----
+# ---- 2 reformat data ----
 
 # combine all watershed wide data
 yadlu_data=bind_rows(baseline_lu,miroc8_5_lu,csiro8_5_lu,csiro4_5_lu,hadley4_5_lu)
@@ -138,7 +138,7 @@ yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
 
-# ---- 3.1 plotting watershed wide data (all categories) ----
+# ---- 3.1 plot watershed wide data (all categories) ----
 
 ggplot(yadlu_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   geom_col() +
@@ -147,7 +147,7 @@ ggplot(yadlu_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   theme_bw()
 
 
-# ---- 3.2 plotting subbasin data (all categories) ----
+# ---- 3.2 plot subbasin data (all categories) ----
 
 ggplot(sublu_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   geom_col() +
@@ -185,7 +185,7 @@ sublu_reclass_data=sublu_reclass_data %>% select(SUB,AREA_PERC,DESCRIPTION,datas
   group_by(SUB,DESCRIPTION,dataset,sub_id) %>%
   summarize(AREA_PERC=sum(AREA_PERC))
 
-# ---- 4.2 plotting watershed wide data (reclassified categories) ----
+# ---- 4.2 plot watershed wide data (reclassified categories) ----
 
 ggplot(yadlu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   geom_col() +
@@ -195,7 +195,7 @@ ggplot(yadlu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   theme_bw()
 
 
-# ---- 4.3 plotting subbasin data (reclassified categories) ----
+# ---- 4.3 plot subbasin data (reclassified categories) ----
 
 ggplot(sublu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   geom_col() +
