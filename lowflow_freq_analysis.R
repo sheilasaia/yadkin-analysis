@@ -233,7 +233,6 @@ yadkin_subs_shp_lowflow_100yr=left_join(yadkin_subs_shp,lowflow_100yr_projection
 # ---- 4.3 plot % change in lowflows on map ----
 
 # 10 yr
-# forest
 #setwd("/Users/ssaia/Desktop")
 #cairo_pdf("lowflow_10yr_change.pdf",width=11,height=8.5)
 ggplot(yadkin_subs_shp_lowflow_10yr,aes(fill=perc_change)) +
@@ -250,7 +249,7 @@ ggplot(yadkin_subs_shp_lowflow_10yr,aes(fill=perc_change)) +
 ggplot(yadkin_subs_shp_lowflow_100yr,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_10yr is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_100yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change 100yr Lowflow",na.value="grey75") +
   theme_bw()
 #dev.off()
@@ -260,63 +259,63 @@ ggplot(yadkin_subs_shp_lowflow_100yr,aes(fill=perc_change)) +
 
 # baseline
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
-baseline_obs_lowflow_calcs_zero_count=baseline_obs_lowflow_calcs %>%
+baseline_obs_zero_counts=baseline_obs_lowflow_calcs %>%
   group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
   mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
          dataset="baseline")
 
-# don't pad with zeros for other subbasins
-#baseline_obs_lowflow_calcs_zero_count=baseline_obs_lowflow_calcs %>% 
-#  filter(obs_min_flow_cms_adj==0) %>%
-#  group_by(RCH) %>% summarize(cum_num_zero_entries=n()) %>%
-#  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
-#         dataset="baseline")
-
 # miroc 8.5
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR))
-miroc8_5_obs_lowflow_calcs_zero_count=miroc8_5_obs_lowflow_calcs %>% 
+miroc8_5_obs_zero_counts=miroc8_5_obs_lowflow_calcs %>% 
   group_by(RCH) %>% summarize(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
   mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
          dataset="miroc_8_5")
 
 # csiro 8.5
 csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
-csiro8_5_obs_lowflow_calcs_zero_count=csiro8_5_obs_lowflow_calcs %>%
+csiro8_5_obs_zero_counts=csiro8_5_obs_lowflow_calcs %>%
   group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
   mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
          dataset="csiro_8_5")
 
 # csiro 4.5
 csiro4_5_num_yrs=length(unique(csiro4_5_rch_data$YR))
-csiro4_5_obs_lowflow_calcs_zero_count=csiro4_5_obs_lowflow_calcs %>%
+csiro4_5_obs_zero_counts=csiro4_5_obs_lowflow_calcs %>%
   group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
   mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
          dataset="csiro_4_5")
 
 # hadley 4.5
 hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
-hadley4_5_obs_lowflow_calcs_zero_count=hadley4_5_obs_lowflow_calcs %>%
+hadley4_5_obs_zero_counts=hadley4_5_obs_lowflow_calcs %>%
   group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
   mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
          dataset="hadley_4_5")
 
 # bind all together
-all_models_zero_counts=bind_rows(baseline_obs_lowflow_calcs_zero_count,
-                                 miroc8_5_obs_lowflow_calcs_zero_count,
-                                 csiro8_5_obs_lowflow_calcs_zero_count,
-                                 csiro4_5_obs_lowflow_calcs_zero_count,
-                                 hadley4_5_obs_lowflow_calcs_zero_count)
+all_models_zero_counts=bind_rows(baseline_obs_zero_counts,
+                                 miroc8_5_obs_zero_counts,
+                                 csiro8_5_obs_zero_counts,
+                                 csiro4_5_obs_zero_counts,
+                                 hadley4_5_obs_zero_counts)
 
 
-# ---- 5.2 export results ----
+# ---- 5.2 plot number of low flow frequency obs = zero ----
+
+ggplot(all_models_zero_counts,aes(x=dataset,y=cum_num_zero_entries,fill=dataset)) +
+  geom_col() +
+  facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("") +
+  ylab("Cumulative Number of Zero Flow Events") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
+
+
+# ---- 5.3 export results ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 #write_csv(all_models_zero_counts,"zero_flow_counts.csv")
-
-
-# ---- 5.3 calculate percent change in zero flow count ----
-
 
 
 # ---- 6.1 calculate lowflow counts below threshold ----
@@ -324,17 +323,22 @@ all_models_zero_counts=bind_rows(baseline_obs_lowflow_calcs_zero_count,
 # find days where flow_out equals lowflow
 my_threshold=0.01 # in cms
 
-# baseline padded with zeros
-#baseline_lowflow_data=baseline_rch_data %>% filter(FLOW_OUTcms<my_threshold)
-#baseline_lowflow_tally=baseline_rch_data %>% group_by(RCH,YR) %>% 
-#  summarise(num_lowflow_days=sum(FLOW_OUTcms<my_threshold),
-#            avg_FLOW_INcms=mean(FLOW_INcms),
-#            avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
-#  arrange(YR,RCH)
+# create data frame to pad lowflow data
+num_subs=28
+num_baseline_yrs=27
+my_yr_list=as.numeric()
+str=1
+for (i in 1982:2008) {
+  my_yr_list[str:(str+num_subs-1)]=rep(i,num_subs)
+  str=str+num_subs
+}
+baseline_pad_ids=data.frame(RCH=rep(seq(1:num_subs),num_baseline_yrs),
+                             YR=my_yr_list) %>% 
+  mutate(id=paste0(RCH,"_",YR)) %>% select(id)
 
-# all baseline data
+# baseline data
 baseline_lowflow_data=baseline_rch_data %>% filter(FLOW_OUTcms<my_threshold)
-baseline_lowflow_tally=baseline_lowflow_data %>% group_by(RCH,YR) %>% 
+baseline_lowflow_thresh_counts=baseline_lowflow_data %>% group_by(RCH,YR) %>% 
   summarize(num_lowflow_days=n(),
             avg_FLOW_INcms=mean(FLOW_INcms),
             avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
@@ -342,120 +346,132 @@ baseline_lowflow_tally=baseline_lowflow_data %>% group_by(RCH,YR) %>%
 
 # miroc 8.5
 miroc8_5_lowflow_data=miroc8_5_rch_data %>% filter(FLOW_OUTcms<my_threshold)
-miroc8_5_lowflow_tally=miroc8_5_lowflow_data %>% group_by(RCH,YR) %>% 
+miroc8_5_lowflow_thresh_counts=miroc8_5_lowflow_data %>% group_by(RCH,YR) %>% 
   summarize(num_lowflow_days=n(),
             avg_FLOW_INcms=mean(FLOW_INcms),
             avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
-  arrange(YR,RCH) %>% mutate(dataset="miroc8_5")
+  arrange(YR,RCH) %>% mutate(dataset="miroc_8_5")
 
 # csiro 8.5
 csiro8_5_lowflow_data=csiro8_5_rch_data %>% filter(FLOW_OUTcms<my_threshold)
-csiro8_5_lowflow_tally=csiro8_5_lowflow_data %>% group_by(RCH,YR) %>% 
+csiro8_5_lowflow_thresh_counts=csiro8_5_lowflow_data %>% group_by(RCH,YR) %>% 
   summarize(num_lowflow_days=n(),
             avg_FLOW_INcms=mean(FLOW_INcms),
             avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
-  arrange(YR,RCH) %>% mutate(dataset="csiro8_5")
+  arrange(YR,RCH) %>% mutate(dataset="csiro_8_5")
 
 # csiro 4.5
 csiro4_5_lowflow_data=csiro4_5_rch_data %>% filter(FLOW_OUTcms<my_threshold)
-csiro4_5_lowflow_tally=csiro4_5_lowflow_data %>% group_by(RCH,YR) %>% 
+csiro4_5_lowflow_thresh_counts=csiro4_5_lowflow_data %>% group_by(RCH,YR) %>% 
   summarize(num_lowflow_days=n(),
             avg_FLOW_INcms=mean(FLOW_INcms),
             avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
-  arrange(YR,RCH) %>% mutate(dataset="csiro4_5")
+  arrange(YR,RCH) %>% mutate(dataset="csiro_4_5")
 
 # hadley 4.5 select
 hadley4_5_lowflow_data=hadley4_5_rch_data %>% filter(FLOW_OUTcms<my_threshold)
-hadley4_5_lowflow_tally=hadley4_5_lowflow_data %>% group_by(RCH,YR) %>% 
+hadley4_5_lowflow_thresh_counts=hadley4_5_lowflow_data %>% group_by(RCH,YR) %>% 
   summarize(num_lowflow_days=n(),
             avg_FLOW_INcms=mean(FLOW_INcms),
             avg_FLOW_OUTcms=mean(FLOW_OUTcms)) %>%
-  arrange(YR,RCH) %>% mutate(dataset="hadley4_5")
+  arrange(YR,RCH) %>% mutate(dataset="hadley_4_5")
 
 # combine all
+all_models_lowflow_thresh_counts=bind_rows(baseline_lowflow_thresh_counts,
+                                       miroc8_5_lowflow_thresh_counts,
+                                       csiro8_5_lowflow_thresh_counts,
+                                       csiro4_5_lowflow_thresh_counts,
+                                       hadley4_5_lowflow_thresh_counts)
 
 
-# look at specific subbasin
-my_subbasin=8
-
-# baseline
-baseline_lowflow_data_sel=baseline_rch_data %>% filter(RCH==my_subbasin)
-
-
-
-
-
-
-
-# ---- 6.2 plot lowflow counts vs time (scatter plot) ----
+# ---- 6.2 plot lowflow counts vs time (bar plot) ----
 
 # baseline
-ggplot(baseline_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
-  geom_point(size=2) +
-  xlab("year") + 
-  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
-  ylim(0,100) +
-  theme_bw()
+ggplot(baseline_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
+         geom_col() +
+         facet_wrap(~RCH) +
+         xlab("Year") +
+         ylab("Baseline Number of Low Flow Events") +
+         theme_bw()
 
-# baseline select
-p9=ggplot(baseline_lowflow_tally_sel,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
-  geom_point(size=2) +
-  xlab("year") + 
-  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
-  ylim(0,100) +
-  theme_bw()
 
-# csiro 4.5
-p10=ggplot(csiro4_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
-  geom_point(size=2) +
-  xlab("year") + 
-  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
-  ylim(0,100) +
-  theme_bw()
+# miroc 8.5
+ggplot(miroc8_5_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
+  geom_col() +
+  facet_wrap(~RCH) +
+  xlab("Year") +
+  ylab("MIROC 8.5 Number of Low Flow Events") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
 
 # csiro 8.5
-p11=ggplot(csiro8_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
-  geom_point(size=2) +
-  xlab("year") + 
-  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
-  ylim(0,100) +
+ggplot(csiro8_5_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
+  geom_col() +
+  facet_wrap(~RCH) +
+  xlab("Year") +
+  ylab("CSIRO 8.5 Number of Low Flow Events") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
+
+# csiro 4.5
+ggplot(csiro4_5_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
+  geom_col() +
+  facet_wrap(~RCH) +
+  xlab("Year") +
+  ylab("CSIRO 4.5 Number of Low Flow Events") +
   theme_bw()
 
 # hadley 4.5
-p12=ggplot(hadley4_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
-  geom_point(size=2) +
-  xlab("year") + 
-  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
-  ylim(0,100) +
-  theme_bw()
-
-# miroc 8.5
-p13=ggplot(miroc8_5_lowflow_tally,aes(x=YR,y=num_lowflow_days,color=as.factor(RCH))) +
-  geom_point(size=2) +
-  xlab("year") + 
-  ylab(paste("num days w/ outflow <", my_lowflow,"cms")) +
-  ylim(0,100) +
-  theme_bw()
-
-# plot together
-#setwd("/Users/ssaia/Desktop")
-#pdf("test.pdf",width=11,height=8.5)
-multiplot(p10,p11,p12,p13,cols=2)
-#dev.off()
+ggplot(hadley4_5_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
+  geom_col() +
+  facet_wrap(~RCH) +
+  xlab("Year") +
+  ylab("Hadley 4.5 Number of Low Flow Events") +
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
 
 
 # ---- 6.3 plot lowflow counts in space (map) ----
 
 # select only necessary down data
-baseline_lowflow_tally_sel=baseline_lowflow_tally %>% select(SUB,num_lowflow_days) %>%
-  group_by(SUB) %>% summarize(num_lowflow_days=sum(num_lowflow_days))
+all_models_lowflow_thresh_counts_sum=all_models_lowflow_thresh_counts %>% 
+  select(RCH,YR,num_lowflow_days,dataset) %>%
+  group_by(RCH,dataset) %>% 
+  summarize(num_lowflow_days_per_yr=sum(num_lowflow_days)/20) %>%
+  select(SUB=RCH,num_lowflow_days_per_yr=num_lowflow_days_per_yr,dataset=dataset)
+
+# select only baseline
+baseline_lowflow_thresh_counts_sum=all_models_lowflow_thresh_counts_sum %>%
+  filter(dataset=="baseline")
+
+# select only projections
+all_projs_lowflow_thresh_counts_sum=all_models_lowflow_thresh_counts_sum %>% 
+  filter(dataset!="baseline")
 
 # add to shp file
-yadkin_subs_shp=left_join(yadkin_subs_shp,baseline_lowflow_tally_sel,by="SUB")
-#glimpse(yadkin_subs_shp)
+yadkin_subs_shp_lowflow_base=left_join(yadkin_subs_shp,baseline_lowflow_thresh_counts_sum,by="SUB")
+#glimpse(yadkin_subs_shp_lowflow_base)
+yadkin_subs_shp_lowflow_proj=left_join(yadkin_subs_shp,all_projs_lowflow_thresh_counts_sum,by="SUB")
+#glimpse(yadkin_subs_shp_lowflow_proj)
 
-# plot
-ggplot(yadkin_subs_shp) +
-  geom_sf(aes(fill=num_lowflow_days)) +
-  scale_fill_gradient(name=paste("total # days <",my_lowflow,"cms \n from 1982-2008"),limits=c(100,200),
-                      low="white",high="red",na.value="grey75")
+# plot baseline
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("baseline_lowflow_count.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_lowflow_base,aes(fill=num_lowflow_days_per_yr)) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_base is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("Avg # Lowflow Days/Yr",na.value="grey75",limits=c(0,10)) +
+  theme_bw()
+dev.off()
+
+# plot projections (this isn't working!)
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("projections_lowflow_count.pdf",width=11,height=8.5)
+#ggplot(yadkin_subs_shp_lowflow_proj,aes(fill=num_lowflow_days_per_yr)) +
+#  facet_wrap(~dataset) +
+#  geom_sf() +
+#  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_projs is base utm 17N so convert to Albers for CONUS
+#  scale_fill_gradient2("Avg # Lowflow Days/Yr",na.value="grey75") +
+#  theme_bw()
+#dev.off()
+
