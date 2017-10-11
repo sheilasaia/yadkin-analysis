@@ -32,12 +32,12 @@ sovi_num_cols=length(sovi_header)
 total_num_lines=length(sovi_txt)
 
 # initialize lists
-temp_FIP_Code=as.numeric()
-temp_State_FIP=as.numeric()
-temp_County_FIP=as.numeric()
-temp_County_Name=as.character()
-temp_CNTY_SoVI=as.numeric()
-temp_Percentile=as.numeric()
+temp_fip_code=as.numeric()
+temp_state_fip=as.numeric()
+temp_county_fip=as.numeric()
+temp_county_name=as.character()
+temp_county_sovi=as.numeric()
+temp_percentile=as.numeric()
 
 for (i in 2:total_num_lines) {
   
@@ -47,55 +47,55 @@ for (i in 2:total_num_lines) {
   # fix temp_row_str if county name gets broken in two
   if (length(temp_row_str)==(sovi_num_cols+1)) { # count name with two words
     if (grep(".",paste0(temp_row_str[4],"_",temp_row_str[5]))==1) { # if there's a period in the name
-      temp_county_name=gsub("._","_",paste0(temp_row_str[4],"_",temp_row_str[5]))
-      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],temp_county_name,temp_row_str[6],temp_row_str[7])
+      county_name_reformat=gsub("._","_",paste0(temp_row_str[4],"_",temp_row_str[5]))
+      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],county_name_reformat,temp_row_str[6],temp_row_str[7])
     }
     else {
-      temp_county_name=gsub(" ","_",paste(temp_row_str[4],temp_row_str[5]))
-      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],temp_county_name,temp_row_str[6],temp_row_str[7])
+      county_name_reformat=gsub(" ","_",paste(temp_row_str[4],temp_row_str[5]))
+      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],county_name_reformat,temp_row_str[6],temp_row_str[7])
     }
   }
   else if (length(temp_row_str)==(sovi_num_cols+2)) { # county name with three words
     if (grep(".",paste0(temp_row_str[4],"_",temp_row_str[5],"_",temp_row_str[6]))==1) { # if there's a period in the name
-      temp_county_name=gsub("._","_",paste0(temp_row_str[4],"_",temp_row_str[5],"_",temp_row_str[6]))
-      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],temp_county_name,temp_row_str[7],temp_row_str[8])
+      county_name_reformat=gsub("._","_",paste0(temp_row_str[4],"_",temp_row_str[5],"_",temp_row_str[6]))
+      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],county_name_reformat,temp_row_str[7],temp_row_str[8])
     }
     else {
-      temp_county_name=gsub(" ","_",paste(temp_row_str[4],temp_row_str[5],"_",temp_row_str[6]))
-      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],temp_county_name,temp_row_str[7],temp_row_str[8])
+      county_name_reformat=gsub(" ","_",paste(temp_row_str[4],temp_row_str[5],"_",temp_row_str[6]))
+      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],county_name_reformat,temp_row_str[7],temp_row_str[8])
     }
   }
   else if (length(temp_row_str)==(sovi_num_cols+3)) { # county name with four words
     if (grep(".",paste0(temp_row_str[4],"_",temp_row_str[5],"_",temp_row_str[6],"_",temp_row_str[7]))==1) { # if there's a period in the name
-      temp_county_name=gsub("._","_",paste0(temp_row_str[4],"_",temp_row_str[5],"_",temp_row_str[6],"_",temp_row_str[7]))
-      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],temp_county_name,temp_row_str[8],temp_row_str[9])
+      county_name_reformat=gsub("._","_",paste0(temp_row_str[4],"_",temp_row_str[5],"_",temp_row_str[6],"_",temp_row_str[7]))
+      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],county_name_reformat,temp_row_str[8],temp_row_str[9])
     }
     else {
-      temp_county_name=gsub(" ","_",paste(temp_row_str[4],temp_row_str[5],"_",temp_row_str[6],"_",temp_row_str[7]))
-      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],temp_county_name,temp_row_str[8],temp_row_str[9])
+      county_name_reformat=gsub(" ","_",paste(temp_row_str[4],temp_row_str[5],"_",temp_row_str[6],"_",temp_row_str[7]))
+      temp_row_str_fix=c(temp_row_str[1],temp_row_str[2],temp_row_str[3],county_name_reformat,temp_row_str[8],temp_row_str[9])
     }
   }
-  else {
+  else { # county name with one word
     temp_row_str_fix=temp_row_str
   }
   
   # save entry to temp column
-  temp_FIP_Code[i-1]=as.numeric(temp_row_str_fix[1])
-  temp_State_FIP[i-1]=as.numeric(temp_row_str_fix[2])
-  temp_County_FIP[i-1]=as.numeric(temp_row_str_fix[3])
-  temp_County_Name[i-1]=as.character(temp_row_str_fix[4])
-  temp_CNTY_SoVI[i-1]=as.numeric(temp_row_str_fix[5])
-  temp_Percentile[i-1]=as.numeric(temp_row_str_fix[6])
+  temp_fip_code[i-1]=as.numeric(temp_row_str_fix[1])
+  temp_state_fip[i-1]=as.numeric(temp_row_str_fix[2])
+  temp_county_fip[i-1]=as.numeric(temp_row_str_fix[3])
+  temp_county_name[i-1]=as.character(temp_row_str_fix[4])
+  temp_county_sovi[i-1]=as.numeric(temp_row_str_fix[5])
+  temp_percentile[i-1]=as.numeric(temp_row_str_fix[6])
   
 }
 
 # save all to data frame
-sovi_data=data.frame(FIP_Code=temp_FIP_Code,
-                     State_FIP=temp_State_FIP,
-                     County_FIP=temp_County_FIP,
-                     County_Name=temp_County_Name,
-                     CNTY_SoVI=temp_CNTY_SoVI,
-                     Percentile=temp_Percentile)
+sovi_data=data.frame(fip_code=temp_fip_code,
+                     state_fip=temp_state_fip,
+                     county_fip=temp_county_fip,
+                     county_name=temp_county_name,
+                     county_sovi=temp_county_sovi,
+                     percentile=temp_percentile)
 
 
 # ---- 3. export data ----
