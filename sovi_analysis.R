@@ -20,12 +20,19 @@ us_sovi_data=read_csv("sovi_data.csv",col_names=TRUE)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers")
 yadkin_counties_raw=read_csv("yadkin_clip_counties_albers.txt",col_names=TRUE)
 
+# county scaling data
+setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/county_scaling_calculations")
+county_scaling_raw=read_csv("county_scaling_allsubs.csv",col_names=TRUE)
+
 # gis data
 # county bounds (.shp file)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
 yadkin_subs_shp_albers=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
 yadkin_subs_shp=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
+yadkin_counties_shp_albers=read_sf("yadkin_clip_counties_albers.shp",quiet=TRUE)
+yadkin_counties_shp=read_sf("yadkin_clip_counties_utm17N.shp",quiet=TRUE)
 #glimpse(yadkin_subs_shp)
+#glimpse(yadkin_counties_shp_albers)
 
 # looking at gis data
 yadkin_subs_shp_albers_geom=st_geometry(yadkin_subs_shp_albers)
@@ -53,21 +60,39 @@ yadkin_sovi_data=left_join(yadkin_counties_sel,us_sovi_data,by="fip_code") %>%
 # add dataset column to us sovi data
 us_sovi_data=us_sovi_data %>% mutate(dataset="national")
 
+# select NC data
+nc_sovi_data=us_sovi_data %>% filter(state_fip==37) %>%
+  mutate(dataset="n_carolina")
+
 # bind all together for plotting
-us_yadkin_sovi_data=bind_rows(yadkin_sovi_data,us_sovi_data)
+us_nc_yadkin_sovi_data=bind_rows(yadkin_sovi_data,nc_sovi_data,us_sovi_data) %>%
+  filter(dataset!="national" | state_fip!=37)
+
+# reformat county scaling so matches other columns in other datasets
+county_scaling_data=county_scaling_raw %>% select(SUB,fip_code=GEOID,area_perc=AREA_PERC)
 
 
 # gis data
 yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin) # add SUB column to .shp file
 #glimpse(yadkin_subs_shp)
+yadkin_counties_shp=yadkin_counties_shp %>% mutate(fip_code=as.numeric(GEOID))
+#glimpse(yadkin_counties_shp)
 
 
 # ---- 3 data exploration ----
 
 # plot hist of us sovi
 ggplot(us_sovi_data,aes(county_sovi)) +
-  geom_histogram(binwidth=.5, colour="black", fill="grey75") +
+  geom_histogram(binwidth=.5, colour="black", fill="grey30") +
   xlab("US SoVI") +
+  ylab("Count") +
+  xlim(-10,16) +
+  theme_bw()
+
+# plot hist of north carolina sovi
+ggplot(nc_sovi_data,aes(county_sovi)) +
+  geom_histogram(binwidth=.5, colour="black", fill="grey75") +
+  xlab("NC SoVI") +
   ylab("Count") +
   xlim(-10,16) +
   theme_bw()
@@ -81,25 +106,61 @@ ggplot(yadkin_sovi_data,aes(county_sovi)) +
   theme_bw()
 
 # plot together
-ggplot(us_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
+us_nc_yadkin_sovi_data$dataset=factor(us_nc_yadkin_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
   xlab("SoVI") +
   ylab("Count") +
   xlim(-10,16) +
-  scale_fill_manual(values=c("grey75","white")) +
-  scale_color_manual(values=c("black","black")) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
   theme_bw()
 
 # zoom
-ggplot(us_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
+ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
   xlab("SoVI") +
   ylab("Count (zoom)") +
   xlim(-10,16) +
-  scale_fill_manual(values=c("grey75","white")) +
-  scale_color_manual(values=c("black","black")) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
   coord_cartesian(ylim=c(0,20)) +
   theme_bw()
 
+# plot sovi for yadkin
+yadkin_sovi_data_sel=yadkin_sovi_data %>% select(fip_code,county_sovi)
+yadkin_counties_shp_sovi=yadkin_counties_shp %>% left_join(yadkin_sovi_data_sel,by="fip_code")
 
-# ---- 4.1 scale county-level data to subbasin ----
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("yadkin_sovi_by_county.pdf",width=11,height=8.5)
+ggplot(yadkin_counties_shp_sovi,aes(fill=county_sovi)) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_counties_shp_sovi is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI") +
+  theme_bw()
+#dev.off()
+
+
+# ---- 4.1 scale county data to subbasin ----
+
+# join county scaling data to yadkin sovi select data
+wtd_calcs_data=left_join(yadkin_sovi_data_sel,county_scaling_data,by="fip_code") %>%
+  mutate(area_wtd_sovi_indiv=county_sovi*area_perc) %>%
+  group_by(SUB) %>% summarise(area_wtd_sovi=sum(area_wtd_sovi_indiv))
+
+# add to shp file
+yadkin_subs_shp_sovi=yadkin_subs_shp %>% left_join(wtd_calcs_data,by="SUB")
+#glimpse(yadkin_subs_shp_sovi)
+
+
+# ---- 4.2 plot county data in space ----
+
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("yadkin_sovi_by_sub.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_sovi,aes(fill=area_wtd_sovi)) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_sovi is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("Area Weighted SoVI") +
+  theme_bw()
+#dev.off()
+
