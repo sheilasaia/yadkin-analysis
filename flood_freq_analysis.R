@@ -223,7 +223,15 @@ ggplot(yadkin_subs_shp_flood_100yr,aes(fill=perc_change)) +
 #dev.off()
 
 
-# ---- 4.4 export results for kelly ----
+# ---- 4.4 export results for sovi analysis ----
+
+# export to results
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(flood_10yr_projections,"flood_10yr_perc_change.csv")
+#write_csv(flood_10yr_projections,"flood_100yr_perc_change.csv")
+
+
+# ---- 4.5 export results for kelly ----
 
 # kelly's watersheds (8,10,18,28) and return periods (10,100)
 
@@ -265,8 +273,8 @@ all_flood_freq_models_sel=bind_rows(baseline_model_flood_freq_sel,
                                 miroc8_5_model_flood_freq_sel)
 
 # export to results
-setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-write_csv(all_flood_freq_models_sel,"model_flood_frequency_results_for_kelly.csv")
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(all_flood_freq_models_sel,"model_flood_frequency_results_for_kelly.csv")
 
 
 # ---- x. extra ----
