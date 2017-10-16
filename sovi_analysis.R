@@ -11,6 +11,10 @@ library(tidyverse)
 #library(ggplot2)
 library(sf)
 
+# load home-made functions
+functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
+source(paste0(functions_path,"risk_vuln_reclass.R")) # reclassify sovi analysis results
+
 # set directory and load data
 # sovi data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -187,15 +191,71 @@ ggplot(yadkin_subs_shp_sovi,aes(fill=area_wtd_percentile)) +
 # join flood and sovi data
 flood_10yr_sovi_data=left_join(flood_10yr_data,wtd_calcs_data,by="SUB") 
 
-# use scale() to get z score
-
+# use scale() to get z-score
+flood_10yr_sovi_data_rescale=flood_10yr_sovi_data %>% 
+  mutate(perc_change_rescale=as.numeric(scale(perc_change)),area_wtd_sovi_rescale=as.numeric(scale(area_wtd_sovi)))
+#hist(flood_10yr_sovi_data_rescale$perc_change_rescale)
+#hist(flood_10yr_sovi_data_rescale$area_wtd_sovi_rescale)
 
 # ---- 5.2 plot flood and lowflow freq results to scaled sovi data ----
 
+# by dataset (not rescaled)
 flood_10yr_sovi_data$dataset=factor(flood_10yr_sovi_data$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 ggplot(flood_10yr_sovi_data,(aes(x=area_wtd_sovi,y=perc_change,color=dataset))) +
   geom_point(size=2) +
-  scale_x_reverse() +
   xlab("Area Weighted SoVI") +
   ylab("10yr Flood Frequency % Change (from Baseline)") +
   theme_bw()
+
+# by dataset (rescaled to within state, aka z-score)
+flood_10yr_sovi_data_rescale$dataset=factor(flood_10yr_sovi_data_rescale$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+ggplot(flood_10yr_sovi_data_rescale,(aes(x=area_wtd_sovi_rescale,y=perc_change_rescale,color=dataset))) +
+  geom_point(size=2) +
+  xlab("Area Weighted SoVI (w/in state z-score)") +
+  ylab("10yr Flood Frequency % Change (from Baseline, z-score)") +
+  theme_bw()
+
+# by subbasin
+flood_10yr_sovi_data$dataset=factor(flood_10yr_sovi_data$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+ggplot(flood_10yr_sovi_data,(aes(x=area_wtd_sovi,y=perc_change,color=SUB))) +
+  geom_point(size=2) +
+  xlab("Area Weighted SoVI") +
+  ylab("10yr Flood Frequency % Change (from Baseline)") +
+  theme_bw()
+
+
+# ---- 5.3 reclass risk/vulnerability results ----
+
+flood_10yr_risk_vuln_data=risk_vuln_reclass(flood_10yr_sovi_data_rescale)
+
+# ---- 5.4 plot reclassified results (points and spatially)
+
+# check output
+# by dataset (rescaled, aka z-score)
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("yadkin_risk_vs_sovi_reclass.pdf",width=11,height=8.5)
+ggplot(flood_10yr_risk_vuln_data,(aes(x=area_wtd_sovi_rescale,y=perc_change_rescale,color=sovi_class))) +
+  geom_point(size=2) +
+  geom_point(shape=1,size=2,color="black") +
+  xlab("Area Weighted SoVI (w/in state z-score)") +
+  ylab("10yr Flood Frequency % Change (from Baseline, z-score)") +
+  theme_bw() +
+  scale_color_manual(values=c("red","orange","orange","yellow")) +
+  scale_fill_manual(values=rep("black",4))
+#dev.off()
+
+# plot spatially
+flood_10yr_risk_vuln_data_sel=flood_10yr_risk_vuln_data %>% select(SUB,dataset,sovi_class)
+# add to shp file
+yadkin_subs_shp_sovi_reclass=yadkin_subs_shp %>% left_join(flood_10yr_risk_vuln_data_sel,by="SUB")
+#glimpse(yadkin_subs_shp_sovi_reclass)
+
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("yadkin_sovi_reclass_by_sub.pdf",width=11,height=8.5)
+#ggplot(yadkin_subs_shp_sovi_reclass,aes(fill=sovi_class)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_sovi_reclass is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values=c("red","orange","orange","yellow")) +
+  theme_bw()
+#dev.off()
