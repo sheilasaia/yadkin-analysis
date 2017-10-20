@@ -228,21 +228,21 @@ ggplot(flood_10yr_sovi_data,(aes(x=area_wtd_sovi,y=perc_change,color=SUB))) +
 
 flood_10yr_risk_vuln_data=risk_vuln_reclass(flood_10yr_sovi_data_rescale)
 
-# ---- 5.4 plot reclassified results (points and spatially)
+# ---- 5.4 plot reclassified results (points and spatially) ----
 
 # check output
 # by dataset (rescaled, aka z-score)
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("yadkin_risk_vs_sovi_reclass.pdf",width=11,height=8.5)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_risk_vs_sovi_reclass.pdf",width=11,height=8.5)
 ggplot(flood_10yr_risk_vuln_data,(aes(x=area_wtd_sovi_rescale,y=perc_change_rescale,color=sovi_class))) +
-  geom_point(size=2) +
-  geom_point(shape=1,size=2,color="black") +
+  geom_point(size=5) +
+  geom_point(shape=1,size=5,color="black") +
   xlab("Area Weighted SoVI (w/in state z-score)") +
   ylab("10yr Flood Frequency % Change (from Baseline, z-score)") +
   theme_bw() +
   scale_color_manual(values=c("red","orange","orange","yellow")) +
   scale_fill_manual(values=rep("black",4))
-#dev.off()
+dev.off()
 
 # plot spatially
 flood_10yr_risk_vuln_data_sel=flood_10yr_risk_vuln_data %>% select(SUB,dataset,sovi_class)
