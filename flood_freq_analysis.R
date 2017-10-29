@@ -201,15 +201,18 @@ yadkin_subs_shp_flood_100yr=left_join(yadkin_subs_shp,flood_100yr_projections,by
 # ---- 4.3 plot % change in flows on map ----
 
 # 10 yr
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("flood_10yr_change.pdf",width=11,height=8.5)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("flood_10yr_change.pdf",width=11,height=8.5)
 ggplot(yadkin_subs_shp_flood_10yr,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_flood_10yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change 10yr Flow",na.value="grey75") +
-  theme_bw()
-#dev.off()
+  scale_fill_gradient2("% Change 10yr Flow",na.value="grey75",limits=c(-60,60)) +
+  theme_bw() #+
+  #theme(axis.text = element_text(size = 20)) +
+  #theme(axis.title = element_text(size = 20)) +
+  #theme(text = element_text(size = 20))
+dev.off()
 
 # 100 yr
 #setwd("/Users/ssaia/Desktop")

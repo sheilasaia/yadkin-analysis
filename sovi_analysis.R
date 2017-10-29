@@ -129,6 +129,8 @@ ggplot(yadkin_sovi_data,aes(county_sovi)) +
   theme_bw()
 
 # plot together
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_hist.pdf",width=11,height=8.5)
 us_nc_yadkin_sovi_data$dataset=factor(us_nc_yadkin_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
 ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
@@ -137,9 +139,15 @@ ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   xlim(-10,16) +
   scale_fill_manual(values=c("grey30","grey75","white")) +
   scale_color_manual(values=c("black","black","black")) +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
 
 # zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_hist_zoom.pdf",width=11,height=8.5)
 ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
   xlab("SoVI") +
@@ -148,7 +156,11 @@ ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   scale_fill_manual(values=c("grey30","grey75","white")) +
   scale_color_manual(values=c("black","black","black")) +
   coord_cartesian(ylim=c(0,20)) +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
 
 # yadkin sovi (spatial)
 setwd("/Users/ssaia/Desktop")
@@ -167,7 +179,10 @@ ggplot(nc_counties_shp_sovi,aes(fill=county_sovi_rescaled)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # nc_counties_shp_sovi is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("Rescaled SoVI",low="blue",high="red",limits=c(-1,1)) +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
 dev.off()
 
 
@@ -249,12 +264,15 @@ cairo_pdf("yadkin_risk_vs_sovi_reclass.pdf",width=11,height=8.5)
 ggplot(flood_10yr_risk_vuln_data,(aes(x=area_wtd_sovi_rescaled,y=perc_change,color=sovi_class))) +
   geom_point(size=5) +
   geom_point(shape=1,size=5,color="black") +
-  xlab("Area Weighted SoVI (w/in state z-score)") +
+  xlab("Area Weighted SoVI Re-scaled") +
   ylab("10yr Flood Frequency % Change") +
   xlim(-1,1) +
-  theme_bw() +
   scale_color_manual(values=c("red","orange","orange","yellow")) +
-  scale_fill_manual(values=rep("black",4))
+  scale_fill_manual(values=rep("black",4)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
 dev.off()
 
 # plot spatially
@@ -270,5 +288,8 @@ ggplot(yadkin_subs_shp_sovi_reclass,aes(fill=sovi_class)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_sovi_reclass is base utm 17N so convert to Albers for CONUS
   scale_fill_manual(values=c("red","orange","orange","yellow")) +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
 dev.off()

@@ -187,12 +187,19 @@ sublu_reclass_data=sublu_reclass_data %>% select(SUB,AREA_PERC,DESCRIPTION,datas
 
 # ---- 4.2 plot watershed wide data (reclassified categories) ----
 
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lu_diff_watershedwide.pdf",width=11,height=8.5, pointsize=20)
 ggplot(yadlu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   geom_col() +
   xlab("") +
   ylab("Area (%)") +
   scale_fill_manual(values=c("orange", "grey75", "forestgreen","green","blue")) +
-  theme_bw()
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
+dev.off()
 
 
 # ---- 4.3 plot subbasin data (reclassified categories) ----
