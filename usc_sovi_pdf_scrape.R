@@ -1,4 +1,4 @@
-# scrape pdf of sovi data
+# scrape pdf of usc sovi data
 
 # ---- 1. set up ----
 
