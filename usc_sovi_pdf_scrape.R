@@ -102,4 +102,4 @@ sovi_data=data.frame(fip_code=temp_fip_code,
 
 # export reformatted data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-write_csv(sovi_data,"sovi_data.csv")
+write_csv(sovi_data,"usc_sovi_data.csv")
