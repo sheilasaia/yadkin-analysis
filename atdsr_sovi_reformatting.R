@@ -16,7 +16,7 @@ sovi_raw=read_csv("us_sovi2014_albers.txt",col_names=TRUE,na=c("-999"))
 
 # select only columns you need
 sovi_data=sovi_raw %>%
-  select(fip_code=STCNTY,state_fip=ST,tract_fip=TRACTCE,county_name=COUNTY,
+  select(fip_code=STCNTY,state_fip=ST,tract_fip=TRACTCE,state_abbrev=ST_ABBR,county_name=COUNTY,
          sovi_theme1=SPL_THEME1,sovi_theme1_percentile=RPL_THEME1,
          sovi_theme2=SPL_THEME2,sovi_theme2_percentile=RPL_THEME2,
          sovi_theme3=SPL_THEME3,sovi_theme3_percentile=RPL_THEME3,
