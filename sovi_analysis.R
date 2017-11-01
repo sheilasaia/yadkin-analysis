@@ -17,9 +17,13 @@ source(paste0(functions_path,"risk_vuln_reclass.R")) # reclassify sovi analysis 
 source(paste0(functions_path,"rescale_minus1to1.R")) # rescale from -1 to 1
 
 # set directory and load data
-# sovi data
+# usc sovi data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-us_sovi_data=read_csv("sovi_data.csv",col_names=TRUE)
+us_usc_sovi_data=read_csv("usc_sovi_data.csv",col_names=TRUE)
+
+# atsdr sovi data
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+us_atsdr_sovi_data=read_csv("atsdr_sovi_data.csv",col_names=TRUE)
 
 # counties list
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers")
@@ -28,6 +32,10 @@ yadkin_counties_raw=read_csv("yadkin_clip_counties_albers.txt",col_names=TRUE)
 # county scaling data
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/county_scaling_calculations")
 county_scaling_raw=read_csv("county_scaling_allsubs.csv",col_names=TRUE)
+
+# atsdr sovi scaling data
+setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/sovibd_scaling_calculations")
+sovibd_scaling_raw=read_csv("sovibd_scaling_allsubs.csv",col_names=TRUE)
 
 # flood frequency results
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -56,12 +64,9 @@ yadkin_subs_shp_geom=st_geometry(yadkin_subs_shp)
 
 # ---- 2 reformat data ----
 
-# add dataset id and rescaled sovi column to us sovi data
-us_sovi_data=us_sovi_data %>% mutate(dataset="national") %>%
-  mutate(county_sovi_rescaled=rescale_minus1to1(county_sovi))
-
-# set common names between us_sovi_data columns and yadkin_counties
-#names(us_sovi_data)
+# set common names between us_usc_sovi_data & us_atsdr_sovi_data columns and yadkin_counties
+#names(us_usc_sovi_data)
+#names(us_atsdr_sovi_data)
 #names(yadkin_counties_raw)
 yadkin_counties=yadkin_counties_raw %>% transmute(fip_code=as.numeric(GEOID),
                                                   state_fip=as.numeric(STATEFP),
@@ -71,19 +76,49 @@ yadkin_counties=yadkin_counties_raw %>% transmute(fip_code=as.numeric(GEOID),
 # select only necessary columns
 yadkin_counties_sel=yadkin_counties %>% select(fip_code,county_name_gis)
 
-# join with sovi data
-yadkin_sovi_data=left_join(yadkin_counties_sel,us_sovi_data,by="fip_code") %>%
+# add dataset id (and rescaled usc data)
+# usc
+us_usc_sovi_data=us_usc_sovi_data %>% mutate(dataset="national") %>%
+  mutate(county_sovi_rescaled=rescale_minus1to1(county_sovi))
+
+# atsrd
+us_atsdr_sovi_data=us_atsdr_sovi_data %>% mutate(dataset="national")
+
+# add state abbreviation to usc data
+state_id_list=us_atsdr_sovi_data %>% select(state_abbrev,state_fip) %>%
+  distinct()
+us_usc_sovi_data=us_usc_sovi_data %>% left_join(state_id_list,by="state_fip")
+
+# use join to only select yadkin data
+# usc
+yadkin_usc_sovi_data=left_join(yadkin_counties_sel,us_usc_sovi_data,by="fip_code") %>%
   mutate(dataset="yadkin") %>% select(-county_name_gis)
 
-# select NC data
-nc_sovi_data=us_sovi_data %>% filter(state_fip==37) %>%
+# atsdr
+yadkin_atsdr_sovi_data=left_join(yadkin_counties_sel,us_atsdr_sovi_data,by="fip_code") %>%
+  mutate(dataset="yadkin") %>% select(-county_name_gis)
+
+# select nc data
+# usc
+nc_usc_sovi_data=us_usc_sovi_data %>% filter(state_fip==37) %>%
+  mutate(dataset="n_carolina")
+
+# atsdr
+nc_atsdr_sovi_data=us_atsdr_sovi_data %>% filter(state_fip==37) %>%
   mutate(dataset="n_carolina")
 
 # bind all together for plotting
-us_nc_yadkin_sovi_data=bind_rows(yadkin_sovi_data,nc_sovi_data,us_sovi_data)
+# usc
+us_nc_yadkin_usc_sovi_data=bind_rows(yadkin_usc_sovi_data,nc_usc_sovi_data,us_usc_sovi_data)
+
+# atsdr
+us_nc_yadkin_atsdr_sovi_data=bind_rows(yadkin_atsdr_sovi_data,nc_atsdr_sovi_data,us_atsdr_sovi_data)
 
 # reformat county scaling so matches other columns in other datasets
 county_scaling_data=county_scaling_raw %>% select(SUB,fip_code=GEOID,area_perc=AREA_PERC)
+
+# reformat sovi boundary scaling so it matches other columns in other datasets
+sovibd_scaling_data=
 
 # gis data
 yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin) # add SUB column to .shp file
@@ -94,34 +129,34 @@ nc_counties_shp=nc_counties_shp %>% mutate(fip_code=as.numeric(GEOID))
 #glimpse(nc_counties_shp)
 
 # select data for yadkin sovi plot
-yadkin_sovi_data_sel=yadkin_sovi_data %>% select(fip_code,county_sovi,percentile,county_sovi_rescaled)
-yadkin_counties_shp_sovi=yadkin_counties_shp %>% left_join(yadkin_sovi_data_sel,by="fip_code")
+yadkin_usc_sovi_data_sel=yadkin_usc_sovi_data %>% select(fip_code,county_sovi,percentile,county_sovi_rescaled)
+yadkin_counties_shp_sovi=yadkin_counties_shp %>% left_join(yadkin_usc_sovi_data_sel,by="fip_code")
 
 # select data for nc sovi plot
-nc_sovi_data_sel=nc_sovi_data %>% select(fip_code:percentile,county_sovi_rescaled)
-nc_counties_shp_sovi=nc_counties_shp %>% left_join(nc_sovi_data_sel,by="fip_code")
+nc_usc_sovi_data_sel=nc_usc_sovi_data %>% select(fip_code:percentile,county_sovi_rescaled)
+nc_counties_shp_usc_sovi=nc_counties_shp %>% left_join(nc_usc_sovi_data_sel,by="fip_code")
 
 
-# ---- 3 data exploration ----
+# ---- 3.1 usc data exploration ----
 
-# plot hist of us sovi
-ggplot(us_sovi_data,aes(county_sovi)) +
+# plot hist of us usc sovi
+ggplot(us_usc_sovi_data,aes(county_sovi)) +
   geom_histogram(binwidth=.5, colour="black", fill="grey30") +
   xlab("US SoVI") +
   ylab("Count") +
   xlim(-10,16) +
   theme_bw()
 
-# plot hist of north carolina sovi
-ggplot(nc_sovi_data,aes(county_sovi)) +
+# plot hist of north carolina usc sovi
+ggplot(nc_usc_sovi_data,aes(county_sovi)) +
   geom_histogram(binwidth=.5, colour="black", fill="grey75") +
   xlab("NC SoVI") +
   ylab("Count") +
   xlim(-10,16) +
   theme_bw()
 
-# plot hist of yadkin sovi
-ggplot(yadkin_sovi_data,aes(county_sovi)) +
+# plot hist of yadkin usc sovi
+ggplot(yadkin_usc_sovi_data,aes(county_sovi)) +
   geom_histogram(binwidth=.5, colour="black", fill="white") +
   xlab("Yadkin SoVI") +
   ylab("Count") +
@@ -130,9 +165,9 @@ ggplot(yadkin_sovi_data,aes(county_sovi)) +
 
 # plot together
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("sovi_hist.pdf",width=11,height=8.5)
-us_nc_yadkin_sovi_data$dataset=factor(us_nc_yadkin_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
-ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
+cairo_pdf("usc_sovi_hist.pdf",width=11,height=8.5)
+us_nc_yadkin_usc_sovi_data$dataset=factor(us_nc_yadkin_usc_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_usc_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
   xlab("SoVI") +
   ylab("Count") +
@@ -147,8 +182,8 @@ dev.off()
 
 # zoom
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("sovi_hist_zoom.pdf",width=11,height=8.5)
-ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
+cairo_pdf("sovi_usc_hist_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_usc_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
   xlab("SoVI") +
   ylab("Count (zoom)") +
@@ -161,6 +196,291 @@ ggplot(us_nc_yadkin_sovi_data,aes(county_sovi,fill=dataset,color=dataset)) +
   theme(axis.title = element_text(size = 20)) +
   theme(text = element_text(size = 20))
 dev.off()
+
+
+# plot hist of us usc sovi (rescaled)
+ggplot(us_usc_sovi_data,aes(county_sovi_rescaled)) +
+  geom_histogram(binwidth=0.05, colour="black", fill="grey30") +
+  xlab("US SoVI Rescaled") +
+  ylab("Count") +
+  xlim(-1,1) +
+  theme_bw()
+
+# plot hist of north carolina usc sovi (rescaled)
+ggplot(nc_usc_sovi_data,aes(county_sovi_rescaled)) +
+  geom_histogram(binwidth=.05, colour="black", fill="grey75") +
+  xlab("NC SoVI Rescaled") +
+  ylab("Count") +
+  xlim(-1,1) +
+  theme_bw()
+
+# plot hist of yadkin usc sovi (rescaled)
+ggplot(yadkin_usc_sovi_data,aes(county_sovi_rescaled)) +
+  geom_histogram(binwidth=.05, colour="black", fill="white") +
+  xlab("Yadkin SoVI Rescaled") +
+  ylab("Count") +
+  xlim(-1,1) +
+  theme_bw()
+
+# plot together (rescaled)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("usc_sovi_hist_rescaled_.pdf",width=11,height=8.5)
+us_nc_yadkin_usc_sovi_data$dataset=factor(us_nc_yadkin_usc_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_usc_sovi_data,aes(county_sovi_rescaled,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.05, alpha=0.5) +
+  xlab("SoVI") +
+  ylab("Count") +
+  xlim(-1,1) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_usc_hist_rescaled_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_usc_sovi_data,aes(county_sovi_rescaled,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.05, alpha=0.5) +
+  xlab("SoVI Rescaled") +
+  ylab("Count (zoom)") +
+  xlim(-1,1) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  coord_cartesian(ylim=c(0,20)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+
+# yadkin usc sovi (spatial)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_usc_sovi_by_county.pdf",width=11,height=8.5)
+ggplot(yadkin_counties_shp_sovi,aes(fill=county_sovi_rescaled)) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_counties_shp_sovi is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("Rescaled SoVI",low="blue",high="red",limits=c(-1,1)) +
+  theme_bw()
+dev.off()
+
+# nc usc sovi (spatial)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("nc_usc_sovi_by_county.pdf",width=11,height=8.5)
+ggplot(nc_counties_shp_usc_sovi,aes(fill=county_sovi_rescaled)) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # nc_counties_shp_usc_sovi is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("Rescaled SoVI",low="blue",high="red",limits=c(-1,1)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+
+# ---- 3.2 atsdr data exploration ----
+
+# plot hist of us atsdr sovi
+ggplot(us_atsdr_sovi_data,aes(sovi_total)) +
+  geom_histogram(binwidth=.5, colour="black", fill="grey30") +
+  xlab("US SoVI") +
+  ylab("Count") +
+  xlim(0,15) +
+  theme_bw()
+
+# plot hist of north carolina atsdr sovi
+ggplot(nc_atsdr_sovi_data,aes(sovi_total)) +
+  geom_histogram(binwidth=.5, colour="black", fill="grey75") +
+  xlab("NC SoVI") +
+  ylab("Count") +
+  xlim(0,15) +
+  theme_bw()
+
+# plot hist of yadkin atsdr sovi
+ggplot(yadkin_atsdr_sovi_data,aes(sovi_total)) +
+  geom_histogram(binwidth=.5, colour="black", fill="white") +
+  xlab("Yadkin SoVI") +
+  ylab("Count") +
+  xlim(0,15) +
+  theme_bw()
+
+# plot together (all themes)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi_allthemes_hist.pdf",width=11,height=8.5)
+us_nc_yadkin_atsdr_sovi_data$dataset=factor(us_nc_yadkin_atsdr_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_total,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI") +
+  ylab("Count") +
+  xlim(0,15) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_atsdr_allthemes_hist_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_total,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI") +
+  ylab("Count (zoom)") +
+  xlim(0,15) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  coord_cartesian(ylim=c(0,250)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+
+# plot together (theme 1)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi_theme1_hist.pdf",width=11,height=8.5)
+us_nc_yadkin_atsdr_sovi_data$dataset=factor(us_nc_yadkin_atsdr_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme1,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI Theme 1") +
+  ylab("Count") +
+  xlim(0,5) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_atsdr_theme1_hist_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme1,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI Theme 1") +
+  ylab("Count (zoom)") +
+  xlim(0,5) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  coord_cartesian(ylim=c(0,1500)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+
+# plot together (theme 2)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi_theme2_hist.pdf",width=11,height=8.5)
+us_nc_yadkin_atsdr_sovi_data$dataset=factor(us_nc_yadkin_atsdr_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme2,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI Theme 2") +
+  ylab("Count") +
+  xlim(0,5) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_atsdr_theme2_hist_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme2,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI Theme 2") +
+  ylab("Count (zoom)") +
+  xlim(0,5) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  coord_cartesian(ylim=c(0,2000)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+
+# plot together (theme 3)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi_theme3_hist.pdf",width=11,height=8.5)
+us_nc_yadkin_atsdr_sovi_data$dataset=factor(us_nc_yadkin_atsdr_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme3,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.25, alpha=0.5) +
+  xlab("SoVI Theme 3") +
+  ylab("Count") +
+  xlim(0,3) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_atsdr_theme3_hist_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme3,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.25, alpha=0.5) +
+  xlab("SoVI Theme 3") +
+  ylab("Count (zoom)") +
+  xlim(0,3) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  coord_cartesian(ylim=c(0,1000)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+
+# plot together (theme 4)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi_theme4_hist.pdf",width=11,height=8.5)
+us_nc_yadkin_atsdr_sovi_data$dataset=factor(us_nc_yadkin_atsdr_sovi_data$dataset,levels=c("national","n_carolina","yadkin"))
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme4,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI Theme 4") +
+  ylab("Count") +
+  xlim(0,5) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_atsdr_theme4_hist_zoom.pdf",width=11,height=8.5)
+ggplot(us_nc_yadkin_atsdr_sovi_data,aes(sovi_theme4,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI Theme 4") +
+  ylab("Count (zoom)") +
+  xlim(0,5) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  coord_cartesian(ylim=c(0,1000)) +
+  theme_bw() +
+  theme(axis.text = element_text(size = 20)) +
+  theme(axis.title = element_text(size = 20)) +
+  theme(text = element_text(size = 20))
+dev.off()
+
 
 # yadkin sovi (spatial)
 setwd("/Users/ssaia/Desktop")
@@ -186,10 +506,12 @@ ggplot(nc_counties_shp_sovi,aes(fill=county_sovi_rescaled)) +
 dev.off()
 
 
+
+
 # ---- 4.1 scale county data to subbasin ----
 
 # join county scaling data to yadkin sovi select data
-wtd_calcs_data=left_join(yadkin_sovi_data_sel,county_scaling_data,by="fip_code") %>%
+wtd_calcs_data=left_join(yadkin_usc_sovi_data_sel,county_scaling_data,by="fip_code") %>%
   mutate(area_wtd_sovi_indiv=county_sovi*area_perc,
          area_wtd_percentile_indiv=percentile*area_perc,
          area_wtd_sovi_rescaled_indiv=county_sovi_rescaled*area_perc) %>%
