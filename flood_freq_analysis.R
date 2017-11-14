@@ -280,6 +280,59 @@ all_flood_freq_models_sel=bind_rows(baseline_model_flood_freq_sel,
 #write_csv(all_flood_freq_models_sel,"model_flood_frequency_results_for_kelly.csv")
 
 
+# ---- 5.1 plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
+
+# select outlet data
+baseline_outlet_rch_data=baseline_rch_data %>% filter(RCH==28)
+
+library(ggridges) # https://cran.rstudio.com/web/packages/ggjoy/vignettes/introduction.html
+# by month (all subbasins)
+ggplot(baseline_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
+  geom_density_ridges2() + #joyplot
+  facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
+  theme_bw()
+
+# by month (outlet)
+ggplot(baseline_outlet_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
+  geom_density_ridges2() + #joyplot
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
+  theme_bw()
+
+# by year (all subbasins)
+ggplot(baseline_rch_data,aes(x=FLOW_OUTcms,y=as.factor(YR))) +
+  geom_density_ridges2() + #joyplot
+  facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
+  theme_bw()
+
+# by year (outlet)
+ggplot(baseline_outlet_rch_data,aes(x=FLOW_OUTcms,y=as.factor(YR))) +
+  geom_density_ridges2() + #joyplot
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
+  theme_bw()
+
+# how does variance change from year to year
+baseline_outlet_variance_by_year=baseline_outlet_rch_data %>% group_by(YR) %>% summarise(variance=sd(FLOW_OUTcms))
+ggplot(baseline_outlet_variance_by_year,aes(x=as.factor(YR),y=variance)) + 
+  geom_point(size=3) + 
+  geom_smooth(method="lm") + # this function adds the fitted line (w/ confidence interval)
+  theme(axis.text.x=element_text(angle=90))
+# no trend so no lm added?
+  
+# determine outliers for each subbasin: https://www.wikihow.com/Calculate-Outliers
+# determine quartiles
+# but then this still doesn't have any meaning in the real world
+# maybe add in month vs flow for climate data sets and see how they compare? (as differently colored distributions)
+
+
+
+
+
 # ---- x. extra ----
 
 sub_area=baseline_sub_data_raw %>% select(SUB,AREAkm2) %>% 
