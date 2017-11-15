@@ -286,6 +286,7 @@ all_flood_freq_models_sel=bind_rows(baseline_model_flood_freq_sel,
 baseline_outlet_rch_data=baseline_rch_data %>% filter(RCH==28)
 
 library(ggridges) # https://cran.rstudio.com/web/packages/ggjoy/vignettes/introduction.html
+library(ggbeeswarm)
 # by month (all subbasins)
 ggplot(baseline_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
   geom_density_ridges2() + #joyplot
@@ -329,9 +330,32 @@ ggplot(baseline_outlet_variance_by_year,aes(x=as.factor(YR),y=variance)) +
 # but then this still doesn't have any meaning in the real world
 # maybe add in month vs flow for climate data sets and see how they compare? (as differently colored distributions)
 
+# join baseline and projection data for overlapping joyplots
+baseline_rch_data_sel=baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="baseline")
+csiro4_5_rch_data_sel=csiro4_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="csiro4_5")
+csiro8_5_rch_data_sel=csiro8_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="csiro8_5")
+hadley4_5_rch_data_sel=hadley4_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="hadley4_5")
+miroc8_5_rch_data_sel=miroc8_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="miroc8_5")
+all_rch_data=bind_rows(baseline_rch_data_sel,csiro4_5_rch_data_sel,csiro8_5_rch_data_sel,hadley4_5_rch_data_sel,miroc8_5_rch_data_sel)
+all_outlet_rch_data=all_rch_data %>% filter(RCH==28)
+ggplot(all_outlet_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO),fill=dataset)) +
+  geom_density_ridges2(alpha=0.5) + #joyplot
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
+  xlim(0,1000) +
+  theme_bw()
 
-
-
+ggplot(all_outlet_rch_data,aes(x=FLOW_OUTcms,y=dataset)) +
+  geom_density_ridges2(alpha=0.5, fill="lightgrey") + #joyplot
+  xlab("Flow Out (cms)") + 
+  ylab("Dataset") +
+  xlim(0,1000) +
+  theme_bw()
 
 # ---- x. extra ----
 
