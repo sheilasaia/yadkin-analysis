@@ -1,12 +1,12 @@
-# select observations for flood frequency analysis (one reach)
+# select observations for high flow frequency analysis (one reach)
 
-# purpose: prepare SWAT .rch file (observations) for flood frequency analysis
+# purpose: prepare SWAT .rch file (observations) for high flow frequency analysis
 # last updated: 20170912
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
 # define function
-obs_flood_freq_calcs_one_rch=function(sel_rch_data,span_days) { 
+obs_hiflow_freq_calcs_one_rch=function(sel_rch_data,span_days) { 
   # sel_rch_data is df for one reach
   
   # load libraries

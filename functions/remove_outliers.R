@@ -10,9 +10,9 @@
 remove_outliers=function(obs_flow_input_df,kn_table,flow_option) {
   # example obs_flow_input_df is the output from obs_lowflow_freq_calcs_one_rch()
   # kn value comes from appendix 4 of the USGS bulletin 17b
-  # flow_option equals either "flood" or "lowflow" depending on which analysis
+  # flow_option equals either "hiflow" or "lowflow" depending on which analysis
   
-  if (flow_option=="flood") {
+  if (flow_option=="hiflow") {
     # log inputs and find mean
     input_flow_log=obs_flow_input_df$obs_max_flow_log_cms_adj
     input_mean=mean(input_flow_log)

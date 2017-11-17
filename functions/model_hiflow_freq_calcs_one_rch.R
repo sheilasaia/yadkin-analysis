@@ -1,12 +1,12 @@
-# flood log-Pearson type III models (one reach)
+# high flow log-Pearson type III models (one reach)
 
-# purpose: generate model curve for flood frequency analysis
+# purpose: generate model curve for high flow frequency analysis
 # last updated: 20170912
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
 # define function
-model_flood_freq_calcs_one_rch=function(obs_flood_freq_calcs_one_rch_df,kn_table,model_p_list) {
+model_hiflow_freq_calcs_one_rch=function(obs_hiflow_freq_calcs_one_rch_df,kn_table,model_p_list) {
   # obs_lowflow_freq_calcs_df is the output dataframe from obs_lowflow_freq_calcs_one_rch()
   # kn value comes from appendix 4 of the USGS bulletin 17b
   # model_p_list is a list of desired probabilities of exceedance
@@ -18,10 +18,10 @@ model_flood_freq_calcs_one_rch=function(obs_flood_freq_calcs_one_rch_df,kn_table
   # USGS Bulletin 17B, 1982
   
   # save temporary variables
-  current_rch=unique(obs_flood_freq_calcs_one_rch_df$RCH)
+  current_rch=unique(obs_hiflow_freq_calcs_one_rch_df$RCH)
   num_p=length(model_p_list)
-  num_yrs=dim(obs_flood_freq_calcs_one_rch_df)[1]
-  flow_option="flood"
+  num_yrs=dim(obs_hiflow_freq_calcs_one_rch_df)[1]
+  flow_option="hiflow"
   
   # make output dataframe to hold results
   model_df=data.frame(RCH=as.integer(),
@@ -31,7 +31,7 @@ model_flood_freq_calcs_one_rch=function(obs_flood_freq_calcs_one_rch_df,kn_table
                       data_type=as.character())
   
   # remove outliers
-  obs_temp_data=remove_outliers(obs_flood_freq_calcs_one_rch_df,kn_table,flow_option)
+  obs_temp_data=remove_outliers(obs_hiflow_freq_calcs_one_rch_df,kn_table,flow_option)
   
   # log inputs and find mean
   obs_flow_log=obs_temp_data$obs_max_flow_log_cms_adj

@@ -1,4 +1,4 @@
-# yadkin flood frequency analysis
+# yadkin high flow frequency analysis
 
 # ---- 1 set up -----
 
@@ -17,9 +17,9 @@ functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
 source(paste0(functions_path,"reformat_rch_file.R")) # reformat SWAT .rch file
 source(paste0(functions_path,"logpearson3_factor_calc.R")) # calculate log-Pearson III frequency factors
 source(paste0(functions_path,"remove_outliers.R")) # removes low and high flows deemed as outliers
-source(paste0(functions_path,"obs_flood_freq_calcs_one_rch.R")) # select observations for one reach
+source(paste0(functions_path,"obs_hiflow_freq_calcs_one_rch.R")) # select observations for one reach
 source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observations for all reaches
-source(paste0(functions_path,"model_flood_freq_calcs_one_rch.R")) # determines flood flow model for one reach
+source(paste0(functions_path,"model_hiflow_freq_calcs_one_rch.R")) # determines high flow model for one reach
 source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines flow model for all reaches
 source(paste0(functions_path,"flow_change.R")) # determines % change in flows for a given return period
 
@@ -95,25 +95,25 @@ yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 
 # ---- 3.1 calculate obs and model ouptuts for each subbasin ----
 
-baseline_obs_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,1,"flood")
+baseline_obs_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,1,"hiflow")
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-baseline_model_calcs=model_freq_calcs_all_rchs(baseline_obs_calcs,kn_table,my_model_p_list,0.4,"flood")
+baseline_model_calcs=model_freq_calcs_all_rchs(baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
-miroc8_5_obs_calcs=obs_freq_calcs_all_rchs(miroc8_5_rch_data,1,"flood")
+miroc8_5_obs_calcs=obs_freq_calcs_all_rchs(miroc8_5_rch_data,1,"hiflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-miroc8_5_model_calcs=model_freq_calcs_all_rchs(miroc8_5_obs_calcs,kn_table,my_model_p_list,0.4,"flood")
+miroc8_5_model_calcs=model_freq_calcs_all_rchs(miroc8_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
-csiro8_5_obs_calcs=obs_freq_calcs_all_rchs(csiro8_5_rch_data,1,"flood")
+csiro8_5_obs_calcs=obs_freq_calcs_all_rchs(csiro8_5_rch_data,1,"hiflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-csiro8_5_model_calcs=model_freq_calcs_all_rchs(csiro8_5_obs_calcs,kn_table,my_model_p_list,0.4,"flood")
+csiro8_5_model_calcs=model_freq_calcs_all_rchs(csiro8_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
-csiro4_5_obs_calcs=obs_freq_calcs_all_rchs(csiro4_5_rch_data,1,"flood")
+csiro4_5_obs_calcs=obs_freq_calcs_all_rchs(csiro4_5_rch_data,1,"hiflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-csiro4_5_model_calcs=model_freq_calcs_all_rchs(csiro4_5_obs_calcs,kn_table,my_model_p_list,0.4,"flood")
+csiro4_5_model_calcs=model_freq_calcs_all_rchs(csiro4_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
-hadley4_5_obs_calcs=obs_freq_calcs_all_rchs(hadley4_5_rch_data,1,"flood")
+hadley4_5_obs_calcs=obs_freq_calcs_all_rchs(hadley4_5_rch_data,1,"hiflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-hadley4_5_model_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_calcs,kn_table,my_model_p_list,0.4,"flood")
+hadley4_5_model_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 
 # ---- 3.2 plot results for each subbasin ----
@@ -166,14 +166,14 @@ hadley4_5_10yr_flow_sel=hadley4_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
 # RCH is generally equal to SUB and need SUB column for joining to .shp file
 
 # gather projections
-flood_10yr_projections=bind_rows(miroc8_5_10yr_flow_sel,
+hiflow_10yr_projections=bind_rows(miroc8_5_10yr_flow_sel,
                                  csiro8_5_10yr_flow_sel,
                                  csiro4_5_10yr_flow_sel,
                                  hadley4_5_10yr_flow_sel)
 
 # add to shp file
-yadkin_subs_shp_flood_10yr=left_join(yadkin_subs_shp,flood_10yr_projections,by="SUB")
-#glimpse(yadkin_subs_shp_flood_10yr)
+yadkin_subs_shp_hiflow_10yr=left_join(yadkin_subs_shp,hiflow_10yr_projections,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_10yr)
 
 
 # 100 yr flow
@@ -189,24 +189,24 @@ hadley4_5_100yr_flow_sel=hadley4_5_100yr_flow %>% select(RCH,flow_change_perc) %
 # RCH is generally equal to SUB and need SUB column for joining to .shp file
 
 # gather projections
-flood_100yr_projections=bind_rows(miroc8_5_100yr_flow_sel,
+hiflow_100yr_projections=bind_rows(miroc8_5_100yr_flow_sel,
                                   csiro8_5_100yr_flow_sel,
                                   csiro4_5_100yr_flow_sel,
                                   hadley4_5_100yr_flow_sel)
 
 # add to shp file
-yadkin_subs_shp_flood_100yr=left_join(yadkin_subs_shp,flood_100yr_projections,by="SUB")
-#glimpse(yadkin_subs_shp_flood_100yr)
+yadkin_subs_shp_hiflow_100yr=left_join(yadkin_subs_shp,hiflow_100yr_projections,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_100yr)
 
 # ---- 4.3 plot % change in flows on map ----
 
 # 10 yr
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("flood_10yr_change.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_flood_10yr,aes(fill=perc_change)) +
+cairo_pdf("hiflow_10yr_change.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_10yr,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_flood_10yr is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_10yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change 10yr Flow",na.value="grey75",limits=c(-60,60)) +
   theme_bw() #+
   #theme(axis.text = element_text(size = 20)) +
@@ -216,11 +216,11 @@ dev.off()
 
 # 100 yr
 #setwd("/Users/ssaia/Desktop")
-#cairo_pdf("flood_100yr_change.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_flood_100yr,aes(fill=perc_change)) +
+#cairo_pdf("hiflow_100yr_change.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_100yr,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_flood_100yr is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_100yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change 100yr Flow",na.value="grey75") +
   theme_bw()
 #dev.off()
@@ -230,8 +230,8 @@ ggplot(yadkin_subs_shp_flood_100yr,aes(fill=perc_change)) +
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(flood_10yr_projections,"flood_10yr_perc_change.csv")
-#write_csv(flood_10yr_projections,"flood_100yr_perc_change.csv")
+#write_csv(hiflow_10yr_projections,"hiflow_10yr_perc_change.csv")
+#write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
 
 
 # ---- 4.5 export results for kelly ----
@@ -239,45 +239,45 @@ ggplot(yadkin_subs_shp_flood_100yr,aes(fill=perc_change)) +
 # kelly's watersheds (8,10,18,28) and return periods (10,100)
 
 # baseline
-baseline_model_flood_freq_sel=baseline_model_calcs %>% 
+baseline_model_hiflow_freq_sel=baseline_model_calcs %>% 
   filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
   filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
   mutate(dataset="baseline")
 
 # csiro 4.5
-csiro4_5_model_flood_freq_sel=csiro4_5_model_calcs %>% 
+csiro4_5_model_hiflow_freq_sel=csiro4_5_model_calcs %>% 
   filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
   filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
   mutate(dataset="csiro_4_5")
 
 # csiro 8.5
-csiro8_5_model_flood_freq_sel=csiro8_5_model_calcs %>% 
+csiro8_5_model_hiflow_freq_sel=csiro8_5_model_calcs %>% 
   filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
   filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
   mutate(dataset="csiro_8_5")
 
 # hadley 4.5
-hadley4_5_model_flood_freq_sel=hadley4_5_model_calcs %>% 
+hadley4_5_model_hiflow_freq_sel=hadley4_5_model_calcs %>% 
   filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
   filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
   mutate(dataset="hadley_4_5")
 
 # miroc 8.5
-miroc8_5_model_flood_freq_sel=miroc8_5_model_calcs %>% 
+miroc8_5_model_hiflow_freq_sel=miroc8_5_model_calcs %>% 
   filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
   filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
   mutate(dataset="miroc_8_5")
 
 # bind together
-all_flood_freq_models_sel=bind_rows(baseline_model_flood_freq_sel,
-                                csiro4_5_model_flood_freq_sel,
-                                csiro8_5_model_flood_freq_sel,
-                                hadley4_5_model_flood_freq_sel,
-                                miroc8_5_model_flood_freq_sel)
+all_hiflow_freq_models_sel=bind_rows(baseline_model_hiflow_freq_sel,
+                                csiro4_5_model_hiflow_freq_sel,
+                                csiro8_5_model_hiflow_freq_sel,
+                                hadley4_5_model_hiflow_freq_sel,
+                                miroc8_5_model_hiflow_freq_sel)
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(all_flood_freq_models_sel,"model_flood_frequency_results_for_kelly.csv")
+#write_csv(all_hiflow_freq_models_sel,"model_hiflow_frequency_results_for_kelly.csv")
 
 
 # ---- 5.1 plot distributions of outflow for each subbasin by month and by year (Joyplot) ----

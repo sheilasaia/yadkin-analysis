@@ -1,13 +1,13 @@
 # calculate log-Pearson type III frequency factor (kt)
 
-# purpose: for flood frequency and low-flow frequency analysis of streamflow data
+# purpose: for high flow frequency and low flow frequency analysis of streamflow data
 # last updated: 20170912
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
 logpearson3_factor_calc=function(my_probability_list,cskew) {
   # my_probability_list ranges from 0 to 1
-  # represents exceedance or non-exceedance probability (depending on whether you're running flood or low-flow frequency analysis)
+  # represents exceedance or non-exceedance probability (depending on whether you're running high flow or low flow frequency analysis)
   # example: my_probability_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
   # cskew represents the coefficient of skew for data of interest
   

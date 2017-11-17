@@ -1,4 +1,4 @@
-# low-flow log-Pearson type III models (all reaches)
+# high flow and low flow log-Pearson type III models (all reaches)
 
 # purpose: generate model curve for low-flow frequency analysis
 # last updated: 20170912
@@ -7,8 +7,8 @@
 
 model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,kn_table,model_p_list,general_cskew,flow_option) {
   # obs_freq_calcs_all_rchs_df is formatted using obs_freq_calcs_all_rchs()
-  # model_p_list is a list of desired probabilities of exceedance or non-exceedance (for flooding and low-flow analysis, respectively)
-  # flow_option equal to "flood" or "lowflow" depending on which analysis type
+  # model_p_list is a list of desired probabilities of exceedance or non-exceedance (for high flow and low flow analysis, respectively)
+  # flow_option equal to "hiflow" or "lowflow" depending on which analysis type
   
   # calculate number of RCHbasins for for loop
   num_rchs=length(unique(obs_freq_calcs_all_rchs_df$RCH))
@@ -23,9 +23,9 @@ model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,kn_table,model_p_l
   for (i in 1:num_rchs) {
     sel_rch_data=obs_freq_calcs_all_rchs_df %>% filter(RCH==i)
     
-    if (flow_option=="flood") {
+    if (flow_option=="hiflow") {
       # fill data frame
-      model_df_all_temp=model_flood_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list)
+      model_df_all_temp=model_hiflow_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list)
       }
     else { # must be "lowflow"
         

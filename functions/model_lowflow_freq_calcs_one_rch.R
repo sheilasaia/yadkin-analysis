@@ -1,4 +1,4 @@
-# low-flow log-Pearson type III models (one reach)
+# low flow log-Pearson type III models (one reach)
 
 # purpose: generate model curve for low-flow frequency analysis
 # last updated: 20170912
@@ -83,7 +83,7 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
                           data_type=rep("model",num_p))
       
       # model_rank_num=seq(1,num_p,1)
-      # note only difference here between low flow and flood frequency analysis is
+      # note only difference here between low flow and high frequency analysis is
       # return period is based on 1-p (i.e., T=1/(1-p))
       
       return(model_df)

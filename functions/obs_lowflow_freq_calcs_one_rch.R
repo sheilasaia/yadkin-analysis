@@ -1,4 +1,4 @@
-# select observations for low-flow frequency analysis (one reach)
+# select observations for low flow frequency analysis (one reach)
 
 # purpose: prepare SWAT .rch file (observations) for low-flow frequency analysis
 # last updated: 20170912

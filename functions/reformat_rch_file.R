@@ -1,6 +1,6 @@
 # reformat SWAT .rch file for frequency analysis
 
-# purpose: prepare SWAT .rch file (observations) for low-flow frequency analysis
+# purpose: prepare SWAT .rch file (observations) for low flow frequency analysis
 # last updated: 20170912
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
