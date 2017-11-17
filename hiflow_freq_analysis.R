@@ -215,15 +215,15 @@ ggplot(yadkin_subs_shp_hiflow_10yr,aes(fill=perc_change)) +
 dev.off()
 
 # 100 yr
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("hiflow_100yr_change.pdf",width=11,height=8.5)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_100yr_change.pdf",width=11,height=8.5)
 ggplot(yadkin_subs_shp_hiflow_100yr,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_100yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change 100yr Flow",na.value="grey75") +
   theme_bw()
-#dev.off()
+dev.off()
 
 
 # ---- 4.4 export results for sovi analysis ----
@@ -234,59 +234,64 @@ ggplot(yadkin_subs_shp_hiflow_100yr,aes(fill=perc_change)) +
 #write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
 
 
-# ---- 4.5 export results for kelly ----
+# ---- 5.1 calculate % change in number of outlier high flows ----
 
-# kelly's watersheds (8,10,18,28) and return periods (10,100)
+# want to calculate boundary with all data
+# then count number of outlers for each subbasin for the whole period (save year)
 
-# baseline
-baseline_model_hiflow_freq_sel=baseline_model_calcs %>% 
-  filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
-  filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
-  mutate(dataset="baseline")
+baseline_rch_data_sel=baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="baseline_all_data")
+baseline_outlet_rch_data_sel=baseline_rch_data_sel %>% filter(RCH==14)
+median(baseline_outlet_rch_data_sel$FLOW_OUTcms)
+min(baseline_outlet_rch_data_sel$FLOW_OUTcms)
+max(baseline_outlet_rch_data_sel$FLOW_OUTcms)
+#ggplot(baseline_outlet_rch_data_sel,aes(x=dataset,y=FLOW_OUTcms)) +
+#  geom_boxplot() +
+#  ylab("Flow Out (cms)") +
+#  theme_bw()
+# reference: https://www.wikihow.com/Calculate-Outliers
+q1=as.numeric(quantile(baseline_outlet_rch_data_sel$FLOW_OUTcms)[2])
+q2=as.numeric(quantile(baseline_outlet_rch_data_sel$FLOW_OUTcms)[3]) # = median
+q3=as.numeric(quantile(baseline_outlet_rch_data_sel$FLOW_OUTcms)[4])
+qrange=q3-q1
+inner_fence_coeff=1.5
+hibound_minor_outlier=q3+qrange*inner_fence_coeff
+outter_fence_coeff=3
+hibound_major_outlier=q3+qrange*outter_fence_coeff
+# can also use critiera that tests whether the outier changes the mean
+baseline_outlet_rch_data_minor_outliers=baseline_outlet_rch_data_sel %>% 
+  filter(FLOW_OUTcms>hibound_minor_outlier) %>%
+  mutate(dataset="baseline_minor_outliers")
+baseline_outlet_rch_data_major_outliers=baseline_outlet_rch_data_sel %>% 
+  filter(FLOW_OUTcms>hibound_major_outlier) %>%
+  mutate(dataset="baseline_major_outliers")
+baseline_outlet_rch_data_with_outliers=bind_rows(baseline_outlet_rch_data_sel,baseline_outlet_rch_data_minor_outliers,baseline_outlet_rch_data_major_outliers)
+baseline_outlet_rch_data_with_outliers$dataset=factor(baseline_outlet_rch_data_with_outliers$dataset,levels=c("baseline_major_outliers","baseline_minor_outliers","baseline_all_data"))
+ggplot(baseline_outlet_rch_data_with_outliers,aes(x=FLOW_OUTcms,fill=dataset)) +
+  geom_density(alpha=0.75) + #joyplot
+  xlab("Flow Out (cms)") +
+  ylab("Density") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+# i don't think this density overlay is accurate b/c i want it to be on the same density scale
+ggplot(baseline_outlet_rch_data_sel,aes(x=FLOW_OUTcms)) +
+  geom_density(alpha=0.75,fill="grey75") +
+  geom_vline(xintercept=hibound_minor_outlier,color="black",linetype=2) +
+  geom_vline(xintercept=hibound_major_outlier,color="black",linetype=1) +
+  xlab("Flow Out (cms)") +
+  ylab("Density") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
-# csiro 4.5
-csiro4_5_model_hiflow_freq_sel=csiro4_5_model_calcs %>% 
-  filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
-  filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
-  mutate(dataset="csiro_4_5")
 
-# csiro 8.5
-csiro8_5_model_hiflow_freq_sel=csiro8_5_model_calcs %>% 
-  filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
-  filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
-  mutate(dataset="csiro_8_5")
-
-# hadley 4.5
-hadley4_5_model_hiflow_freq_sel=hadley4_5_model_calcs %>% 
-  filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
-  filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
-  mutate(dataset="hadley_4_5")
-
-# miroc 8.5
-miroc8_5_model_hiflow_freq_sel=miroc8_5_model_calcs %>% 
-  filter(RCH==8 | RCH==10 | RCH==18 | RCH==28) %>%
-  filter(round(model_return_period_yr,4)==10 | round(model_return_period_yr,4)==100) %>%
-  mutate(dataset="miroc_8_5")
-
-# bind together
-all_hiflow_freq_models_sel=bind_rows(baseline_model_hiflow_freq_sel,
-                                csiro4_5_model_hiflow_freq_sel,
-                                csiro8_5_model_hiflow_freq_sel,
-                                hadley4_5_model_hiflow_freq_sel,
-                                miroc8_5_model_hiflow_freq_sel)
-
-# export to results
-#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(all_hiflow_freq_models_sel,"model_hiflow_frequency_results_for_kelly.csv")
-
-
-# ---- 5.1 plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
+# ---- 5.x plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
 
 # select outlet data
 baseline_outlet_rch_data=baseline_rch_data %>% filter(RCH==28)
 
 library(ggridges) # https://cran.rstudio.com/web/packages/ggjoy/vignettes/introduction.html
 library(ggbeeswarm)
+
 # by month (all subbasins)
 ggplot(baseline_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
   geom_density_ridges2() + #joyplot
