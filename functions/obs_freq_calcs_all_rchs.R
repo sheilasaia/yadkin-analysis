@@ -12,7 +12,6 @@ obs_freq_calcs_all_rchs=function(rch_data,span_days,flow_option) {
     # flow_option equal to "hiflow" or "lowflow" depending on which analysis type
     
     # load libraries
-    #library(smwrBase) # for movingAve()
     library(tidyverse) # data management
     
     # calculate number of reaches for for loop

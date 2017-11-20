@@ -10,7 +10,7 @@ model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,kn_table,model_p_l
   # model_p_list is a list of desired probabilities of exceedance or non-exceedance (for high flow and low flow analysis, respectively)
   # flow_option equal to "hiflow" or "lowflow" depending on which analysis type
   
-  # calculate number of RCHbasins for for loop
+  # calculate number of subbasins for for loop
   num_rchs=length(unique(obs_freq_calcs_all_rchs_df$RCH))
   
   # make dataframe for all outputs
