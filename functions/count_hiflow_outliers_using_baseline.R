@@ -15,7 +15,7 @@ count_hiflow_outliers_using_baseline=function(baseline_outlier_cutoffs,projectio
   library(tidyverse) # data management
   
   # select necessary info
-  projection_data_sel=projection_data %>% select(RCH,MO,YR,FLOW_OUTcms)
+  projection_data_sel=projection_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms)
   
   # define output data frames
   output_counts_df=data.frame(RCH=as.integer(),
@@ -33,14 +33,14 @@ count_hiflow_outliers_using_baseline=function(baseline_outlier_cutoffs,projectio
   for (i in 1:num_rchs) {
     
     # select one subbasin
-    baseline_df_temp=baseline_outlier_cutoffs %>% filter(RCH==i)
+    baseline_cutoff_df_temp=baseline_outlier_cutoffs %>% filter(RCH==i)
     projection_df_temp=projection_data_sel %>% filter(RCH==i) %>% mutate(dataset="all_data")
     
     # baseline minor outlier cutoff
-    hibound_minor_outlier=baseline_df_temp$minor_outlier_cutoff
+    hibound_minor_outlier=baseline_cutoff_df_temp$minor_outlier_cutoff
     
     # baseline major outlier cutoff
-    hibound_major_outlier=baseline_df_temp$major_outlier_cutoff
+    hibound_major_outlier=baseline_cutoff_df_temp$major_outlier_cutoff
     
     # save projection outlier data
     minor_hiflow_df=projection_rch_data %>% 
@@ -51,7 +51,7 @@ count_hiflow_outliers_using_baseline=function(baseline_outlier_cutoffs,projectio
       mutate(dataset="major_outlier")
     
     # count outliers
-    output_counts_baseline_df_temp=bind_rows(projection_df_temp,minor_hiflow_df,major_hiflow_df) %>% # bind baseline_df_temp too so make sure to get all years
+    output_counts_df_temp=bind_rows(projection_df_temp,minor_hiflow_df,major_hiflow_df) %>% # bind baseline_df_temp too so make sure to get all years
       group_by(RCH,YR) %>% 
       summarize(n_minor_hiflow=sum(dataset=="minor_outlier"),
                                    n_major_hiflow=sum(dataset=="major_outlier"))
@@ -62,8 +62,8 @@ count_hiflow_outliers_using_baseline=function(baseline_outlier_cutoffs,projectio
                                      major_outlier_cutoff=hibound_major_outlier)
     
     # append temp output
-    output_counts_df=bind_rows(output_counts_df,output_counts_baseline_df_temp)
-    output_bounds_df=bind_rows(output_bounds_df,output_bounds_baseline_df_temp)
+    output_counts_df=bind_rows(output_counts_df,output_counts_df_temp)
+    output_bounds_df=bind_rows(output_bounds_df,output_bounds_df_temp)
   }
   
   return(list(output_counts_df,output_bounds_df)) # returns list element with both dataframes
