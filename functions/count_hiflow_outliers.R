@@ -1,6 +1,6 @@
-# find outliers in SWAT .rch file for high flow risk analysis
+# count_hiflow_outliers function
 
-# purpose: find outliers for high flow risk analysis
+# purpose: find outliers in SWAT .rch file for high flow risk analysis
 # last updated: 20171120
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
@@ -17,11 +17,11 @@ count_hiflow_outliers=function(rch_data) {
   # define output data frames
   output_counts_df=data.frame(RCH=as.integer(),
                               YR=as.integer(),
-                              mean_daily_flow_cms=as.numeric(),
-                              median_daily_flow_cms=as.numeric(),
                               n_minor_hiflow=as.integer(),
                               n_major_hiflow=as.integer())
   output_bounds_df=data.frame(RCH=as.integer(),
+                              mean_daily_flow_cms=as.numeric(),
+                              median_daily_flow_cms=as.numeric(),
                               minor_outlier_cutoff=as.numeric(),
                               major_outlier_cutoff=as.numeric())
   
@@ -43,11 +43,11 @@ count_hiflow_outliers=function(rch_data) {
     
     # minor outlier cutoff
     inner_fence_coeff=1.5 # within +3 standard deviations
-    hibound_minor_outlier=q3+qrange*inner_fence_coeff
+    hibound_minor_outlier=q3+interquartile_range*inner_fence_coeff
     
     # major outlier cutoff
     outter_fence_coeff=3 # within +6 stanadard deviations
-    hibound_major_outlier=q3+qrange*outter_fence_coeff
+    hibound_major_outlier=q3+interquartile_range*outter_fence_coeff
     
     # save outlier data
     minor_hiflow_df=temp_df %>% 
