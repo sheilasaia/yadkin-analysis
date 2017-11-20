@@ -23,6 +23,7 @@ source(paste0(functions_path,"model_hiflow_freq_calcs_one_rch.R")) # determines 
 source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines flow model for all reaches
 source(paste0(functions_path,"flow_change.R")) # determines % change in flows for a given return period
 source(paste0(functions_path,"count_hiflow_outliers.R")) # counts number of minor and major outliers for risk analysis
+source(paste0(functions_path,"count_hiflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
 source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
 
 # download kn_table for outlier analysis
@@ -236,35 +237,53 @@ dev.off()
 #write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
 
 
-# ---- 5.1 calculate outlier cutoffs and number of outlier high flows ----
+# ---- 5.1 calculate outlier cutoffs and number of outlier high flows (not using and using basesline) ----
 
 # baseline
 baseline_outlier_calcs=count_hiflow_outliers(baseline_rch_data)
 baseline_outlier_counts=baseline_outlier_calcs[[1]]
 baseline_outlier_cutoffs=baseline_outlier_calcs[[2]]
 
+# baseline (only 21 most recent years)
+baseline_rch_data_21yrs=baseline_rch_data %>% filter(YR>1987)
+baseline_outlier_calcs_21yrs=count_hiflow_outliers(baseline_rch_data_21yrs)
+baseline_outlier_counts_21yrs=baseline_outlier_calcs_21yrs[[1]]
+baseline_outlier_cutoffs_21yrs=baseline_outlier_calcs_21yrs[[2]]
+
 # miroc 8.5
-miroc8_5_outlier_calcs=count_hiflow_outliers(miroc8_5_rch_data)
+miroc8_5_outlier_calcs=count_hiflow_outliers(miroc8_5_rch_data) # find outliers using cutoff from data itself
 miroc8_5_outlier_counts=miroc8_5_outlier_calcs[[1]]
 miroc8_5_outlier_cutoffs=miroc8_5_outlier_calcs[[2]]
+miroc8_5_outlier_calcs_using_baseline=count_hiflow_outliers_using_baseline(baseline_outlier_cutoffs_21yrs,miroc8_5_rch_data) # find outliers using baseline cutoff
+miroc8_5_outlier_counts_using_baseline=miroc8_5_outlier_calcs_using_baseline[[1]]
+miroc8_5_outlier_cutoffs_using_baseline=miroc8_5_outlier_calcs_using_baseline[[2]]
 
 # csiro 8.5
 csiro8_5_outlier_calcs=count_hiflow_outliers(csiro8_5_rch_data)
 csiro8_5_outlier_counts=csiro8_5_outlier_calcs[[1]]
 csiro8_5_outlier_cutoffs=csiro8_5_outlier_calcs[[2]]
+csiro8_5_outlier_calcs_using_baseline=count_hiflow_outliers_using_baseline(baseline_outlier_cutoffs_21yrs,csiro8_5_rch_data) # find outliers using baseline cutoff
+csiro8_5_outlier_counts_using_baseline=csiro8_5_outlier_calcs_using_baseline[[1]]
+csiro8_5_outlier_cutoffs_using_baseline=csiro8_5_outlier_calcs_using_baseline[[2]]
 
 # csiro 4.5
 csiro4_5_outlier_calcs=count_hiflow_outliers(csiro4_5_rch_data)
 csiro4_5_outlier_counts=csiro4_5_outlier_calcs[[1]]
 csiro4_5_outlier_cutoffs=csiro4_5_outlier_calcs[[2]]
+csiro4_5_outlier_calcs_using_baseline=count_hiflow_outliers_using_baseline(baseline_outlier_cutoffs_21yrs,csiro4_5_rch_data) # find outliers using baseline cutoff
+csiro4_5_outlier_counts_using_baseline=csiro4_5_outlier_calcs_using_baseline[[1]]
+csiro4_5_outlier_cutoffs_using_baseline=csiro4_5_outlier_calcs_using_baseline[[2]]
 
 # hadley 4.5
 hadley4_5_outlier_calcs=count_hiflow_outliers(hadley4_5_rch_data)
 hadley4_5_outlier_counts=hadley4_5_outlier_calcs[[1]]
 hadley4_5_outlier_cutoffs=hadley4_5_outlier_calcs[[2]]
+hadley4_5_outlier_calcs_using_baseline=count_hiflow_outliers_using_baseline(baseline_outlier_cutoffs_21yrs,hadley4_5_rch_data) # find outliers using baseline cutoff
+hadley4_5_outlier_counts_using_baseline=hadley4_5_outlier_calcs_using_baseline[[1]]
+hadley4_5_outlier_cutoffs_using_baseline=hadley4_5_outlier_calcs_using_baseline[[2]]
 
 
-# ---- 5.2 calculate % change in outlier high flows ----
+# ---- 5.2 calculate % change in outlier high flows (not using baseline) ----
 
 # sum outlier counts data by subbasin
 baseline_outlier_counts_sum=baseline_outlier_counts %>% filter(YR>1987) %>% 
@@ -301,7 +320,45 @@ yadkin_subs_shp_hiflow_outliers=left_join(yadkin_subs_shp,hiflow_outlier_change_
 #glimpse(yadkin_subs_shp_hiflow_outliers)
 
 
-# ---- 5.3 plot % change in outlier high flows on map ----
+# ---- 5.3 calculate % change in outlier high flows (using baseline) ----
+
+# sum outlier counts data by subbasin
+baseline_outlier_counts_sum_2=baseline_outlier_counts_21yrs %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="baseline")
+# baseline has to be cut down to most recent time period (1988-2008) to timeframe compares to projections
+miroc8_5_outlier_counts_using_baseline_sum=miroc8_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="miroc8_5")
+csiro8_5_outlier_counts_using_baseline_sum=csiro8_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro8_5")
+csiro4_5_outlier_counts_using_baseline_sum=csiro4_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro4_5")
+hadley4_5_outlier_counts_using_baseline_sum=hadley4_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="hadley4_5")
+
+# calculate % change 
+miroc8_5_hiflow_outlier_change_using_baseline=outlier_change(baseline_outlier_counts_sum_2,miroc8_5_outlier_counts_using_baseline_sum)
+csiro8_5_hiflow_outlier_change_using_baseline=outlier_change(baseline_outlier_counts_sum_2,csiro8_5_outlier_counts_using_baseline_sum)
+csiro4_5_hiflow_outlier_change_using_baseline=outlier_change(baseline_outlier_counts_sum_2,csiro4_5_outlier_counts_using_baseline_sum)
+hadley4_5_hiflow_outlier_change_using_baseline=outlier_change(baseline_outlier_counts_sum_2,hadley4_5_outlier_counts_using_baseline_sum)
+
+# bind rows
+hiflow_outlier_change_using_baseline_projections=bind_rows(miroc8_5_hiflow_outlier_change_using_baseline,
+                                                           csiro8_5_hiflow_outlier_change_using_baseline,
+                                                           csiro4_5_hiflow_outlier_change_using_baseline,
+                                                           hadley4_5_hiflow_outlier_change_using_baseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+
+# add to shp file
+yadkin_subs_shp_hiflow_outliers_using_baseline=left_join(yadkin_subs_shp,hiflow_outlier_change_using_baseline_projections,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_outliers_using_baseline)
+
+
+
+# ---- 5.4 plot % change in outlier high flows on map (not using baseline) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
@@ -332,7 +389,38 @@ ggplot(yadkin_subs_shp_hiflow_outliers,aes(fill=major_outlier_perc_change)) +
 dev.off()
 
 
-# ---- 5.4 plot flow distrubutions and cutoffs for outlet ----
+# ---- 5.5 plot % change in outlier high flows on map (using baseline) ----
+
+# minor outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_minor_outlier_change_using_baseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_baseline,aes(fill=minor_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_baseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Minor High Flow Outliers",na.value="grey75") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# major outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_major_outlier_change_using_baseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_baseline,aes(fill=major_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_baseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Major High Flow Outliers",na.value="grey75") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+
+# ---- 5.x plot flow distrubutions and cutoffs for outlet ----
 
 
 
