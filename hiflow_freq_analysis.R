@@ -22,6 +22,8 @@ source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observation
 source(paste0(functions_path,"model_hiflow_freq_calcs_one_rch.R")) # determines high flow model for one reach
 source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines flow model for all reaches
 source(paste0(functions_path,"flow_change.R")) # determines % change in flows for a given return period
+source(paste0(functions_path,"count_hiflow_outliers.R")) # counts number of minor and major outliers for risk analysis
+source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -134,21 +136,21 @@ ggplot() +
 
 # ---- 4.1 calculate % change in flows ----
 
-# csiro 4.5
-csiro4_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro4_5_model_calcs)
-csiro4_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro4_5_model_calcs)
+# miroc 8.5
+miroc8_5_10yr_flow=flow_change(10,baseline_model_calcs,miroc8_5_model_calcs)
+miroc8_5_100yr_flow=flow_change(100,baseline_model_calcs,miroc8_5_model_calcs)
 
 # csiro 8.5
 csiro8_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro8_5_model_calcs)
 csiro8_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro8_5_model_calcs)
 
+# csiro 4.5
+csiro4_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro4_5_model_calcs)
+csiro4_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro4_5_model_calcs)
+
 # hadley 4.5
 hadley4_5_10yr_flow=flow_change(10,baseline_model_calcs,hadley4_5_model_calcs)
 hadley4_5_100yr_flow=flow_change(100,baseline_model_calcs,hadley4_5_model_calcs)
-
-# miroc 8.5
-miroc8_5_10yr_flow=flow_change(10,baseline_model_calcs,miroc8_5_model_calcs)
-miroc8_5_100yr_flow=flow_change(100,baseline_model_calcs,miroc8_5_model_calcs)
 
 
 # ---- 4.2 reformat calculations for plots ----
@@ -234,63 +236,144 @@ dev.off()
 #write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
 
 
-# ---- 5.1 calculate % change in number of outlier high flows ----
+# ---- 5.1 calculate outlier cutoffs and number of outlier high flows ----
 
-# want to calculate boundary with all data
-# then count number of outlers for each subbasin for the whole period (save year)
+# baseline
+baseline_outlier_calcs=count_hiflow_outliers(baseline_rch_data)
+baseline_outlier_counts=baseline_outlier_calcs[[1]]
+baseline_outlier_cutoffs=baseline_outlier_calcs[[2]]
 
-baseline_rch_data_sel=baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="baseline_all_data")
-baseline_outlet_rch_data_sel=baseline_rch_data_sel %>% filter(RCH==14)
-median(baseline_outlet_rch_data_sel$FLOW_OUTcms)
-min(baseline_outlet_rch_data_sel$FLOW_OUTcms)
-max(baseline_outlet_rch_data_sel$FLOW_OUTcms)
-#ggplot(baseline_outlet_rch_data_sel,aes(x=dataset,y=FLOW_OUTcms)) +
-#  geom_boxplot() +
-#  ylab("Flow Out (cms)") +
-#  theme_bw()
-# reference: https://www.wikihow.com/Calculate-Outliers
-q1=as.numeric(quantile(baseline_outlet_rch_data_sel$FLOW_OUTcms)[2])
-q2=as.numeric(quantile(baseline_outlet_rch_data_sel$FLOW_OUTcms)[3]) # = median
-q3=as.numeric(quantile(baseline_outlet_rch_data_sel$FLOW_OUTcms)[4])
-qrange=q3-q1
-inner_fence_coeff=1.5
-hibound_minor_outlier=q3+qrange*inner_fence_coeff
-outter_fence_coeff=3
-hibound_major_outlier=q3+qrange*outter_fence_coeff
-# can also use critiera that tests whether the outier changes the mean
-baseline_outlet_rch_data_minor_outliers=baseline_outlet_rch_data_sel %>% 
-  filter(FLOW_OUTcms>hibound_minor_outlier) %>%
-  mutate(dataset="baseline_minor_outliers")
-baseline_outlet_rch_data_major_outliers=baseline_outlet_rch_data_sel %>% 
-  filter(FLOW_OUTcms>hibound_major_outlier) %>%
-  mutate(dataset="baseline_major_outliers")
-baseline_outlet_rch_data_with_outliers=bind_rows(baseline_outlet_rch_data_sel,baseline_outlet_rch_data_minor_outliers,baseline_outlet_rch_data_major_outliers)
-baseline_outlet_rch_data_with_outliers$dataset=factor(baseline_outlet_rch_data_with_outliers$dataset,levels=c("baseline_major_outliers","baseline_minor_outliers","baseline_all_data"))
-ggplot(baseline_outlet_rch_data_with_outliers,aes(x=FLOW_OUTcms,fill=dataset)) +
+# miroc 8.5
+miroc8_5_outlier_calcs=count_hiflow_outliers(miroc8_5_rch_data)
+miroc8_5_outlier_counts=miroc8_5_outlier_calcs[[1]]
+miroc8_5_outlier_cutoffs=miroc8_5_outlier_calcs[[2]]
+
+# csiro 8.5
+csiro8_5_outlier_calcs=count_hiflow_outliers(csiro8_5_rch_data)
+csiro8_5_outlier_counts=csiro8_5_outlier_calcs[[1]]
+csiro8_5_outlier_cutoffs=csiro8_5_outlier_calcs[[2]]
+
+# csiro 4.5
+csiro4_5_outlier_calcs=count_hiflow_outliers(csiro4_5_rch_data)
+csiro4_5_outlier_counts=csiro4_5_outlier_calcs[[1]]
+csiro4_5_outlier_cutoffs=csiro4_5_outlier_calcs[[2]]
+
+# hadley 4.5
+hadley4_5_outlier_calcs=count_hiflow_outliers(hadley4_5_rch_data)
+hadley4_5_outlier_counts=hadley4_5_outlier_calcs[[1]]
+hadley4_5_outlier_cutoffs=hadley4_5_outlier_calcs[[2]]
+
+
+# ---- 5.2 calculate % change in outlier high flows ----
+
+# sum outlier counts data by subbasin
+baseline_outlier_counts_sum=baseline_outlier_counts %>% filter(YR>1987) %>% 
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="baseline")
+# baseline has to be cut down to most recent time period (1988-2008) to timeframe compares to projections
+miroc8_5_outlier_counts_sum=miroc8_5_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="miroc8_5")
+csiro8_5_outlier_counts_sum=csiro8_5_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro8_5")
+csiro4_5_outlier_counts_sum=csiro4_5_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro4_5")
+hadley4_5_outlier_counts_sum=hadley4_5_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="hadley4_5")
+
+# calculate % change 
+miroc8_5_hiflow_outlier_change=outlier_change(baseline_outlier_counts_sum,miroc8_5_outlier_counts_sum)
+csiro8_5_hiflow_outlier_change=outlier_change(baseline_outlier_counts_sum,csiro8_5_outlier_counts_sum)
+csiro4_5_hiflow_outlier_change=outlier_change(baseline_outlier_counts_sum,csiro4_5_outlier_counts_sum)
+hadley4_5_hiflow_outlier_change=outlier_change(baseline_outlier_counts_sum,hadley4_5_outlier_counts_sum)
+
+# bind rows
+hiflow_outlier_change_projections=bind_rows(miroc8_5_hiflow_outlier_change,
+                                           csiro8_5_hiflow_outlier_change,
+                                           csiro4_5_hiflow_outlier_change,
+                                           hadley4_5_hiflow_outlier_change) %>% mutate(SUB=RCH) %>% select(-RCH)
+
+# add to shp file
+yadkin_subs_shp_hiflow_outliers=left_join(yadkin_subs_shp,hiflow_outlier_change_projections,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_outliers)
+
+
+# ---- 5.3 plot % change in outlier high flows on map ----
+
+# minor outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_minor_outlier_change.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers,aes(fill=minor_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Minor High Flow Outliers",na.value="grey75",limits=c(-10,120)) +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# major outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_major_outlier_change.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers,aes(fill=major_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Major High Flow Outliers",na.value="grey75",limits=c(-20,300)) +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+
+# ---- 5.4 plot flow distrubutions and cutoffs for outlet ----
+
+
+
+
+blah$dataset=factor(blah$dataset,levels=c("major_outlier","minor_outlier","all_data"))
+ggplot(blah,aes(x=FLOW_OUTcms,fill=dataset)) +
   geom_density(alpha=0.75) + #joyplot
   xlab("Flow Out (cms)") +
   ylab("Density") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 # i don't think this density overlay is accurate b/c i want it to be on the same density scale
-ggplot(baseline_outlet_rch_data_sel,aes(x=FLOW_OUTcms)) +
+ggplot(blah,aes(x=FLOW_OUTcms)) +
   geom_density(alpha=0.75,fill="grey75") +
-  geom_vline(xintercept=hibound_minor_outlier,color="black",linetype=2) +
-  geom_vline(xintercept=hibound_major_outlier,color="black",linetype=1) +
+  #geom_vline(xintercept=hibound_minor_outlier,color="black",linetype=2) +
+  #geom_vline(xintercept=hibound_major_outlier,color="black",linetype=1) +
+  facet_wrap(~RCH,ncol=7,nrow=4) +
   xlab("Flow Out (cms)") +
   ylab("Density") +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+ggplot(baseline_outlet_outlier_summary,aes(x=YR,y=n_minor_hiflow)) +
+  geom_bar(stat="identity") +
+  #facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("Year") +
+  ylab("Number of Minor Outlier High Flows (1.5xIQR)") +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 
 # ---- 5.x plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
 
+
+
+
 # select outlet data
 baseline_outlet_rch_data=baseline_rch_data %>% filter(RCH==28)
 
 library(ggridges) # https://cran.rstudio.com/web/packages/ggjoy/vignettes/introduction.html
-library(ggbeeswarm)
+#library(ggbeeswarm)
 
 # by month (all subbasins)
 ggplot(baseline_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
@@ -347,18 +430,22 @@ hadley4_5_rch_data_sel=hadley4_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
 miroc8_5_rch_data_sel=miroc8_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
   mutate(dataset="miroc8_5")
 all_rch_data=bind_rows(baseline_rch_data_sel,csiro4_5_rch_data_sel,csiro8_5_rch_data_sel,hadley4_5_rch_data_sel,miroc8_5_rch_data_sel)
+all_rch_data$dataset=factor(all_rch_data$dataset,levels=c("baseline","miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+ggplot(all_rch_data,aes(x=FLOW_OUTcms,y=dataset,fill=dataset)) +
+  geom_density_ridges2(alpha=0.5) + #joyplot
+  facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("Flow Out (cms)") + 
+  ylab("Dataset") +
+  xlim(0,1000) +
+  theme_bw()
+
+
+#
 all_outlet_rch_data=all_rch_data %>% filter(RCH==28)
 ggplot(all_outlet_rch_data,aes(x=FLOW_OUTcms,y=as.factor(MO),fill=dataset)) +
   geom_density_ridges2(alpha=0.5) + #joyplot
   xlab("Flow Out (cms)") + 
   ylab("Month") +
-  xlim(0,1000) +
-  theme_bw()
-
-ggplot(all_outlet_rch_data,aes(x=FLOW_OUTcms,y=dataset)) +
-  geom_density_ridges2(alpha=0.5, fill="lightgrey") + #joyplot
-  xlab("Flow Out (cms)") + 
-  ylab("Dataset") +
   xlim(0,1000) +
   theme_bw()
 
