@@ -43,10 +43,10 @@ count_hiflow_outliers_using_baseline=function(baseline_outlier_cutoffs,projectio
     hibound_major_outlier=baseline_cutoff_df_temp$major_outlier_cutoff
     
     # save projection outlier data
-    minor_hiflow_df=projection_rch_data %>% 
+    minor_hiflow_df=projection_df_temp %>% 
       filter(FLOW_OUTcms>hibound_minor_outlier) %>%
       mutate(dataset="minor_outlier")
-    major_hiflow_df=projection_rch_data %>% 
+    major_hiflow_df=projection_df_temp %>% 
       filter(FLOW_OUTcms>hibound_major_outlier) %>%
       mutate(dataset="major_outlier")
     
@@ -54,7 +54,7 @@ count_hiflow_outliers_using_baseline=function(baseline_outlier_cutoffs,projectio
     output_counts_df_temp=bind_rows(projection_df_temp,minor_hiflow_df,major_hiflow_df) %>% # bind baseline_df_temp too so make sure to get all years
       group_by(RCH,YR) %>% 
       summarize(n_minor_hiflow=sum(dataset=="minor_outlier"),
-                                   n_major_hiflow=sum(dataset=="major_outlier"))
+                n_major_hiflow=sum(dataset=="major_outlier"))
     
     # format bounds information (this should be the same as for baseline_outlier_cutoffs)
     output_bounds_df_temp=data.frame(RCH=i,
