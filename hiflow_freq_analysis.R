@@ -207,7 +207,7 @@ ggplot() +
         panel.background = element_blank())
 
 
-# ---- 4.1 calculate % change in flows (no backcast) ----
+# ---- 4.1 calculate % change in flows for given return period (no backcast) ----
 
 # miroc 8.5
 miroc8_5_10yr_flow=flow_change(10,baseline_model_calcs,miroc8_5_model_calcs)
@@ -309,7 +309,7 @@ dev.off()
 #write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
 
 
-# ---- 4.5 calculate % change in flows (backcast) ----
+# ---- 4.5 calculate % change in flows for given return period (backcast) ----
 
 # using baseline backcast for each projection rather than true baseline
 
@@ -407,7 +407,7 @@ ggplot(yadkin_subs_shp_hiflow_100yr_bc,aes(fill=perc_change)) +
 dev.off()
 
 
-# ---- 4.4 export results for sovi analysis (no backcast) ----
+# ---- 4.8 export results for sovi analysis (no backcast) ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -653,6 +653,22 @@ ggplot(my_sub_baseline_to_projections,aes(x=FLOW_OUTcms,y=dataset,fill=datatype)
   geom_density_ridges2() +
   xlab("Flow Out (cms)") + 
   ylab("Dataset") +
+  xlim(0,1000) +
+  theme_bw()
+
+# one dataset one sub (by month)
+blah=my_sub_baseline_to_projections %>% filter(dataset=="miroc_baseline")
+ggplot(blah,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
+  geom_density_ridges2() +
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
+  xlim(0,1000) +
+  theme_bw()
+blah2=my_sub_baseline_to_projections %>% filter(dataset=="miroc8_5")
+ggplot(blah2,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
+  geom_density_ridges2() +
+  xlab("Flow Out (cms)") + 
+  ylab("Month") +
   xlim(0,1000) +
   theme_bw()
 
