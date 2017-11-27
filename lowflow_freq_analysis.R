@@ -11,6 +11,7 @@ library(tidyverse)
 #devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
 #library(ggplot2)
 library(sf)
+library(ggridges) # joyplots - https://cran.rstudio.com/web/packages/ggjoy/vignettes/introduction.html
 
 # load home-made functions 
 functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
@@ -22,33 +23,42 @@ source(paste0(functions_path,"obs_freq_calcs_all_rchs.R")) # selects observation
 source(paste0(functions_path,"model_lowflow_freq_calcs_one_rch.R")) # determines lowflow model for one reach
 source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines flow model for all reaches
 source(paste0(functions_path,"flow_change.R")) # determines % change in flows for a given return period
+source(paste0(functions_path,"count_lowflow_outliers.R")) # counts number of minor and major outliers for risk analysis
+source(paste0(functions_path,"count_lowflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
+#source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
 kn_table=read_csv("kn_table_appendix4_usgsbulletin17b.csv",col_names=TRUE)
 
 # set directory and load data
-# baseline data & river network
+# baseline climate+landuse change data (not backcasted) & river network
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/baseline82-08_daily")
 baseline_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
-#yadkin_net_data_raw=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
+#baseline_sub_raw_data=read_table2("output.sub",col_names=FALSE,skip=9) # baseline .sub file from SWAT
+#yadkin_net_raw_data=read_csv("rch_table.txt",col_names=TRUE) # wdreach.shp attribute table from ArcSWAT
 
-# miroc rcp 8.5 data
+# baseline climate+landuse change data (backcasted)
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/backcast_results")
+csiro_baseline_rch_raw_data=read_table2("CSIRO-output.rch",col_names=FALSE,skip=9) # baseline backcast .rch file from SWAT
+miroc_baseline_rch_raw_data=read_table2("MIROC-output.rch",col_names=FALSE,skip=9) # baseline backcast .rch file from SWAT
+hadley_baseline_rch_raw_data=read_table2("Hadley-output.rch",col_names=FALSE,skip=9) # baseline backcast .rch file from SWAT
+
+# miroc rcp 8.5 climate+landuse change data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/A_MIROC8.5")
 miroc8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
-# csiro rcp 8.5 data
+# csiro rcp 8.5 climate+landuse change data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/B_CSIRO85")
 csiro8_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
-# csiro rcp 8.5 data
+# csiro rcp 8.5 climate+landuse change data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/C_CSIRO45")
 csiro4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
 
-# hadley rcp 4.5 data
+# hadley rcp 4.5 climate+landuse change data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/D_Hadley45")
 hadley4_5_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9)
-
 
 # gis data
 # set directory and load county bounds (.shp file)
@@ -65,8 +75,15 @@ attributes(yadkin_subs_shp_geom) # this has an epsg code!
 
 # ---- 2 reformat data ----
 
+# reach file (.rch) 
 # baseline data
-baseline_rch_data=reformat_rch_file(baseline_rch_raw_data)
+baseline_rch_data=reformat_rch_file(baseline_rch_raw_data) %>% 
+  filter(YR<2003) # not backcast
+# take only 21 most recent years (1982-2002) so there's same data record length as projection
+miroc_baseline_rch_data=reformat_rch_file(miroc_baseline_rch_raw_data) # backcast
+csiro_baseline_rch_data=reformat_rch_file(csiro_baseline_rch_raw_data) # backcast
+hadley_baseline_rch_data=reformat_rch_file(hadley_baseline_rch_raw_data) # backcast
+# all climate model baseline backcasts are from 1982-2002
 
 # miroc 8.5 data
 miroc8_5_rch_data=reformat_rch_file(miroc8_5_rch_raw_data)
@@ -80,62 +97,106 @@ csiro4_5_rch_data=reformat_rch_file(csiro4_5_rch_raw_data)
 # hadley 4.5 data
 hadley4_5_rch_data=reformat_rch_file(hadley4_5_rch_raw_data)
 
-# gis data
-yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin) # add SUB column to .shp file
+
+# shape file (.shp)
+# add SUB column to .shp file
+yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
 
 # ---- 3.1 calculate obs and model ouptuts for each subbasin ----
 
-#baseline_rch_data_test=baseline_rch_data %>% filter(RCH<11)
-#baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(baseline_rch_data_test,span_days=1,flow_option="lowflow")
-baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,span_days=1,flow_option="lowflow")
+# baseline (not backcast)
+baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,1,"lowflow")
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-baseline_model_lowflow_calcs=model_freq_calcs_all_rchs(baseline_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,flow_option="lowflow")
+baseline_model_lowflow_calcs=model_freq_calcs_all_rchs(baseline_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
 
-miroc8_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(miroc8_5_rch_data,span_days=1,flow_option="lowflow")
+# miroc baseline backcast
+miroc_baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(miroc_baseline_rch_data,1,"lowflow")
+my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+miroc_baseline_model_lowflow_calcs=model_freq_calcs_all_rchs(miroc_baseline_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
+
+# mirco 8.5 projection
+miroc8_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(miroc8_5_rch_data,1,"lowflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-miroc8_5_model_lowflow_calcs=model_freq_calcs_all_rchs(miroc8_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,flow_option="lowflow")
+miroc8_5_model_lowflow_calcs=model_freq_calcs_all_rchs(miroc8_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
 
-csiro8_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(csiro8_5_rch_data,span_days=1,flow_option="lowflow")
+# csiro baseline backcast (for comparison with csiro 8.5 and 4.5 projections)
+csiro_baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(csiro_baseline_rch_data,1,"lowflow")
+my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+csiro_baseline_model_lowflow_calcs=model_freq_calcs_all_rchs(csiro_baseline_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
+
+# csiro 8.5 projection
+csiro8_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(csiro8_5_rch_data,1,"lowflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-csiro8_5_model_lowflow_calcs=model_freq_calcs_all_rchs(csiro8_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,flow_option="lowflow")
+csiro8_5_model_lowflow_calcs=model_freq_calcs_all_rchs(csiro8_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
 
-csiro4_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(csiro4_5_rch_data,span_days=1,flow_option="lowflow")
+# cisro 4.5 projection
+csiro4_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(csiro4_5_rch_data,1,"lowflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-csiro4_5_model_lowflow_calcs=model_freq_calcs_all_rchs(csiro4_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,flow_option="lowflow")
+csiro4_5_model_lowflow_calcs=model_freq_calcs_all_rchs(csiro4_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
 
-hadley4_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(hadley4_5_rch_data,span_days=1,flow_option="lowflow")
+# hadley baseline backcast
+hadley_baseline_obs_lowflow_calcs=obs_freq_calcs_all_rchs(hadley_baseline_rch_data,1,"lowflow")
+my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+hadley_baseline_model_lowflow_calcs=model_freq_calcs_all_rchs(hadley_baseline_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
+
+# hadley 4.5 projection
+hadley4_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(hadley4_5_rch_data,1,"lowflow")
 #my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
-hadley4_5_model_lowflow_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,flow_option="lowflow")
+hadley4_5_model_lowflow_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
 
 
-# ---- 3.2 plot results for each subbasin ----
+# ---- 3.2 plot low flow freq. baselines for each subbasin (not backcast and backcast comparison) ----
 
 # omit zero values from observations
 baseline_obs_lowflow_calcs_nozeros=baseline_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
+miroc_baseline_obs_lowflow_calcs_nozeros=miroc_baseline_obs_lowflow_calcs %>% filter(obs_min_flow_log_cms_adj>0)
 miroc8_5_obs_lowflow_calcs_nozeros=miroc8_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
+csiro_baseline_obs_lowflow_calcs_nozeros=csiro_baseline_obs_lowflow_calcs %>% filter(obs_min_flow_log_cms_adj>0)
 csiro8_5_obs_lowflow_calcs_nozeros=csiro8_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
 csiro4_5_obs_lowflow_calcs_nozeros=csiro4_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
+hadley_baseline_obs_lowflow_calcs_nozeros=hadley_baseline_obs_lowflow_calcs %>% filter(obs_min_flow_log_cms_adj>0)
 hadley4_5_obs_lowflow_calcs_nozeros=hadley4_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
 
 # omit NAs from model outputs
-baseline_model_lowflow_calcs_noNAa=baseline_model_lowflow_calcs %>% na.omit()
-miroc8_5_model_lowflow_calcs_noNAa=miroc8_5_model_lowflow_calcs %>% na.omit()
-csiro8_5_model_lowflow_calcs_noNAa=csiro8_5_model_lowflow_calcs %>% na.omit()
-csiro4_5_model_lowflow_calcs_noNAa=csiro4_5_model_lowflow_calcs %>% na.omit()
-hadley4_5_model_lowflow_calcs_noNAa=hadley4_5_model_lowflow_calcs %>% na.omit()
+baseline_model_lowflow_calcs_noNA=baseline_model_lowflow_calcs %>% na.omit()
+miroc_baseline_model_lowflow_calcs_noNA=miroc_baseline_model_lowflow_calcs %>% na.omit()
+miroc8_5_model_lowflow_calcs_noNA=miroc8_5_model_lowflow_calcs %>% na.omit()
+csiro_baseline_model_lowflow_calcs_noNA=csiro_baseline_model_lowflow_calcs %>% na.omit()
+csiro8_5_model_lowflow_calcs_noNA=csiro8_5_model_lowflow_calcs %>% na.omit()
+csiro4_5_model_lowflow_calcs_noNA=csiro4_5_model_lowflow_calcs %>% na.omit()
+hadley_baseline_model_lowflow_calcs_noNA=hadley_baseline_model_lowflow_calcs %>% na.omit()
+hadley4_5_model_lowflow_calcs_noNA=hadley4_5_model_lowflow_calcs %>% na.omit()
+
+# plot observations and baseline models together
+ggplot() +
+  geom_point(aes(x=obs_return_period_yr,y=obs_min_flow_cms_adj),baseline_obs_lowflow_calcs_nozeros,size=1) +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_lowflow_calcs_noNA,color="black",linetype=1) +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc_baseline_model_lowflow_calcs_noNA,color="green",linetype=1) +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro_baseline_model_lowflow_calcs_noNA,color="red",linetype=1) +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley_baseline_model_lowflow_calcs_noNA,color="blue",linetype=1) +
+  facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("Return Period (yr)") + 
+  ylab("Flow Out (cms)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank())
+
+# STOPPED HERE 11/27/2017
+
+# ---- 3.3 plot high flow freq. results for each subbasin (not backcast) ----
 
 # plot observations and models together (not log transformed)
 #setwd("/Users/ssaia/Desktop")
 #cairo_pdf("lowflow_models.pdf",width=11,height=8.5)
 ggplot() +
   geom_point(aes(x=obs_return_period_yr,y=obs_min_flow_cms_adj),baseline_obs_lowflow_calcs_nozeros,size=1) +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_lowflow_calcs_noNAa,color="black") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_lowflow_calcs_noNAa,color="green") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro8_5_model_lowflow_calcs_noNAa,color="red") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro4_5_model_lowflow_calcs_noNAa,color="orange") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley4_5_model_lowflow_calcs_noNAa,color="blue") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_lowflow_calcs_noNA,color="black") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_lowflow_calcs_noNA,color="green") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro8_5_model_lowflow_calcs_noNA,color="red") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro4_5_model_lowflow_calcs_noNA,color="orange") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley4_5_model_lowflow_calcs_noNA,color="blue") +
   facet_wrap(~RCH,ncol=7,nrow=4) +
   xlab("Return Period (yr)") + 
   ylab("Flow Out (cms)") +
@@ -149,11 +210,11 @@ ggplot() +
 #cairo_pdf("lowflow_models_log.pdf",width=11,height=8.5)
 ggplot() +
   geom_point(aes(x=obs_return_period_yr,y=obs_min_flow_log_cms_adj),baseline_obs_lowflow_calcs_nozeros,size=1) +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),baseline_model_lowflow_calcs_noNAa,color="black") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),miroc8_5_model_lowflow_calcs_noNAa,color="green") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),csiro8_5_model_lowflow_calcs_noNAa,color="red") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),csiro4_5_model_lowflow_calcs_noNAa,color="orange") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),hadley4_5_model_lowflow_calcs_noNAa,color="blue") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),baseline_model_lowflow_calcs_noNA,color="black") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),miroc8_5_model_lowflow_calcs_noNA,color="green") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),csiro8_5_model_lowflow_calcs_noNA,color="red") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),csiro4_5_model_lowflow_calcs_noNA,color="orange") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_log_cms),hadley4_5_model_lowflow_calcs_noNA,color="blue") +
   facet_wrap(~RCH,ncol=7,nrow=4) +
   xlab("return Period (yr)") + 
   ylab("Flow Out (log cms)") +
