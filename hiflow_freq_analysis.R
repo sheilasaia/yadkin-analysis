@@ -111,44 +111,39 @@ yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
 
 # ---- 3.1 calculate obs and model ouptuts for each subbasin ----
 
+# probability list
+my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
+
 # baseline (not backcast)
 baseline_obs_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,1,"hiflow")
-my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 baseline_model_calcs=model_freq_calcs_all_rchs(baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # miroc baseline backcast
 miroc_baseline_obs_calcs=obs_freq_calcs_all_rchs(miroc_baseline_rch_data,1,"hiflow")
-my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 miroc_baseline_model_calcs=model_freq_calcs_all_rchs(miroc_baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # mirco 8.5 projection
 miroc8_5_obs_calcs=obs_freq_calcs_all_rchs(miroc8_5_rch_data,1,"hiflow")
-#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 miroc8_5_model_calcs=model_freq_calcs_all_rchs(miroc8_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # csiro baseline backcast (for comparison with csiro 8.5 and 4.5 projections)
 csiro_baseline_obs_calcs=obs_freq_calcs_all_rchs(csiro_baseline_rch_data,1,"hiflow")
-my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 csiro_baseline_model_calcs=model_freq_calcs_all_rchs(csiro_baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # csiro 8.5 projection
 csiro8_5_obs_calcs=obs_freq_calcs_all_rchs(csiro8_5_rch_data,1,"hiflow")
-#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 csiro8_5_model_calcs=model_freq_calcs_all_rchs(csiro8_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # cisro 4.5 projection
 csiro4_5_obs_calcs=obs_freq_calcs_all_rchs(csiro4_5_rch_data,1,"hiflow")
-#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 csiro4_5_model_calcs=model_freq_calcs_all_rchs(csiro4_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # hadley baseline backcast
 hadley_baseline_obs_calcs=obs_freq_calcs_all_rchs(hadley_baseline_rch_data,1,"hiflow")
-my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 hadley_baseline_model_calcs=model_freq_calcs_all_rchs(hadley_baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # hadley 4.5 projection
 hadley4_5_obs_calcs=obs_freq_calcs_all_rchs(hadley4_5_rch_data,1,"hiflow")
-#my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 hadley4_5_model_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 
@@ -407,7 +402,7 @@ ggplot(yadkin_subs_shp_hiflow_100yr_bc,aes(fill=perc_change)) +
 dev.off()
 
 
-# ---- 4.8 export results for sovi analysis (no backcast) ----
+# ---- 4.8 export results for sovi analysis (backcast) ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -644,7 +639,9 @@ ggplot(all_rch_data_sel,aes(x=FLOW_OUTcms,y=dataset,fill=dataset)) +
   xlab("Flow Out (cms)") + 
   ylab("Dataset") +
   xlim(0,1000) +
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank())
 
 # all datasets one sub
 my_sub=28
@@ -654,7 +651,9 @@ ggplot(my_sub_baseline_to_projections,aes(x=FLOW_OUTcms,y=dataset,fill=datatype)
   xlab("Flow Out (cms)") + 
   ylab("Dataset") +
   xlim(0,1000) +
-  theme_bw()
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank())
 
 # one dataset one sub (by month)
 blah=my_sub_baseline_to_projections %>% filter(dataset=="miroc_baseline")
