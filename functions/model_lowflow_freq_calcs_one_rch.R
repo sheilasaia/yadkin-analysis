@@ -82,10 +82,18 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
                           model_flow_cms=model_flow_unlog,
                           data_type=rep("model",num_p))
       
+      # redefine flows beyond max observation to NA (by 5 cms)
+      obs_max_flow_plus_buffer=round(max(obs_lowflow_freq_calcs_one_rch_df$obs_min_flow_cms_adj))+5 # add buffer of 5 cms (arbitrarily chosen)
+      if (sum(as.numeric(model_df$model_flow_cms>obs_max_flow_plus_buffer))>1) { # if there are entries to change, then change them
+        model_df$model_flow_cms[model_df$model_flow_cms>obs_max_flow_plus_buffer]=as.numeric("NA")
+        model_df$model_flow_log_cms[is.na(model_df$model_flow_cms)==TRUE]=as.numeric("NA")
+      }
+      
       # model_rank_num=seq(1,num_p,1)
       # note only difference here between low flow and high frequency analysis is
       # return period is based on 1-p (i.e., T=1/(1-p))
       
+      # return output
       return(model_df)
     }
     else {
@@ -169,9 +177,15 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
                           model_return_period_yr=1/(1-model_p_list),
                           model_flow_log_cms=syn_mean+syn_stdev*fin_kt,
                           model_flow_cms=exp(syn_mean+syn_stdev*fin_kt),
-                          data_type=rep("model",num_p)) %>%
-        filter(model_flow_cms<(round(max(obs_lowflow_freq_calcs_one_rch_df$obs_min_flow_cms_adj))+5)) # remove flow estimations beyond observations
+                          data_type=rep("model",num_p))
       
+      # redefine flows beyond observation to NA (by 5 cms)
+      obs_max_flow_plus_buffer=round(max(obs_lowflow_freq_calcs_one_rch_df$obs_min_flow_cms_adj))+5 # add buffer of 5 cms (arbitrarily chosen)
+      if (sum(as.numeric(model_df$model_flow_cms>obs_max_flow_plus_buffer))>1) { # if there are entries to change, then change them
+        model_df$model_flow_cms[model_df$model_flow_cms>obs_max_flow_plus_buffer]=as.numeric("NA")
+        model_df$model_flow_log_cms[is.na(model_df$model_flow_cms)==TRUE]=as.numeric("NA")
+      }
+    
       # return output
       return(model_df)
     }
@@ -186,6 +200,7 @@ model_lowflow_freq_calcs_one_rch=function(obs_lowflow_freq_calcs_one_rch_df,kn_t
                         model_flow_log_cms=rep(as.numeric("NA"),num_p),
                         model_flow_cms=rep(as.numeric("NA"),num_p),
                         data_type=rep("model",num_p))
+    # return output
     return(model_df)
   }
 }
