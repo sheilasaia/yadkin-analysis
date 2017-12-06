@@ -25,7 +25,7 @@ source(paste0(functions_path,"model_freq_calcs_all_rchs.R")) # determines flow m
 source(paste0(functions_path,"flow_change.R")) # determines % change in flows for a given return period
 source(paste0(functions_path,"count_lowflow_outliers.R")) # counts number of minor and major outliers for risk analysis
 source(paste0(functions_path,"count_lowflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
-#source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
+source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -179,7 +179,7 @@ ggplot() +
         panel.background = element_blank())
 
 
-# ---- 3.3 plot high flow freq. results for each subbasin (not backcast) ----
+# ---- 3.3 plot low flow freq. results for each subbasin (not backcast) ----
 
 # plot observations and models together (not log transformed)
 #setwd("/Users/ssaia/Desktop")
@@ -222,7 +222,7 @@ ggplot() +
 #dev.off()
 
 
-# ---- 3.4 plot high flow freq. results for each subbasin (backcast) ----
+# ---- 3.4 plot low flow freq. results for each subbasin (backcast) ----
 
 # plot observations and models together (not log transformed)
 ggplot() +
@@ -563,10 +563,345 @@ ggplot(all_models_zero_counts,aes(x=dataset,y=cum_num_zero_entries_by_dataset,fi
 #write_csv(all_models_zero_counts,"zero_flow_counts.csv")
 
 
-# STOPPED HERE 11/28/2017
+# ---- 6.1 check normality of data (baseline backcast) ----
+
+# make new data frame without zero values (b/c just looking at actual flows)
+# miroc baseline (backcast)
+#miroc_baseline_rch_data_log_no_zeros=miroc_baseline_rch_data %>%
+#  mutate(FLOW_OUTcms_no_zeros=replace(FLOW_OUTcms,FLOW_OUTcms==0,as.numeric("NA")),
+#         log_FLOW_OUTcms=log(FLOW_OUTcms),
+#         log_FLOW_OUTcms_no_zeros=replace(log(FLOW_OUTcms),log(FLOW_OUTcms)=="-Inf",as.numeric("NA"))) %>% na.omit()
+miroc_baseline_rch_data_log_no_zeros=miroc_baseline_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
+
+# csiro baseline (backcast)
+csiro_baseline_rch_data_log_no_zeros=csiro_baseline_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
+
+# hadley baseline (backcast)
+hadley_baseline_rch_data_log_no_zeros=hadley_baseline_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
+
+# miroc 8.5
+miroc8_5_rch_data_log_no_zeros=miroc8_5_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
+
+# csiro 8.5
+csiro8_5_rch_data_log_no_zeros=csiro8_5_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
+
+# csiro 4.5
+csiro4_5_rch_data_log_no_zeros=csiro4_5_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
+
+# hadley 4.5
+hadley4_5_rch_data_log_no_zeros=hadley4_5_rch_data %>%
+  filter(FLOW_OUTcms!=0) %>%
+  mutate(log_FLOW_OUTcms=log(FLOW_OUTcms))
 
 
-# ---- 6.1 calculate lowflow counts below threshold ----
+# plot unlogged data
+# miroc baseline (backcast)
+ggplot(miroc_baseline_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(miroc_baseline_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+# csiro baseline (backcast)
+ggplot(csiro_baseline_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(csiro_baseline_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+# csiro baseline (backcast)
+ggplot(hadley_baseline_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(hadley_baseline_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+# miroc 8.5
+ggplot(miroc8_5_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(miroc8_5_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+# csiro 8.5
+ggplot(csiro8_5_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(csiro8_5_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+# csiro 4.5
+ggplot(csiro4_5_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(csiro4_5_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+# hadley 4.5
+ggplot(hadley4_5_rch_data_log_no_zeros,aes(sample=FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(hadley4_5_rch_data_log_no_zeros,aes(x=FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# qqplot tails are off line, hist looks non-normal
+
+
+# plot logged data
+# miroc baseline (backcast)
+ggplot(miroc_baseline_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(miroc_baseline_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# csiro baseline (backcast)
+ggplot(csiro_baseline_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(csiro_baseline_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# hadley baseline (backcast)
+ggplot(hadley_baseline_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(hadley_baseline_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# miroc 8.5
+ggplot(miroc8_5_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(miroc8_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# csiro 8.5
+ggplot(csiro8_5_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(csiro8_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# csiro 4.5
+ggplot(csiro4_5_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(csiro4_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# hadley 4.5
+ggplot(hadley4_5_rch_data_log_no_zeros,aes(sample=log_FLOW_OUTcms)) +
+  geom_qq(size=1) +
+  geom_qq_line() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+ggplot(hadley4_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
+  geom_histogram() +
+  facet_wrap(~RCH,ncol=7,nrow=4)
+# looks normal in qqplot and hist
+
+# in conclusion...need to log transform FLOW_OUTcms data for outlier calcs
+
+
+# ---- 6.2 calculate outlier cutoffs and number of outlier low flows (not using and using backcast baseline) ----
+
+# baseline (not backcast)
+#baseline_outlier_calcs=count_lowflow_outliers(baseline_rch_data)
+#baseline_outlier_counts=baseline_outlier_calcs[[1]]
+#baseline_outlier_cutoffs=baseline_outlier_calcs[[2]]
+
+# miroc baseline (backcast)
+miroc_baseline_outlier_calcs=count_lowflow_outliers(miroc_baseline_rch_data)
+miroc_baseline_outlier_counts=miroc_baseline_outlier_calcs[[1]]
+miroc_baseline_outlier_cutoffs=miroc_baseline_outlier_calcs[[2]]
+
+# csiro baseline (backcast)
+csiro_baseline_outlier_calcs=count_lowflow_outliers(csiro_baseline_rch_data)
+csiro_baseline_outlier_counts=csiro_baseline_outlier_calcs[[1]]
+csiro_baseline_outlier_cutoffs=csiro_baseline_outlier_calcs[[2]]
+
+# hadley baseline (backcast)
+hadley_baseline_outlier_calcs=count_lowflow_outliers(hadley_baseline_rch_data)
+hadley_baseline_outlier_counts=hadley_baseline_outlier_calcs[[1]]
+hadley_baseline_outlier_cutoffs=hadley_baseline_outlier_calcs[[2]]
+
+# miroc 8.5
+#miroc8_5_outlier_calcs=count_lowflow_outliers(miroc8_5_rch_data) # find outliers using cutoff from data itself
+#miroc8_5_outlier_counts=miroc8_5_outlier_calcs[[1]]
+#miroc8_5_outlier_cutoffs=miroc8_5_outlier_calcs[[2]]
+miroc8_5_outlier_calcs_using_baseline=count_lowflow_outliers_using_baseline(miroc_baseline_outlier_cutoffs,miroc8_5_rch_data) # find outliers using backcast baseline cutoff
+miroc8_5_outlier_counts_using_baseline=miroc8_5_outlier_calcs_using_baseline[[1]]
+miroc8_5_outlier_cutoffs_using_baseline=miroc8_5_outlier_calcs_using_baseline[[2]]
+
+# csiro 8.5
+#csiro8_5_outlier_calcs=count_lowflow_outliers(csiro8_5_rch_data)
+#csiro8_5_outlier_counts=csiro8_5_outlier_calcs[[1]]
+#csiro8_5_outlier_cutoffs=csiro8_5_outlier_calcs[[2]]
+csiro8_5_outlier_calcs_using_baseline=count_lowflow_outliers_using_baseline(csiro_baseline_outlier_cutoffs,csiro8_5_rch_data) # find outliers using backcast baseline cutoff
+csiro8_5_outlier_counts_using_baseline=csiro8_5_outlier_calcs_using_baseline[[1]]
+csiro8_5_outlier_cutoffs_using_baseline=csiro8_5_outlier_calcs_using_baseline[[2]]
+
+# csiro 4.5
+#csiro4_5_outlier_calcs=count_lowflow_outliers(csiro4_5_rch_data)
+#csiro4_5_outlier_counts=csiro4_5_outlier_calcs[[1]]
+#csiro4_5_outlier_cutoffs=csiro4_5_outlier_calcs[[2]]
+csiro4_5_outlier_calcs_using_baseline=count_lowflow_outliers_using_baseline(csiro_baseline_outlier_cutoffs,csiro4_5_rch_data) # find outliers using backcast baseline cutoff
+csiro4_5_outlier_counts_using_baseline=csiro4_5_outlier_calcs_using_baseline[[1]]
+csiro4_5_outlier_cutoffs_using_baseline=csiro4_5_outlier_calcs_using_baseline[[2]]
+
+# hadley 4.5
+#hadley4_5_outlier_calcs=count_lowflow_outliers(hadley4_5_rch_data)
+#hadley4_5_outlier_counts=hadley4_5_outlier_calcs[[1]]
+#hadley4_5_outlier_cutoffs=hadley4_5_outlier_calcs[[2]]
+hadley4_5_outlier_calcs_using_baseline=count_lowflow_outliers_using_baseline(hadley_baseline_outlier_cutoffs,hadley4_5_rch_data) # find outliers using backcast baseline cutoff
+hadley4_5_outlier_counts_using_baseline=hadley4_5_outlier_calcs_using_baseline[[1]]
+hadley4_5_outlier_cutoffs_using_baseline=hadley4_5_outlier_calcs_using_baseline[[2]]
+
+
+# ---- 6.3 calculate % change in outlier low flows (using backcast baseline) ----
+
+# sum outlier counts data by subbasin
+# backcast baselines
+miroc_baseline_outlier_counts_sum=miroc_baseline_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="baseline")
+csiro_baseline_outlier_counts_sum=csiro_baseline_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="baseline")
+hadley_baseline_outlier_counts_sum=hadley_baseline_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="baseline")
+# projections
+miroc8_5_outlier_counts_using_baseline_sum=miroc8_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="miroc8_5")
+csiro8_5_outlier_counts_using_baseline_sum=csiro8_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="csiro8_5")
+csiro4_5_outlier_counts_using_baseline_sum=csiro4_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="csiro4_5")
+hadley4_5_outlier_counts_using_baseline_sum=hadley4_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="hadley4_5")
+
+# calculate % change 
+miroc8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
+csiro8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
+csiro4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
+hadley4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
+
+# bind rows
+lowflow_outlier_change_using_bcbaseline_projections=bind_rows(miroc8_5_lowflow_outlier_change_using_bcbaseline,
+                                                              csiro8_5_lowflow_outlier_change_using_bcbaseline,
+                                                              csiro4_5_lowflow_outlier_change_using_bcbaseline,
+                                                              hadley4_5_lowflow_outlier_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+
+# add to shp file
+yadkin_subs_shp_lowflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,lowflow_outlier_change_using_bcbaseline_projections,by="SUB")
+#glimpse(yadkin_subs_shp_lowflow_outliers_using_bcbaseline)
+
+
+# ---- 6.4 plot boxplots for low flow outlier context (using backcast baseline) ----
+
+ggplot(lowflow_outlier_change_using_bcbaseline_projections) +
+  geom_point(aes(x=dataset,y=minor_outlier_perc_change))
+
+# ---- 6.5 plot % change in outlier low flows on map (using backcast baseline) ----
+
+# minor outliers (up to 500% change)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lowflow_minor_outlier_change_using_baseline_bc_low.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Minor Low Flow Outliers",limits=c(-100,500),na.value="grey75",high="darkred",low="darkblue") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# minor outliers (beyond 500% change)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lowflow_minor_outlier_change_using_baseline_bc_up.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Minor Low Flow Outliers",na.value="grey75",limits=c(600,5000),high="darkred",low="white") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# major outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lowflow_major_outlier_change_using_baseline_bc.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=major_outlier_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Major Low Flow Outliers",na.value="grey75",limits=c(-10,160)) +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+
+# ---- 7.1 calculate lowflow counts below threshold ----
 
 # find days where flow_out equals lowflow
 my_threshold=0.01 # in cms
@@ -632,7 +967,7 @@ all_models_lowflow_thresh_counts=bind_rows(baseline_lowflow_thresh_counts,
                                        hadley4_5_lowflow_thresh_counts)
 
 
-# ---- 6.2 plot lowflow counts vs time (bar plot) ----
+# ---- 7.2 plot lowflow counts vs time (bar plot) ----
 
 # baseline
 ggplot(baseline_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
@@ -679,7 +1014,7 @@ ggplot(hadley4_5_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
 
 
-# ---- 6.3 plot lowflow counts in space (map) ----
+# ---- 7.3 plot lowflow counts in space (map) ----
 
 # select only necessary down data
 all_models_lowflow_thresh_counts_sum=all_models_lowflow_thresh_counts %>% 
