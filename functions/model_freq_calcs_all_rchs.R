@@ -26,12 +26,17 @@ model_freq_calcs_all_rchs=function(obs_freq_calcs_all_rchs_df,kn_table,model_p_l
     if (flow_option=="hiflow") {
       # fill data frame
       model_df_all_temp=model_hiflow_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list)
-      }
-    else { # must be "lowflow"
+    }
+    
+    else if (flow_option=="lowflow") {
         
       # fill data frame
       model_df_all_temp=model_lowflow_freq_calcs_one_rch(sel_rch_data,kn_table,model_p_list,general_cskew)
-      }
+    }
+    
+    else {
+      print("The flow_otion used was not valid.")
+    }
     
     model_df_all_rchs=bind_rows(model_df_all_rchs,model_df_all_temp)
     }
