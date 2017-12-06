@@ -20,8 +20,8 @@ count_lowflow_outliers=function(rch_data) {
                               n_minor_lowflow=as.integer(),
                               n_major_lowflow=as.integer())
   output_bounds_df=data.frame(RCH=as.integer(),
-                              mean_daily_flow_cms=as.numeric(),
-                              median_daily_flow_cms=as.numeric(),
+                              mean_daily_flow_cms_no_zeros=as.numeric(),
+                              median_daily_flow_cms_no_zeros=as.numeric(),
                               minor_outlier_cutoff=as.numeric(),
                               major_outlier_cutoff=as.numeric())
   
@@ -35,32 +35,30 @@ count_lowflow_outliers=function(rch_data) {
     temp_df=rch_data_sel %>% filter(RCH==i) %>%
       mutate(dataset="all_data")
     
+    temp_log_df=temp_df %>%
+      filter(FLOW_OUTcms!=0) %>% # select only non-zero values only for quartile cacls
+      mutate(log_FLOW_OUTcms=log(FLOW_OUTcms)) # take log (to ensure normality)
+    
     # calculate q's and interquartile range
-    q1=as.numeric(quantile(temp_df$FLOW_OUTcms)[2])
-    q2=as.numeric(quantile(temp_df$FLOW_OUTcms)[3]) # = median
-    q3=as.numeric(quantile(temp_df$FLOW_OUTcms)[4])
+    q1=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[2])
+    q2=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[3]) # = median
+    q3=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[4])
     interquartile_range=q3-q1
     
     # minor outlier cutoff
     inner_fence_coeff=1.5 # within +3 standard deviations
-    lowbound_minor_outlier=q3-interquartile_range*inner_fence_coeff
-    if (lowbound_minor_outlier<0) { # flow cannot be negative
-      lowbound_minor_outlier=0
-    }
+    lowbound_minor_outlier=q1-interquartile_range*inner_fence_coeff
     
     # major outlier cutoff
     outter_fence_coeff=3 # within +6 stanadard deviations
-    lowbound_major_outlier=q3-interquartile_range*outter_fence_coeff
-    if (lowbound_major_outlier<0) { # flow cannot be negative
-      lowbound_major_outlier=0
-    }
+    lowbound_major_outlier=q1-interquartile_range*outter_fence_coeff
     
-    # save outlier data
-    minor_lowflow_df=temp_df %>% 
-      filter(FLOW_OUTcms<=lowbound_minor_outlier) %>%
+    # save outlier data (use full dataset - i.e., one with zeros)
+    minor_lowflow_df=temp_df %>%
+      filter(FLOW_OUTcms<=exp(lowbound_minor_outlier)) %>%
       mutate(dataset="minor_outlier")
     major_lowflow_df=temp_df %>% 
-      filter(FLOW_OUTcms<=lowbound_major_outlier) %>%
+      filter(FLOW_OUTcms<=exp(lowbound_major_outlier)) %>%
       mutate(dataset="major_outlier")
     
     # count outliers
@@ -71,10 +69,10 @@ count_lowflow_outliers=function(rch_data) {
     
     # format bounds information
     output_bounds_temp_df=data.frame(RCH=i,
-                                     mean_daily_flow_cms=mean(temp_df$FLOW_OUTcms),
-                                     median_daily_flow_cms=q2,
-                                     minor_outlier_cutoff=lowbound_minor_outlier,
-                                     major_outlier_cutoff=lowbound_major_outlier)
+                                     mean_daily_flow_cms_no_zeros=exp(mean(temp_log_df$FLOW_OUTcms)),
+                                     median_daily_flow_cms_no_zeros=exp(q2),
+                                     minor_outlier_cutoff=exp(lowbound_minor_outlier),
+                                     major_outlier_cutoff=exp(lowbound_major_outlier))
     
     # append temp output
     output_counts_df=bind_rows(output_counts_df,output_counts_temp_df)
