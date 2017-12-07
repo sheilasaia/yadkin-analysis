@@ -41,7 +41,7 @@ count_lowflow_outliers=function(rch_data) {
     
     # calculate q's and interquartile range
     q1=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[2])
-    q2=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[3]) # = median
+    q2=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[3]) # = log of median
     q3=as.numeric(quantile(temp_log_df$log_FLOW_OUTcms)[4])
     interquartile_range=q3-q1
     
@@ -65,7 +65,7 @@ count_lowflow_outliers=function(rch_data) {
     output_counts_temp_df=bind_rows(temp_df,minor_lowflow_df,major_lowflow_df) %>% # bind temp_df too so make sure to get all years
       group_by(RCH,YR) %>% 
       summarize(n_minor_lowflow=sum(dataset=="minor_outlier"),
-                                   n_major_lowflow=sum(dataset=="major_outlier"))
+                n_major_lowflow=sum(dataset=="major_outlier"))
     
     # format bounds information
     output_bounds_temp_df=data.frame(RCH=i,
