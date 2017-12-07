@@ -17,6 +17,10 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
   num_rchs=length(unique(baseline_outlier_counts_sum$RCH))
   dataset_temp=unique(projection_outlier_counts_sum$dataset)
   change_df=data.frame(RCH=as.integer(),
+                       baseline_sum_n_minor_hiflow=as.numeric(),
+                       projection_sum_n_minor_hiflow=as.numeric(),
+                       baseline_sum_n_major_hiflow=as.numeric(),
+                       projection_sum_n_major_hiflow=as.numeric(),
                        minor_outlier_perc_change=as.numeric(),
                        major_outlier_perc_change=as.numeric(),
                        dataset=as.character())
@@ -36,11 +40,26 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
       projection_major_temp=projection_rch_temp$sum_major_hiflow
       
       # find percent change
-      minor_outlier_perc_change_temp=((projection_minor_temp-baseline_minor_temp)/baseline_minor_temp)*100
-      major_outlier_perc_change_temp=((projection_major_temp-baseline_major_temp)/baseline_major_temp)*100
+      if (baseline_minor_temp==0) { # if starting point is zero then can't calculate percent change
+        minor_outlier_perc_change_temp=as.numeric("NA")
+      }
+      else {
+        minor_outlier_perc_change_temp=((projection_minor_temp-baseline_minor_temp)/baseline_minor_temp)*100
+      }
       
+      if (baseline_major_temp==0) { # if starting point is zero then can't calculate percent change
+        major_outlier_perc_change_temp=as.numeric("NA")
+      }
+      else {
+        major_outlier_perc_change_temp=((projection_major_temp-baseline_major_temp)/baseline_major_temp)*100
+      }
+
       # save results to data frame
       change_df_temp=data.frame(RCH=i,
+                                baseline_sum_n_minor_hiflow=baseline_minor_temp,
+                                projection_sum_n_minor_hiflow=projection_minor_temp,
+                                baseline_sum_n_major_hiflow=baseline_major_temp,
+                                projection_sum_n_major_hiflow=projection_major_temp,
                                 minor_outlier_perc_change=minor_outlier_perc_change_temp,
                                 major_outlier_perc_change=major_outlier_perc_change_temp,
                                 dataset=dataset_temp)
@@ -77,6 +96,10 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
       
       # save results to data frame
       change_df_temp=data.frame(RCH=i,
+                                baseline_sum_n_minor_hiflow=baseline_minor_temp,
+                                projection_sum_n_minor_hiflow=projection_minor_temp,
+                                baseline_sum_n_major_hiflow=baseline_major_temp,
+                                projection_sum_n_major_hiflow=projection_major_temp,
                                 minor_outlier_perc_change=minor_outlier_perc_change_temp,
                                 major_outlier_perc_change=major_outlier_perc_change_temp,
                                 dataset=dataset_temp)
