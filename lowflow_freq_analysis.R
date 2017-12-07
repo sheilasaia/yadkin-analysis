@@ -850,6 +850,9 @@ lowflow_outlier_change_using_bcbaseline_projections=bind_rows(miroc8_5_lowflow_o
 yadkin_subs_shp_lowflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,lowflow_outlier_change_using_bcbaseline_projections,by="SUB")
 #glimpse(yadkin_subs_shp_lowflow_outliers_using_bcbaseline)
 
+# adjust levels
+yadkin_subs_shp_lowflow_outliers_using_bcbaseline$dataset=factor(yadkin_subs_shp_lowflow_outliers_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
 
 # ---- 6.4 plot boxplots for low flow outlier context (using backcast baseline) ----
 
