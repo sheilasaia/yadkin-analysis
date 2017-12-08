@@ -541,10 +541,11 @@ yadkin_subs_shp_zero_flow_using_bcbaseline=left_join(yadkin_subs_shp,zero_flow_c
 #glimpse(yadkin_subs_shp_zero_flow_using_bcbaseline)
 
 # adjust levels
+zero_flow_change_using_bcbaseline_projections$dataset=factor(zero_flow_change_using_bcbaseline_projections$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 yadkin_subs_shp_zero_flow_using_bcbaseline$dataset=factor(yadkin_subs_shp_zero_flow_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 5.3 plot number of low flow frequency obs = zero by subbasin (not backcast and backcast) ----
+# ---- 5.3 plot number of zero flows by subbasin (not backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("zero_flow_counts_by_sub.pdf",width=11,height=8.5)
@@ -562,7 +563,7 @@ ggplot(all_models_zero_counts_by_sub,aes(x=dataset,y=sum_n_zero_entries,fill=dat
 dev.off()
 
 
-# ---- 5.4 plot number of low flow frequency obs = zero by dataset (sum of subbasins, not backcast and backcast) ----
+# ---- 5.4 plot number of zero flows by dataset (sum of subbasins, not backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("zero_flow_counts_by_dataset.pdf",width=11,height=8.5)
@@ -579,7 +580,7 @@ ggplot(all_models_zero_counts,aes(x=dataset,y=sum_n_zero_entries_by_dataset,fill
 dev.off()
 
 
-# ---- 5.5 plot % change in outlier low flows on map (using backcast baseline) ----
+# ---- 5.5 plot % change in zero flows on map (using backcast baseline) ----
 
 # results below 500 % change
 setwd("/Users/ssaia/Desktop")
@@ -609,7 +610,37 @@ ggplot(yadkin_subs_shp_zero_flow_using_bcbaseline,aes(fill=zero_flow_perc_change
 #theme(text = element_text(size = 20))
 dev.off()
 
-# ---- 5.5 export results ----
+
+# ---- 5.6 plot variation in zero flows (using backcast baseline) ----
+
+contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+  distinct() %>% mutate(SUB=RCH) %>% select(-RCH)
+
+blah=zero_flow_change_using_bcbaseline_projections %>%
+  left_join(contributing_areas,contributing_areas,by='SUB')
+  
+zero_flow_variation_by_sub=zero_flow_change_using_bcbaseline_projections %>%
+  group_by(SUB) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_zero_entries),
+                              projection_n_zero_entries_sd=sd(projection_sum_n_zero_entries))
+
+zero_flow_variation_by_dataset=zero_flow_change_using_bcbaseline_projections %>%
+  group_by(dataset) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_zero_entries),
+                              projection_n_zero_entries_sd=sd(projection_sum_n_zero_entries))
+
+ggplot(data=blah) +
+  geom_point(aes(x=AREAkm2,y=baseline_sum_n_zero_entries,color=dataset),size=2)
+
+ggplot(data=blah) +
+  geom_boxplot(aes(x=as.factor(AREAkm2),y=baseline_sum_n_zero_entries))
+
+
+ggplot(data=blah) +
+  geom_point(aes(x=AREAkm2,y=projection_sum_n_zero_entries,color=dataset),size=2)
+
+ggplot(data=blah) +
+  geom_boxplot(aes(x=as.factor(AREAkm2),y=projection_sum_n_zero_entries))
+
+# ---- 5.7 export results ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
