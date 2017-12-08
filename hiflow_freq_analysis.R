@@ -813,6 +813,12 @@ ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_p
 #theme(text = element_text(size = 20))
 dev.off()
 
+# ---- 5.6 export results from outlier analysis ----
+
+# export to results
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(hiflow_outlier_change_using_bcbaseline_projections,"hiflow_outlier_calcs_data.csv")
+
 
 # ---- 6.1 plot flow distributions ----
 
