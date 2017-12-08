@@ -26,6 +26,7 @@ source(paste0(functions_path,"flow_change.R")) # determines % change in flows fo
 source(paste0(functions_path,"count_lowflow_outliers.R")) # counts number of minor and major outliers for risk analysis
 source(paste0(functions_path,"count_lowflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
 source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
+source(paste0(functions_path,"zero_flow_change.R")) # determines % change in zero flows
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -448,62 +449,62 @@ dev.off()
 #write_csv(lowflow_10yr_projections_bc,"lowflow_100yr_perc_change_bc.csv")
 
 
-# ---- 5.1 count number of low flow frequency obs = zero ----
+# ---- 5.1 count number of flows that equal zero ----
 
 # baseline (not backcast)
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
-baseline_obs_zero_counts=baseline_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+baseline_obs_zero_counts=baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(n_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="baseline",datatype="baseline")
 
 # miroc baseline backcast
 miroc_baseline_num_yrs=length(unique(miroc_baseline_rch_data$YR))
-miroc_baseline_obs_zero_counts=miroc_baseline_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+miroc_baseline_obs_zero_counts=miroc_baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="miroc_baseline",datatype="baseline")
 
 # miroc 8.5
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR))
-miroc8_5_obs_zero_counts=miroc8_5_obs_lowflow_calcs %>% 
-  group_by(RCH) %>% summarize(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+miroc8_5_obs_zero_counts=miroc8_5_rch_data %>% 
+  group_by(RCH) %>% summarize(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="miroc8_5",datatype="projection")
 
 # csiro baseline backcast (for comparison with csiro 8.5 and 4.5 projections)
 csiro_baseline_num_yrs=length(unique(csiro_baseline_rch_data$YR))
-csiro_baseline_obs_zero_counts=csiro_baseline_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+csiro_baseline_obs_zero_counts=csiro_baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="csiro_baseline",datatype="baseline")
 
 # csiro 8.5
 csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
-csiro8_5_obs_zero_counts=csiro8_5_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+csiro8_5_obs_zero_counts=csiro8_5_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="csiro8_5",datatype="projection")
 
 # csiro 4.5
 csiro4_5_num_yrs=length(unique(csiro4_5_rch_data$YR))
-csiro4_5_obs_zero_counts=csiro4_5_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+csiro4_5_obs_zero_counts=csiro4_5_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="csiro4_5",datatype="projection")
 
 # hadley baseline backcast
 hadley_baseline_num_yrs=length(unique(hadley_baseline_rch_data$YR))
-hadley_baseline_obs_zero_counts=hadley_baseline_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+hadley_baseline_obs_zero_counts=hadley_baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="hadley_baseline",datatype="baseline")
 
 # hadley 4.5
 hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
-hadley4_5_obs_zero_counts=hadley4_5_obs_lowflow_calcs %>%
-  group_by(RCH) %>% summarise(cum_num_zero_entries=sum(obs_min_flow_cms_adj==0)) %>%
-  mutate(num_zero_entries_per_yr=cum_num_zero_entries/baseline_num_yrs,
+hadley4_5_obs_zero_counts=hadley4_5_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
          dataset="hadley4_5",datatype="projection")
 
 # bind all together for each subbasin
@@ -518,45 +519,97 @@ all_models_zero_counts_by_sub=bind_rows(baseline_obs_zero_counts,
 
 # summarize for each dataset (sum of subbasins)
 all_models_zero_counts=all_models_zero_counts_by_sub %>% group_by(dataset,datatype) %>%
-  summarize(cum_num_zero_entries_by_dataset=sum(cum_num_zero_entries))
+  summarize(sum_n_zero_entries_by_dataset=sum(sum_n_zero_entries))
 
 
-# ---- 5.2 plot number of low flow frequency obs = zero by subbasin (not backcast and backcast) ----
+# ---- 5.2 calculate % change in number of zero flows (using backcast baseline) ----
 
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("zero_flow_counts_by_sub.pdf",width=11,height=8.5)
+# calculate % change 
+miroc8_5_zero_flow_change_using_bcbaseline=zero_flow_change(miroc_baseline_obs_zero_counts,miroc8_5_obs_zero_counts)
+csiro8_5_zero_flow_change_using_bcbaseline=zero_flow_change(csiro_baseline_obs_zero_counts,csiro8_5_obs_zero_counts)
+csiro4_5_zero_flow_change_using_bcbaseline=zero_flow_change(csiro_baseline_obs_zero_counts,csiro4_5_obs_zero_counts)
+hadley4_5_zero_flow_change_using_bcbaseline=zero_flow_change(hadley_baseline_obs_zero_counts,hadley4_5_obs_zero_counts)
+
+# bind rows
+zero_flow_change_using_bcbaseline_projections=bind_rows(miroc8_5_zero_flow_change_using_bcbaseline,
+                                                        csiro8_5_zero_flow_change_using_bcbaseline,
+                                                        csiro4_5_zero_flow_change_using_bcbaseline,
+                                                        hadley4_5_zero_flow_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+
+# add to shp file
+yadkin_subs_shp_zero_flow_using_bcbaseline=left_join(yadkin_subs_shp,zero_flow_change_using_bcbaseline_projections,by="SUB")
+#glimpse(yadkin_subs_shp_zero_flow_using_bcbaseline)
+
+# adjust levels
+yadkin_subs_shp_zero_flow_using_bcbaseline$dataset=factor(yadkin_subs_shp_zero_flow_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
+
+# ---- 5.3 plot number of low flow frequency obs = zero by subbasin (not backcast and backcast) ----
+
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("zero_flow_counts_by_sub.pdf",width=11,height=8.5)
 all_models_zero_counts_by_sub$dataset=factor(all_models_zero_counts_by_sub$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
 all_models_zero_counts_by_sub$datatype=factor(all_models_zero_counts_by_sub$datatype,levels=c("baseline","projection"))
-ggplot(all_models_zero_counts_by_sub,aes(x=dataset,y=cum_num_zero_entries,fill=datatype)) +
+ggplot(all_models_zero_counts_by_sub,aes(x=dataset,y=sum_n_zero_entries,fill=datatype)) +
   geom_col() +
   facet_wrap(~RCH,ncol=7,nrow=4) +
   xlab("") +
-  ylab("Cumulative Number of Zero Flow Events") +
+  ylab("Number of Zero Flow Events") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank())
-#dev.off()
+dev.off()
 
 
-# ---- 5.3 plot number of low flow frequency obs = zero by dataset (sum of subbasins, not backcast and backcast) ----
+# ---- 5.4 plot number of low flow frequency obs = zero by dataset (sum of subbasins, not backcast and backcast) ----
 
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("zero_flow_counts_by_dataset.pdf",width=11,height=8.5)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("zero_flow_counts_by_dataset.pdf",width=11,height=8.5)
 all_models_zero_counts$dataset=factor(all_models_zero_counts$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
 all_models_zero_counts$datatype=factor(all_models_zero_counts$datatype,levels=c("baseline","projection"))
-ggplot(all_models_zero_counts,aes(x=dataset,y=cum_num_zero_entries_by_dataset,fill=datatype)) +
+ggplot(all_models_zero_counts,aes(x=dataset,y=sum_n_zero_entries_by_dataset,fill=datatype)) +
   geom_col() +
   xlab("") +
-  ylab("Cumulative Number of Zero Flow Events (All Subbasins)") +
+  ylab("Number of Zero Flow Events (All Subbasins)") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank())
-#dev.off()
+dev.off()
 
 
-# ---- 5.4 export results ----
+# ---- 5.5 plot % change in outlier low flows on map (using backcast baseline) ----
+
+# results below 500 % change
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("zero_flow_change_using_baseline_bc_low.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_zero_flow_using_bcbaseline,aes(fill=zero_flow_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Zero Flows",na.value="grey75",limits=c(-100,500),high="darkred",low="darkblue") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# results above 500 % change
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("zero_flow_change_using_baseline_bc_up.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_zero_flow_using_bcbaseline,aes(fill=zero_flow_perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Zero Flows",na.value="grey75",limits=c(500,4500),high="darkred",low="white") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# ---- 5.5 export results ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -902,6 +955,13 @@ ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=major_outlier_
 #theme(axis.title = element_text(size = 20)) +
 #theme(text = element_text(size = 20))
 dev.off()
+
+# ---- 6.6 export results from outlier analysis ----
+
+# export to results
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(lowflow_outlier_change_using_bcbaseline_projections,"lowflow_outlier_calcs_data.csv")
+
 
 
 # ---- 7.1 calculate lowflow counts below threshold ----
