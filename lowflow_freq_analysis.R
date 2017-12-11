@@ -462,49 +462,49 @@ baseline_obs_no_flow_counts=baseline_rch_data %>%
 miroc_baseline_num_yrs=length(unique(miroc_baseline_rch_data$YR))
 miroc_baseline_obs_no_flow_counts=miroc_baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/miroc_baseline_num_yrs,
          dataset="miroc_baseline",datatype="baseline")
 
 # miroc 8.5
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR))
 miroc8_5_obs_no_flow_counts=miroc8_5_rch_data %>% 
   group_by(RCH) %>% summarize(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/miroc8_5_num_yrs,
          dataset="miroc8_5",datatype="projection")
 
 # csiro baseline backcast (for comparison with csiro 8.5 and 4.5 projections)
 csiro_baseline_num_yrs=length(unique(csiro_baseline_rch_data$YR))
 csiro_baseline_obs_no_flow_counts=csiro_baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/csiro_baseline_num_yrs,
          dataset="csiro_baseline",datatype="baseline")
 
 # csiro 8.5
 csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
 csiro8_5_obs_no_flow_counts=csiro8_5_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/csiro8_5_num_yrs,
          dataset="csiro8_5",datatype="projection")
 
 # csiro 4.5
 csiro4_5_num_yrs=length(unique(csiro4_5_rch_data$YR))
 csiro4_5_obs_no_flow_counts=csiro4_5_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/csiro4_5_num_yrs,
          dataset="csiro4_5",datatype="projection")
 
 # hadley baseline backcast
 hadley_baseline_num_yrs=length(unique(hadley_baseline_rch_data$YR))
 hadley_baseline_obs_no_flow_counts=hadley_baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/hadley_baseline_num_yrs,
          dataset="hadley_baseline",datatype="baseline")
 
 # hadley 4.5
 hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
 hadley4_5_obs_no_flow_counts=hadley4_5_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/hadley4_5_num_yrs,
          dataset="hadley4_5",datatype="projection")
 
 # bind all together for each subbasin
@@ -555,7 +555,7 @@ ggplot(all_models_no_flow_counts_by_sub,aes(x=dataset,y=sum_n_no_flow_entries,fi
   geom_col() +
   facet_wrap(~RCH,ncol=7,nrow=4) +
   xlab("") +
-  ylab("Number of Days Flow = 0") +
+  ylab("Number of Days with No Flow") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -572,7 +572,7 @@ all_models_no_flow_counts$datatype=factor(all_models_no_flow_counts$datatype,lev
 ggplot(all_models_no_flow_counts,aes(x=dataset,y=sum_n_no_flow_entries_by_dataset,fill=datatype)) +
   geom_col() +
   xlab("") +
-  ylab("Number of Zero Flow Events (All Subbasins)") +
+  ylab("Number Days with No Flow (All Subbasins)") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -589,7 +589,7 @@ ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Zero Flows",na.value="grey75",limits=c(-100,500),high="darkred",low="darkblue") +
+  scale_fill_gradient2("% Change # Days with Flow = 0",na.value="grey75",limits=c(-100,500),high="darkred",low="darkblue") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -603,7 +603,7 @@ ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Zero Flows",na.value="grey75",limits=c(500,4500),high="darkred",low="white") +
+  scale_fill_gradient2("% Change # Days with Flow = 0",na.value="grey75",limits=c(500,4500),high="darkred",low="white") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -707,16 +707,81 @@ dev.off()
 
 # ---- 5.7 calculate number of consecutive days with no flow (using backcast baseline) ----
 
-miroc_baseline_consec_no_flow=miroc_baseline_rch_data %>%
-  mutate(date_ymd=ymd(sprintf('%04d%02d%02d', YR, MO, DA))) %>% select(-YR,-MO,-DA) %>%
-  arrange(date_ymd)
+
+consec_no_flow_df=miroc_baseline_rch_data %>%
+  mutate(date_ymd=ymd(sprintf('%04d%02d%02d', YR, MO, DA))) %>% select(-DA) %>%
+  filter(FLOW_OUTcms==0) 
+
+sub_list=sort(unique(consec_no_flow_df$RCH))
+num_subs=length(sub_list)
+
+# make data frames to hold results
+num_no_flow_df=data.frame(SUB=as.numeric(),
+                          num_no_flow_events=as.numeric())
+length_no_flow_df=data.frame(SUB=as.numeric(),
+                             no_flow_event_strt_month=as.numeric(),
+                             no_flow_event_strt_year=as.numeric(),
+                             no_flow_event_length_days=as.numeric())
+
+
+for (i in 1:num_subs) {
+  # select data from one sub, arrange by date, and find moving difference
+  consec_no_flow_df_temp=consec_no_flow_df %>% filter(RCH==sub_list[i]) %>%
+    arrange(date_ymd) %>%
+    mutate(moving_diff=movingDiff(as.numeric(consec_no_flow_df_temp$date_ymd),span=1))
+  
+  # whenever movingDiff>1 here it's the start of a no flow event
+  num_no_flow_events_temp=dim(consec_no_flow_df_temp %>% filter(moving_diff>1))[1]
+  
+  # initialize variables
+  no_flow_event_length_days=rep(0,num_no_flow_events_temp)
+  no_flow_event_strt_month=rep(0,num_no_flow_events_temp)
+  no_flow_event_strt_year=rep(0,num_no_flow_events_temp)
+  str=1
+  tally=1
+  
+  # calculate length and timing of no flow period
+  for (j in 2:95){#dim(consec_no_flow_df_temp)[1]) {
+    current_day_diff=consec_no_flow_df_temp$moving_diff[j]
+    future_day_diff=consec_no_flow_df_temp$moving_diff[j+1]
+    if (current_day_diff>1 & future_day_diff==1) { # start of event
+      tally=tally+1
+      no_flow_event_strt_month[str]=consec_no_flow_df_temp$MO[j]
+      no_flow_event_strt_year[str]=consec_no_flow_df_temp$YR[j]
+    }
+    
+    else if (current_day_diff==1 & future_day_diff==1) { # during event
+      tally=tally+1
+    }
+    
+    else if (current_day_diff==1 & future_day_diff>1) { # end of event
+      no_flow_event_length_days[str]=tally
+      str=str+1 # move to next entry in no_flow_event_length_days
+      tally=1 # restart tally
+    }
+    
+    else if (current_day_diff>1 & future_day_diff>1) { # single day event
+      tally=1 # restart tally
+      no_flow_event_length_days[str]=tally
+      no_flow_event_strt_month[str]=consec_no_flow_df_temp$MO[j]
+      no_flow_event_strt_year[str]=consec_no_flow_df_temp$YR[j]
+      str=str+1 # move to next entry in no_flow_event_length_days
+    }
+    
+    else if (current_day_diff==1 & is.na(future_day_diff)) { # end of data
+      
+    }
+  }
+  return()
+}
+
 
 
 # ---- 5.8 plot number of consecutive days with no flow (using backcast baseline) ----
 
 
 
-# ---- 5.7 export results ----
+# ---- 5.9 export results ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
