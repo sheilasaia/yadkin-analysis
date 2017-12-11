@@ -26,7 +26,7 @@ source(paste0(functions_path,"flow_change.R")) # determines % change in flows fo
 source(paste0(functions_path,"count_lowflow_outliers.R")) # counts number of minor and major outliers for risk analysis
 source(paste0(functions_path,"count_lowflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
 source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
-source(paste0(functions_path,"zero_flow_change.R")) # determines % change in zero flows
+source(paste0(functions_path,"no_flow_change.R")) # determines % change in number of days with no flow
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -453,109 +453,109 @@ dev.off()
 
 # baseline (not backcast)
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
-baseline_obs_zero_counts=baseline_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(n_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+baseline_obs_no_flow_counts=baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(n_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="baseline",datatype="baseline")
 
 # miroc baseline backcast
 miroc_baseline_num_yrs=length(unique(miroc_baseline_rch_data$YR))
-miroc_baseline_obs_zero_counts=miroc_baseline_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+miroc_baseline_obs_no_flow_counts=miroc_baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="miroc_baseline",datatype="baseline")
 
 # miroc 8.5
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR))
-miroc8_5_obs_zero_counts=miroc8_5_rch_data %>% 
-  group_by(RCH) %>% summarize(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+miroc8_5_obs_no_flow_counts=miroc8_5_rch_data %>% 
+  group_by(RCH) %>% summarize(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="miroc8_5",datatype="projection")
 
 # csiro baseline backcast (for comparison with csiro 8.5 and 4.5 projections)
 csiro_baseline_num_yrs=length(unique(csiro_baseline_rch_data$YR))
-csiro_baseline_obs_zero_counts=csiro_baseline_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+csiro_baseline_obs_no_flow_counts=csiro_baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="csiro_baseline",datatype="baseline")
 
 # csiro 8.5
 csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
-csiro8_5_obs_zero_counts=csiro8_5_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+csiro8_5_obs_no_flow_counts=csiro8_5_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="csiro8_5",datatype="projection")
 
 # csiro 4.5
 csiro4_5_num_yrs=length(unique(csiro4_5_rch_data$YR))
-csiro4_5_obs_zero_counts=csiro4_5_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+csiro4_5_obs_no_flow_counts=csiro4_5_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="csiro4_5",datatype="projection")
 
 # hadley baseline backcast
 hadley_baseline_num_yrs=length(unique(hadley_baseline_rch_data$YR))
-hadley_baseline_obs_zero_counts=hadley_baseline_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+hadley_baseline_obs_no_flow_counts=hadley_baseline_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="hadley_baseline",datatype="baseline")
 
 # hadley 4.5
 hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
-hadley4_5_obs_zero_counts=hadley4_5_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_zero_entries=sum(FLOW_OUTcms==0)) %>%
-  mutate(num_zero_entries_per_yr=sum_n_zero_entries/baseline_num_yrs,
+hadley4_5_obs_no_flow_counts=hadley4_5_rch_data %>%
+  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  mutate(num_zero_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
          dataset="hadley4_5",datatype="projection")
 
 # bind all together for each subbasin
-all_models_zero_counts_by_sub=bind_rows(baseline_obs_zero_counts,
-                                        miroc_baseline_obs_zero_counts,
-                                        miroc8_5_obs_zero_counts,
-                                        csiro_baseline_obs_zero_counts,
-                                        csiro8_5_obs_zero_counts,
-                                        csiro4_5_obs_zero_counts,
-                                        hadley_baseline_obs_zero_counts,
-                                        hadley4_5_obs_zero_counts)
+all_models_no_flow_counts_by_sub=bind_rows(baseline_obs_no_flow_counts,
+                                        miroc_baseline_obs_no_flow_counts,
+                                        miroc8_5_obs_no_flow_counts,
+                                        csiro_baseline_obs_no_flow_counts,
+                                        csiro8_5_obs_no_flow_counts,
+                                        csiro4_5_obs_no_flow_counts,
+                                        hadley_baseline_obs_no_flow_counts,
+                                        hadley4_5_obs_no_flow_counts)
 
 # summarize for each dataset (sum of subbasins)
-all_models_zero_counts=all_models_zero_counts_by_sub %>% group_by(dataset,datatype) %>%
-  summarize(sum_n_zero_entries_by_dataset=sum(sum_n_zero_entries))
+all_models_no_flow_counts=all_models_no_flow_counts_by_sub %>% group_by(dataset,datatype) %>%
+  summarize(sum_n_no_flow_entries_by_dataset=sum(sum_n_no_flow_entries))
 
 
-# ---- 5.2 calculate % change in number of zero flows (using backcast baseline) ----
+# ---- 5.2 calculate % change in number days with no flow (using backcast baseline) ----
 
 # calculate % change 
-miroc8_5_zero_flow_change_using_bcbaseline=zero_flow_change(miroc_baseline_obs_zero_counts,miroc8_5_obs_zero_counts)
-csiro8_5_zero_flow_change_using_bcbaseline=zero_flow_change(csiro_baseline_obs_zero_counts,csiro8_5_obs_zero_counts)
-csiro4_5_zero_flow_change_using_bcbaseline=zero_flow_change(csiro_baseline_obs_zero_counts,csiro4_5_obs_zero_counts)
-hadley4_5_zero_flow_change_using_bcbaseline=zero_flow_change(hadley_baseline_obs_zero_counts,hadley4_5_obs_zero_counts)
+miroc8_5_no_flow_change_using_bcbaseline=no_flow_change(miroc_baseline_obs_no_flow_counts,miroc8_5_obs_no_flow_counts)
+csiro8_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_flow_counts,csiro8_5_obs_no_flow_counts)
+csiro4_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_flow_counts,csiro4_5_obs_no_flow_counts)
+hadley4_5_no_flow_change_using_bcbaseline=no_flow_change(hadley_baseline_obs_no_flow_counts,hadley4_5_obs_no_flow_counts)
 
 # bind rows
-zero_flow_change_using_bcbaseline_projections=bind_rows(miroc8_5_zero_flow_change_using_bcbaseline,
-                                                        csiro8_5_zero_flow_change_using_bcbaseline,
-                                                        csiro4_5_zero_flow_change_using_bcbaseline,
-                                                        hadley4_5_zero_flow_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+no_flow_change_using_bcbaseline_projections=bind_rows(miroc8_5_no_flow_change_using_bcbaseline,
+                                                        csiro8_5_no_flow_change_using_bcbaseline,
+                                                        csiro4_5_no_flow_change_using_bcbaseline,
+                                                        hadley4_5_no_flow_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
 
 # add to shp file
-yadkin_subs_shp_zero_flow_using_bcbaseline=left_join(yadkin_subs_shp,zero_flow_change_using_bcbaseline_projections,by="SUB")
-#glimpse(yadkin_subs_shp_zero_flow_using_bcbaseline)
+yadkin_subs_shp_no_flow_using_bcbaseline=left_join(yadkin_subs_shp,no_flow_change_using_bcbaseline_projections,by="SUB")
+#glimpse(yadkin_subs_shp_no_flow_using_bcbaseline)
 
 # adjust levels
-zero_flow_change_using_bcbaseline_projections$dataset=factor(zero_flow_change_using_bcbaseline_projections$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-yadkin_subs_shp_zero_flow_using_bcbaseline$dataset=factor(yadkin_subs_shp_zero_flow_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+no_flow_change_using_bcbaseline_projections$dataset=factor(no_flow_change_using_bcbaseline_projections$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+yadkin_subs_shp_no_flow_using_bcbaseline$dataset=factor(yadkin_subs_shp_no_flow_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 5.3 plot number of zero flows by subbasin (not backcast and backcast) ----
+# ---- 5.3 plot number days with no flow by subbasin (not backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("zero_flow_counts_by_sub.pdf",width=11,height=8.5)
-all_models_zero_counts_by_sub$dataset=factor(all_models_zero_counts_by_sub$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
-all_models_zero_counts_by_sub$datatype=factor(all_models_zero_counts_by_sub$datatype,levels=c("baseline","projection"))
-ggplot(all_models_zero_counts_by_sub,aes(x=dataset,y=sum_n_zero_entries,fill=datatype)) +
+cairo_pdf("no_flow_counts_by_sub.pdf",width=11,height=8.5)
+all_models_no_flow_counts_by_sub$dataset=factor(all_models_no_flow_counts_by_sub$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
+all_models_no_flow_counts_by_sub$datatype=factor(all_models_no_flow_counts_by_sub$datatype,levels=c("baseline","projection"))
+ggplot(all_models_no_flow_counts_by_sub,aes(x=dataset,y=sum_n_no_flow_entries,fill=datatype)) +
   geom_col() +
   facet_wrap(~RCH,ncol=7,nrow=4) +
   xlab("") +
-  ylab("Number of Zero Flow Events") +
+  ylab("Number of Days Flow = 0") +
   theme_bw() +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -563,13 +563,13 @@ ggplot(all_models_zero_counts_by_sub,aes(x=dataset,y=sum_n_zero_entries,fill=dat
 dev.off()
 
 
-# ---- 5.4 plot number of zero flows by dataset (sum of subbasins, not backcast and backcast) ----
+# ---- 5.4 plot number days with no flow by dataset (sum of subbasins, not backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("zero_flow_counts_by_dataset.pdf",width=11,height=8.5)
-all_models_zero_counts$dataset=factor(all_models_zero_counts$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
-all_models_zero_counts$datatype=factor(all_models_zero_counts$datatype,levels=c("baseline","projection"))
-ggplot(all_models_zero_counts,aes(x=dataset,y=sum_n_zero_entries_by_dataset,fill=datatype)) +
+cairo_pdf("no_flow_counts_by_dataset.pdf",width=11,height=8.5)
+all_models_no_flow_counts$dataset=factor(all_models_no_flow_counts$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
+all_models_no_flow_counts$datatype=factor(all_models_no_flow_counts$datatype,levels=c("baseline","projection"))
+ggplot(all_models_no_flow_counts,aes(x=dataset,y=sum_n_no_flow_entries_by_dataset,fill=datatype)) +
   geom_col() +
   xlab("") +
   ylab("Number of Zero Flow Events (All Subbasins)") +
@@ -580,12 +580,12 @@ ggplot(all_models_zero_counts,aes(x=dataset,y=sum_n_zero_entries_by_dataset,fill
 dev.off()
 
 
-# ---- 5.5 plot % change in zero flows on map (using backcast baseline) ----
+# ---- 5.5 plot % change in days with no flow on map (using backcast baseline) ----
 
 # results below 500 % change
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("zero_flow_change_using_baseline_bc_low.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_zero_flow_using_bcbaseline,aes(fill=zero_flow_perc_change)) +
+cairo_pdf("no_flow_change_using_baseline_bc_low.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
@@ -598,8 +598,8 @@ dev.off()
 
 # results above 500 % change
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("zero_flow_change_using_baseline_bc_up.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_zero_flow_using_bcbaseline,aes(fill=zero_flow_perc_change)) +
+cairo_pdf("no_flow_change_using_baseline_bc_up.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
@@ -611,40 +611,116 @@ ggplot(yadkin_subs_shp_zero_flow_using_bcbaseline,aes(fill=zero_flow_perc_change
 dev.off()
 
 
-# ---- 5.6 plot variation in zero flows (using backcast baseline) ----
+# ---- 5.6 plot variation in days with no flow (using backcast baseline) ----
 
+# make dataframe with contributing errors to can use to plot
 contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
   distinct() %>% mutate(SUB=RCH) %>% select(-RCH)
 
-blah=zero_flow_change_using_bcbaseline_projections %>%
+no_flow_change_using_bcbaseline_projections_area=no_flow_change_using_bcbaseline_projections %>%
   left_join(contributing_areas,contributing_areas,by='SUB')
-  
-zero_flow_variation_by_sub=zero_flow_change_using_bcbaseline_projections %>%
-  group_by(SUB) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_zero_entries),
-                              projection_n_zero_entries_sd=sd(projection_sum_n_zero_entries))
 
-zero_flow_variation_by_dataset=zero_flow_change_using_bcbaseline_projections %>%
-  group_by(dataset) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_zero_entries),
-                              projection_n_zero_entries_sd=sd(projection_sum_n_zero_entries))
+# just backcast baselines (and recode them for plotting)
+no_flow_change_baselines=no_flow_change_using_bcbaseline_projections_area %>%
+  select(SUB,AREAkm2,baseline_sum_n_no_flow_entries,dataset)
+no_flow_change_baselines$dataset=recode(no_flow_change_baselines$dataset,"miroc8_5"="miroc","csiro8_5"="csiro","csiro4_5"="csiro","hadley4_5"="hadley")
 
-ggplot(data=blah) +
-  geom_point(aes(x=AREAkm2,y=baseline_sum_n_zero_entries,color=dataset),size=2)
+# just projections
+no_flow_change_projections=no_flow_change_using_bcbaseline_projections_area %>%
+  select(SUB,AREAkm2,projection_sum_n_no_flow_entries,dataset)
 
-ggplot(data=blah) +
-  geom_boxplot(aes(x=as.factor(AREAkm2),y=baseline_sum_n_zero_entries))
+# order subbasin by area
+no_flow_change_baselines$SUB=factor(no_flow_change_baselines$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+no_flow_change_projections$SUB=factor(no_flow_change_projections$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+
+# backcast baselines
+# as boxplot
+ggplot(data=no_flow_change_baselines,aes(x=SUB,y=baseline_sum_n_no_flow_entries)) +
+    geom_boxplot() +
+    geom_point(size=3) +
+  #geom_point(size=2,shape=1,color="black") +
+  #geom_smooth(method='loess',formula=y~x)
+  xlab("Subbasin (Ordered by Increasing Conbributing Area)") +
+  ylab("Number of Days with No Flow (Backcast Baselines)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(),axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+
+# as points
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("num_no_flow_baseline.pdf",width=11,height=8.5,pointsize=12)
+ggplot(data=no_flow_change_baselines,aes(x=SUB,y=baseline_sum_n_no_flow_entries,color=dataset)) +
+  geom_point(size=3) +
+  geom_point(size=3,shape=1,color="black") +
+  #geom_smooth(method='loess',formula=y~x)
+  xlab("Subbasin (Ordered by Increasing Conbributing Area)") +
+  ylab("Number of Days with No Flow (Backcast Baselines)") +
+  scale_color_manual(values=c("white","grey75","black")) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=16))
+dev.off()
+
+# projections
+# as boxplot
+ggplot(data=no_flow_change_projections,aes(x=SUB,y=projection_sum_n_no_flow_entries)) +
+  geom_boxplot() +
+  geom_point(size=3) +
+  #geom_point(size=3,shape=1,color="black") +
+  #geom_smooth(method='loess',formula=y~x)
+  xlab("Subbasin (Ordered by Increasing Conbributing Area)") +
+  ylab("Number of Days with No Flow (Projections)") +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=16))
+
+# as points
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("num_no_flow_projection.pdf",width=11,height=8.5,pointsize=12)
+ggplot(data=no_flow_change_projections,aes(x=SUB,y=projection_sum_n_no_flow_entries,color=dataset)) +
+  geom_point(size=3) +
+  geom_point(size=3,shape=1,color="black") +
+  #geom_smooth(method='loess',formula=y~x)
+  xlab("Subbasin (Ordered by Increasing Conbributing Area)") +
+  ylab("Number of Days with No Flow (Projections)") +
+  scale_color_manual(values=c("white","grey75","grey50","black")) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=16))
+dev.off()
 
 
-ggplot(data=blah) +
-  geom_point(aes(x=AREAkm2,y=projection_sum_n_zero_entries,color=dataset),size=2)
+#no_flow_variation_by_sub=no_flow_change_using_bcbaseline_projections %>%
+#  group_by(SUB) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_no_flow_entries),
+#                              projection_n_zero_entries_sd=sd(projection_sum_n_no_flow_entries))
 
-ggplot(data=blah) +
-  geom_boxplot(aes(x=as.factor(AREAkm2),y=projection_sum_n_zero_entries))
+#no_flow_variation_by_dataset=no_flow_change_using_bcbaseline_projections %>%
+#  group_by(dataset) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_no_flow_entries),
+#                              projection_n_zero_entries_sd=sd(projection_sum_n_no_flow_entries))
+
+
+# ---- 5.7 calculate number of consecutive days with no flow (using backcast baseline) ----
+
+miroc_baseline_consec_no_flow=miroc_baseline_rch_data %>%
+  mutate(date_ymd=ymd(sprintf('%04d%02d%02d', YR, MO, DA))) %>% select(-YR,-MO,-DA) %>%
+  arrange(date_ymd)
+
+
+# ---- 5.8 plot number of consecutive days with no flow (using backcast baseline) ----
+
+
 
 # ---- 5.7 export results ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(all_models_zero_counts,"zero_flow_counts.csv")
+#write_csv(all_models_no_flow_counts,"no_flow_counts.csv")
 
 
 # ---- 6.1 check normality of data (baseline backcast) ----
