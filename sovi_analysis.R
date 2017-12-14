@@ -33,7 +33,7 @@ yadkin_counties_raw=read_csv("yadkin_clip_counties_albers.txt",col_names=TRUE)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/county_scaling_calculations")
 county_scaling_raw=read_csv("county_scaling_allsubs.csv",col_names=TRUE)
 
-# atsdr sovi scaling data
+# atsdr sovi tract scaling data
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/sovibd_scaling_calculations")
 sovibd_scaling_raw=read_csv("sovibd_scaling_allsubs.csv",col_names=TRUE)
 
