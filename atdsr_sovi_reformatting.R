@@ -1,4 +1,4 @@
-# reformat atsdr sovi data
+# reformat atsdr sovi 2014 data
 
 # ---- 1 set up ----
 
@@ -34,4 +34,4 @@ sovi_data=sovi_raw %>%
 
 # export reformatted data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-write_csv(sovi_data,"atsdr_us_sovi_data.csv")
+write_csv(sovi_data,"atsdr_us_sovi_2014_data.csv")
