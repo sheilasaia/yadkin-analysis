@@ -356,3 +356,18 @@ ggplot(yadkin_sub_shp_sovi_theme1to4,aes(fill=area_wt_sovi)) +
 # theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
 #       text=element_text(size=16))
 dev.off()
+
+
+# ---- 6.1 import high/low/zero flow data ----
+
+#yadkin_sovi_total_sub_data
+#yadkin_sub_shp_sovi_total
+
+
+# ---- 6.2 reclass flow and sovi data for plotting ----
+
+
+# ---- 6.3 point cloud of reclassified data ----
+
+
+# ---- 6.4 spatial distribution of reclassified data ----
