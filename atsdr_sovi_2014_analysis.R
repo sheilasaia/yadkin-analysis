@@ -57,7 +57,67 @@ yadkin_sub_shp=yadkin_sub_shp_raw %>%
 yadkin_sovi_data=left_join(sovidb_scaling_data,us_sovi_data,by="fips")
 
 
-# ---- extract tract data to plot all themes together on one plot ----
+# ---- 3.1 combine us, nc, and yadkin tract sovi data for histogram ----
+
+# find unique fips id's for yadkin
+yadkin_unique_fips=sovidb_scaling_data %>% select(fips) %>% distinct()
+
+# find unique fips id's for nc
+nc_unique_fips=us_sovi_data %>% filter(state_abbrev=="NC") %>% select(fips) %>% distinct()
+
+# select sovi data for yadkin using unique fips id's
+yadkin_sovi_hist=us_sovi_data %>% select(fips,sovi_total) %>% 
+  right_join(yadkin_unique_fips,by="fips") %>% mutate(dataset="UYPD")
+
+# select sovi data for nc using unique fips id's
+nc_sovi_hist=us_sovi_data %>% select(fips,sovi_total) %>% 
+  right_join(nc_unique_fips,by="fips") %>% mutate(dataset="NC")
+
+# select sovi data for us using unique fips id's
+us_sovi_hist=us_sovi_data %>% select(fips,sovi_total) %>% mutate(dataset="US")
+
+# bind all together
+sovi_hist=bind_rows(yadkin_sovi_hist,nc_sovi_hist,us_sovi_hist)
+
+# ---- 3.2 plot us, nc, yadkin tract sovi data as histogram ----
+
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi2014_hist.pdf",width=11,height=8.5)
+sovi_hist$dataset=factor(sovi_hist$dataset,levels=c("US","NC","UYPD"))
+ggplot(sovi_hist,aes(sovi_total,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI (Census Tract Scale)") +
+  ylab("Count") +
+  xlim(0,15) +
+  coord_cartesian(ylim=c(0,8000)) +
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
+        text=element_text(size=16),panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),panel.background = element_blank())
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi2014_hist_zoom.pdf",width=11,height=8.5)
+sovi_hist$dataset=factor(sovi_hist$dataset,levels=c("US","NC","UYPD"))
+ggplot(sovi_hist,aes(sovi_total,fill=dataset,color=dataset)) +
+  geom_histogram(binwidth=.5, alpha=0.5) +
+  xlab("SoVI (Census Tract Scale)") +
+  ylab("Count") +
+  xlim(0,15) +
+  coord_cartesian(ylim=c(0,250)) + # allows you to zoom without cutting out data
+  scale_fill_manual(values=c("grey30","grey75","white")) +
+  scale_color_manual(values=c("black","black","black")) +
+  theme_bw() +
+  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
+        text=element_text(size=16),panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),panel.background = element_blank())
+dev.off()
+
+
+# ---- 4.1 extract tract data to plot all themes together on one plot ----
 
 # select out theme 1
 yadkin_sovi_theme1_tract_data=yadkin_census_tracts_data %>%
@@ -88,23 +148,23 @@ yadkin_sovi_themes_tract_data=bind_rows(yadkin_sovi_theme1_tract_data,
 yadkin_tract_shp_sovi_theme1to4=left_join(yadkin_tract_shp,yadkin_sovi_themes_tract_data,by="fips")
 #glimpse(yadkin_tract_shp_sovi_theme1to4)
 
-# ---- plot sovi data by tract ----
+# ---- 4.2 plot sovi data by tract ----
 
 # total sovi by tract
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_total_by_tract.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_total_by_tract.pdf",width=11,height=8.5)
 ggplot(yadkin_tract_shp,aes(fill=SPL_THEMES)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Total SoVI",na.value="grey75",high="darkred",low="white",limits=c(2,13)) +
+  scale_fill_gradient2("Total SoVI (2010-2014)",na.value="grey75",high="darkred",low="white",limits=c(2,13)) +
   theme_bw() #+
-  #theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
-  #      text=element_text(size=16))
+#  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
+#         text=element_text(size=16))
 dev.off()
 
 # sovi theme 1 (socioeconomic status) by tract
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme1_by_tract.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme1_by_tract.pdf",width=11,height=8.5)
 ggplot(yadkin_tract_shp,aes(fill=SPL_THEME1)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
@@ -116,7 +176,7 @@ dev.off()
 
 # sovi theme 2 (household make-up & disability) by tract
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme2_by_tract.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme2_by_tract.pdf",width=11,height=8.5)
 ggplot(yadkin_tract_shp,aes(fill=SPL_THEME2)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
@@ -128,7 +188,7 @@ dev.off()
 
 # sovi theme 3 (minority status & knowledge of english) by tract
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme3_by_tract.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme3_by_tract.pdf",width=11,height=8.5)
 ggplot(yadkin_tract_shp,aes(fill=SPL_THEME3)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
@@ -140,7 +200,7 @@ dev.off()
 
 # sovi theme 4 (housing and transportation) by tract
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme4_by_tract.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme4_by_tract.pdf",width=11,height=8.5)
 ggplot(yadkin_tract_shp,aes(fill=SPL_THEME4)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
@@ -152,19 +212,19 @@ dev.off()
 
 # all four themes together in one plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme1to4_by_tract.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme1to4_by_tract.pdf",width=11,height=8.5)
 ggplot(yadkin_tract_shp_sovi_theme1to4,aes(fill=sovi)) +
   geom_sf() +
   facet_wrap(~theme) +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme4 is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI",na.value="grey75",high="darkred",low="white",limit=c(0,5)) +
+  scale_fill_gradient2("SoVI (2010-2014)",na.value="grey75",high="darkred",low="white",limit=c(0,5)) +
   theme_bw() #+
 # theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
 #       text=element_text(size=16))
 dev.off()
 
 
-# ---- scale sovi data to subbasin ----
+# ---- 5.1 scale sovi data to subbasin ----
 
 # scale to subbasin
 # total sovi
@@ -222,15 +282,15 @@ yadkin_sub_shp_sovi_theme1to4=left_join(yadkin_sub_shp,yadkin_sovi_themes_sub_da
 #glimpse(yadkin_sub_shp_sovi_theme1to4)
 
 
-# ---- plot subbasin scaled sovi data ----
+# ---- 5.2 plot subbasin scaled sovi data ----
 
 # total sovi by sub
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_total_by_sub.pdf",width=11,height=8.5)
-ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi_total)) +
+cairo_pdf("yadkin_sovi2014_total_by_sub.pdf",width=11,height=8.5)
+ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_total is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Area Wtd Total SoVI",na.value="grey75",high="darkred",low="white",limits=c(2,13)) +
+  scale_fill_gradient2("Area Wtd Total SoVI (2010-2014)",na.value="grey75",high="darkred",low="white",limits=c(2,13)) +
   theme_bw() #+
 #  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
 #        text=element_text(size=16))
@@ -238,7 +298,7 @@ dev.off()
 
 # theme 1 sovi by sub
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme1_by_sub.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme1_by_sub.pdf",width=11,height=8.5)
 ggplot(yadkin_sub_shp_sovi_theme1,aes(fill=area_wt_sovi)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme1 is base utm 17N so convert to Albers for CONUS
@@ -250,7 +310,7 @@ dev.off()
 
 # theme 2 sovi by sub
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme2_by_sub.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme2_by_sub.pdf",width=11,height=8.5)
 ggplot(yadkin_sub_shp_sovi_theme2,aes(fill=area_wt_sovi)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme2 is base utm 17N so convert to Albers for CONUS
@@ -262,7 +322,7 @@ dev.off()
 
 # theme 3 sovi by sub
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme3_by_sub.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme3_by_sub.pdf",width=11,height=8.5)
 ggplot(yadkin_sub_shp_sovi_theme3,aes(fill=area_wt_sovi)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme3 is base utm 17N so convert to Albers for CONUS
@@ -274,7 +334,7 @@ dev.off()
 
 # theme 4 sovi by sub
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme4_by_sub.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme4_by_sub.pdf",width=11,height=8.5)
 ggplot(yadkin_sub_shp_sovi_theme4,aes(fill=area_wt_sovi)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme4 is base utm 17N so convert to Albers for CONUS
@@ -286,12 +346,12 @@ dev.off()
 
 # all four themes together in one plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi_theme1to4_by_sub.pdf",width=11,height=8.5)
+cairo_pdf("yadkin_sovi2014_theme1to4_by_sub.pdf",width=11,height=8.5)
 ggplot(yadkin_sub_shp_sovi_theme1to4,aes(fill=area_wt_sovi)) +
   geom_sf() +
   facet_wrap(~theme) +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme4 is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Area Wtd SoVI",na.value="grey75",high="darkred",low="white",limit=c(0,4)) +
+  scale_fill_gradient2("Area Wtd SoVI",na.value="grey75",high="darkred",low="white",limit=c(0,5)) +
   theme_bw() #+
 # theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
 #       text=element_text(size=16))
