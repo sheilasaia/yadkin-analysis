@@ -456,14 +456,14 @@ baseline_num_yrs=length(unique(baseline_rch_data$YR))
 baseline_obs_no_flow_counts=baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/baseline_num_yrs,
-         dataset="baseline",datatype="baseline")
+         dataset="true_baseline",datatype="baseline")
 
 # miroc baseline backcast
 miroc_baseline_num_yrs=length(unique(miroc_baseline_rch_data$YR))
 miroc_baseline_obs_no_flow_counts=miroc_baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/miroc_baseline_num_yrs,
-         dataset="miroc_baseline",datatype="baseline")
+         dataset="miroc_bcbaseline",datatype="baseline")
 
 # miroc 8.5
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR))
@@ -477,7 +477,7 @@ csiro_baseline_num_yrs=length(unique(csiro_baseline_rch_data$YR))
 csiro_baseline_obs_no_flow_counts=csiro_baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/csiro_baseline_num_yrs,
-         dataset="csiro_baseline",datatype="baseline")
+         dataset="csiro_bcbaseline",datatype="baseline")
 
 # csiro 8.5
 csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
@@ -498,7 +498,7 @@ hadley_baseline_num_yrs=length(unique(hadley_baseline_rch_data$YR))
 hadley_baseline_obs_no_flow_counts=hadley_baseline_rch_data %>%
   group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/hadley_baseline_num_yrs,
-         dataset="hadley_baseline",datatype="baseline")
+         dataset="hadley_bcbaseline",datatype="baseline")
 
 # hadley 4.5
 hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
@@ -518,8 +518,10 @@ all_models_no_flow_counts_by_sub=bind_rows(baseline_obs_no_flow_counts,
                                         hadley4_5_obs_no_flow_counts)
 
 # summarize for each dataset (sum of subbasins)
+num_subs=length(unique(baseline_rch_data$RCH))
 all_models_no_flow_counts=all_models_no_flow_counts_by_sub %>% group_by(dataset,datatype) %>%
-  summarize(sum_n_no_flow_entries_by_dataset=sum(sum_n_no_flow_entries))
+  summarize(sum_n_no_flow_entries_by_dataset=sum(sum_n_no_flow_entries),
+            sum_n_no_flow_entries_by_dataset_per_year_per_subbasin=sum(sum_n_no_flow_entries)/baseline_num_yrs/num_subs)
 
 
 # ---- 5.2 calculate % change in number days with no flow (using backcast baseline) ----
@@ -531,25 +533,26 @@ csiro4_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_fl
 hadley4_5_no_flow_change_using_bcbaseline=no_flow_change(hadley_baseline_obs_no_flow_counts,hadley4_5_obs_no_flow_counts)
 
 # bind rows
-no_flow_change_using_bcbaseline_projections=bind_rows(miroc8_5_no_flow_change_using_bcbaseline,
-                                                        csiro8_5_no_flow_change_using_bcbaseline,
-                                                        csiro4_5_no_flow_change_using_bcbaseline,
-                                                        hadley4_5_no_flow_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+all_models_no_flow_change=bind_rows(miroc8_5_no_flow_change_using_bcbaseline,
+                                    csiro8_5_no_flow_change_using_bcbaseline,
+                                    csiro4_5_no_flow_change_using_bcbaseline,
+                                    hadley4_5_no_flow_change_using_bcbaseline) %>%
+  mutate(SUB=RCH) %>% select(-RCH)
 
 # add to shp file
-yadkin_subs_shp_no_flow_using_bcbaseline=left_join(yadkin_subs_shp,no_flow_change_using_bcbaseline_projections,by="SUB")
+yadkin_subs_shp_no_flow_using_bcbaseline=left_join(yadkin_subs_shp,all_models_no_flow_change,by="SUB")
 #glimpse(yadkin_subs_shp_no_flow_using_bcbaseline)
 
 # adjust levels
-no_flow_change_using_bcbaseline_projections$dataset=factor(no_flow_change_using_bcbaseline_projections$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+all_models_no_flow_change$dataset=factor(all_models_no_flow_change$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 yadkin_subs_shp_no_flow_using_bcbaseline$dataset=factor(yadkin_subs_shp_no_flow_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 5.3 plot number days with no flow by subbasin (not backcast and backcast) ----
+# ---- 5.3 plot number days with no flow by subbasin per year (not backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("no_flow_counts_by_sub.pdf",width=11,height=8.5)
-all_models_no_flow_counts_by_sub$dataset=factor(all_models_no_flow_counts_by_sub$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
+all_models_no_flow_counts_by_sub$dataset=factor(all_models_no_flow_counts_by_sub$dataset,levels=c("true_baseline","miroc_bcbaseline","miroc8_5","csiro_bcbaseline","csiro8_5","csiro4_5","hadley_bcbaseline","hadley4_5"))
 all_models_no_flow_counts_by_sub$datatype=factor(all_models_no_flow_counts_by_sub$datatype,levels=c("baseline","projection"))
 ggplot(all_models_no_flow_counts_by_sub,aes(x=dataset,y=n_no_flow_entries_per_yr,fill=datatype)) +
   geom_col() +
@@ -563,17 +566,17 @@ ggplot(all_models_no_flow_counts_by_sub,aes(x=dataset,y=n_no_flow_entries_per_yr
 dev.off()
 
 
-# ---- 5.4 plot number days with no flow by dataset (sum of subbasins, not backcast and backcast) ----
+# ---- 5.4 plot total number days with no flow by dataset (sum of subbasins, not backcast and backcast) ----
 
-# bar chart
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("no_flow_counts_by_dataset.pdf",width=11,height=8.5)
-all_models_no_flow_counts$dataset=factor(all_models_no_flow_counts$dataset,levels=c("baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5"))
+all_models_no_flow_counts$dataset=factor(all_models_no_flow_counts$dataset,levels=c("true_baseline","miroc_bcbaseline","miroc8_5","csiro_bcbaseline","csiro8_5","csiro4_5","hadley_bcbaseline","hadley4_5"))
 all_models_no_flow_counts$datatype=factor(all_models_no_flow_counts$datatype,levels=c("baseline","projection"))
-ggplot(all_models_no_flow_counts,aes(x=dataset,y=sum_n_no_flow_entries_by_dataset,fill=datatype)) +
+ggplot(all_models_no_flow_counts,aes(x=dataset,y=sum_n_no_flow_entries_by_dataset_per_year_per_subbasin,fill=datatype)) +
   geom_col() +
   xlab("") +
-  ylab("Number Days with No Flow (All Subbasins)") +
+  ylab("Number Days with No Flow/Year/Subbasin") +
+  scale_fill_manual(values=c("grey75","black")) +
   theme_bw() +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5),
         panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -620,22 +623,23 @@ contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
   mutate(SUB=RCH) %>% 
   select(-RCH)
 
-no_flow_change_using_bcbaseline_projections_area=no_flow_change_using_bcbaseline_projections %>%
-  left_join(contributing_areas,contributing_areas,by='SUB')
+# join areas
+all_models_no_flow_change_area=all_models_no_flow_change %>%
+  left_join(contributing_areas,by='SUB')
 
 # backcast baselines (and recode them for plotting)
-no_flow_change_baselines=no_flow_change_using_bcbaseline_projections_area %>%
+no_flow_change_baseline=all_models_no_flow_change_area %>%
   select(SUB,AREAkm2,baseline_sum_n_no_flow_entries,dataset) %>%
   mutate(baseline_sum_n_no_flow_entries_per_year=baseline_sum_n_no_flow_entries/baseline_num_yrs) %>%
   filter(dataset!="csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
-no_flow_change_baselines$dataset=recode(no_flow_change_baselines$dataset,"miroc8_5"="MIROC","csiro8_5"="CSIRO","hadley4_5"="Hadley")
+no_flow_change_baseline$dataset=recode(no_flow_change_baseline$dataset,"miroc8_5"="MIROC","csiro8_5"="CSIRO","hadley4_5"="Hadley")
 
 # backcast baseline ordered by subbasin area
-no_flow_change_baselines$SUB=factor(no_flow_change_baselines$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
-no_flow_change_baselines$dataset=factor(no_flow_change_baselines$dataset,levels=c("MIROC","CSIRO","Hadley"))
+no_flow_change_baseline$SUB=factor(no_flow_change_baseline$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+no_flow_change_baseline$dataset=factor(no_flow_change_baseline$dataset,levels=c("MIROC","CSIRO","Hadley"))
 
 # backcast baseline summary for pointrange plot
-no_flow_change_baselines_summary=no_flow_change_baselines %>%
+no_flow_change_baseline_summary=no_flow_change_baseline %>%
   group_by(SUB,AREAkm2) %>%
   summarize(min_n_no_flow_entries_per_year=min(baseline_sum_n_no_flow_entries_per_year),
             max_n_no_flow_entries_per_year=max(baseline_sum_n_no_flow_entries_per_year),
@@ -645,9 +649,9 @@ no_flow_change_baselines_summary=no_flow_change_baselines %>%
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("num_no_flow_baseline.pdf",width=11,height=8.5,pointsize=12)
 ggplot() +
-  geom_pointrange(data=no_flow_change_baselines_summary,
+  geom_pointrange(data=no_flow_change_baseline_summary,
                   aes(x=SUB,y=mean_n_no_flow_entries_per_year,ymin=min_n_no_flow_entries_per_year,ymax=max_n_no_flow_entries_per_year),shape=32) +
-  geom_point(data=no_flow_change_baselines,aes(x=SUB,y=baseline_sum_n_no_flow_entries_per_year,color=dataset),
+  geom_point(data=no_flow_change_baseline,aes(x=SUB,y=baseline_sum_n_no_flow_entries_per_year,color=dataset),
              size=2,alpha=0.5, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
@@ -662,16 +666,16 @@ dev.off()
 
 
 # projections
-no_flow_change_projections=no_flow_change_using_bcbaseline_projections_area %>%
+no_flow_change_projection=all_models_no_flow_change_area %>%
   select(SUB,AREAkm2,projection_sum_n_no_flow_entries,dataset) %>%
   mutate(projection_sum_n_no_flow_entries_per_year=projection_sum_n_no_flow_entries/miroc8_5_num_yrs) # all are equal to 21 but use miroc8_5_num_yrs for simplicity 
 
 # projections ordered by subbasin area
-no_flow_change_projections$SUB=factor(no_flow_change_projections$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
-no_flow_change_projections$dataset=factor(no_flow_change_projections$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+no_flow_change_projection$SUB=factor(no_flow_change_projection$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+no_flow_change_projection$dataset=factor(no_flow_change_projection$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 # projections summary for pointrange plot
-no_flow_change_projections_summary=no_flow_change_projections %>%
+no_flow_change_projection_summary=no_flow_change_projection %>%
   group_by(SUB,AREAkm2) %>%
   summarize(min_n_no_flow_entries_per_year=min(projection_sum_n_no_flow_entries_per_year),
             max_n_no_flow_entries_per_year=max(projection_sum_n_no_flow_entries_per_year),
@@ -681,10 +685,10 @@ no_flow_change_projections_summary=no_flow_change_projections %>%
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("num_no_flow_projection.pdf",width=11,height=8.5,pointsize=12)
 ggplot() +
-  geom_pointrange(data=no_flow_change_projections_summary,
+  geom_pointrange(data=no_flow_change_projection_summary,
                   aes(x=SUB,y=mean_n_no_flow_entries_per_year,ymin=min_n_no_flow_entries_per_year,ymax=max_n_no_flow_entries_per_year),
                   shape=32) +
-  geom_point(data=no_flow_change_projections,aes(x=SUB,y=projection_sum_n_no_flow_entries_per_year,color=dataset),
+  geom_point(data=all_models_no_flow_change,aes(x=SUB,y=projection_sum_n_no_flow_entries_per_year,color=dataset),
              size=2,alpha=0.5, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
@@ -696,15 +700,6 @@ ggplot() +
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
         text=element_text(size=16))
 dev.off()
-
-
-#no_flow_variation_by_sub=no_flow_change_using_bcbaseline_projections %>%
-#  group_by(SUB) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_no_flow_entries),
-#                              projection_n_zero_entries_sd=sd(projection_sum_n_no_flow_entries))
-
-#no_flow_variation_by_dataset=no_flow_change_using_bcbaseline_projections %>%
-#  group_by(dataset) %>% summarize(baselin_n_zero_entries_sd=sd(baseline_sum_n_no_flow_entries),
-#                              projection_n_zero_entries_sd=sd(projection_sum_n_no_flow_entries))
 
 
 # ---- 5.7 calculate number of consecutive days with no flow (using backcast baseline) ----
