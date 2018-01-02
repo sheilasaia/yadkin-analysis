@@ -143,7 +143,7 @@ hadley4_5_obs_lowflow_calcs=obs_freq_calcs_all_rchs(hadley4_5_rch_data,1,"lowflo
 hadley4_5_model_lowflow_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_lowflow_calcs,kn_table,my_model_p_list,0.4,"lowflow")
 
 
-# ---- 3.2 plot low flow freq. baselines for each subbasin (not backcast and backcast comparison) ----
+# ---- 3.2 plot low flow freq. baselines for each subbasin (no backcast and backcast comparison) ----
 
 # omit zero values from observations
 baseline_obs_lowflow_calcs_nozeros=baseline_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
@@ -180,7 +180,7 @@ ggplot() +
         panel.background = element_blank())
 
 
-# ---- 3.3 plot low flow freq. results for each subbasin (not backcast) ----
+# ---- 3.3 plot low flow freq. results for each subbasin (no backcast) ----
 
 # plot observations and models together (not log transformed)
 #setwd("/Users/ssaia/Desktop")
@@ -524,7 +524,7 @@ all_models_no_flow_counts=all_models_no_flow_counts_by_sub %>% group_by(dataset,
             sum_n_no_flow_entries_by_dataset_per_year_per_subbasin=sum(sum_n_no_flow_entries)/baseline_num_yrs/num_subs)
 
 
-# ---- 5.2 calculate % change in number days with no flow (using backcast baseline) ----
+# ---- 5.2 calculate % change in number days with no flow (backcast) ----
 
 # calculate % change 
 miroc8_5_no_flow_change_using_bcbaseline=no_flow_change(miroc_baseline_obs_no_flow_counts,miroc8_5_obs_no_flow_counts)
@@ -548,7 +548,7 @@ all_models_no_flow_change$dataset=factor(all_models_no_flow_change$dataset,level
 yadkin_subs_shp_no_flow_using_bcbaseline$dataset=factor(yadkin_subs_shp_no_flow_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 5.3 plot number days with no flow by subbasin per year (not backcast and backcast) ----
+# ---- 5.3 plot number days with no flow by subbasin per year (no backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("no_flow_counts_by_sub.pdf",width=11,height=8.5)
@@ -566,7 +566,7 @@ ggplot(all_models_no_flow_counts_by_sub,aes(x=dataset,y=n_no_flow_entries_per_yr
 dev.off()
 
 
-# ---- 5.4 plot total number days with no flow by dataset (sum of subbasins, not backcast and backcast) ----
+# ---- 5.4 plot total number days with no flow by dataset (sum of subbasins, no backcast and backcast) ----
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("no_flow_counts_by_dataset.pdf",width=11,height=8.5)
@@ -584,7 +584,7 @@ ggplot(all_models_no_flow_counts,aes(x=dataset,y=sum_n_no_flow_entries_by_datase
 dev.off()
 
 
-# ---- 5.5 plot % change in days with no flow on map (using backcast baseline) ----
+# ---- 5.5 plot % change in days with no flow on map (backcast) ----
 
 # results below 500 % change
 setwd("/Users/ssaia/Desktop")
@@ -615,7 +615,7 @@ ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
 dev.off()
 
 
-# ---- 5.6 plot variation in days with no flow (using backcast baseline) ----
+# ---- 5.6 plot variation in days with no flow (backcast) ----
 
 # make dataframe with contributing errors to can use to plot
 contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
@@ -627,7 +627,7 @@ contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
 all_models_no_flow_change_area=all_models_no_flow_change %>%
   left_join(contributing_areas,by='SUB')
 
-# backcast baselines (and recode them for plotting)
+# backcast baseline (and recode them for plotting)
 no_flow_change_baseline=all_models_no_flow_change_area %>%
   select(SUB,AREAkm2,baseline_sum_n_no_flow_entries,dataset) %>%
   mutate(baseline_sum_n_no_flow_entries_per_year=baseline_sum_n_no_flow_entries/baseline_num_yrs) %>%
@@ -645,18 +645,19 @@ no_flow_change_baseline_summary=no_flow_change_baseline %>%
             max_n_no_flow_entries_per_year=max(baseline_sum_n_no_flow_entries_per_year),
             mean_n_no_flow_entries_per_year=mean(baseline_sum_n_no_flow_entries_per_year))
 
-# backcast baselines plot
+# backcast baseline plot
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("num_no_flow_baseline.pdf",width=11,height=8.5,pointsize=12)
 ggplot() +
   geom_pointrange(data=no_flow_change_baseline_summary,
                   aes(x=SUB,y=mean_n_no_flow_entries_per_year,ymin=min_n_no_flow_entries_per_year,ymax=max_n_no_flow_entries_per_year),shape=32) +
   geom_point(data=no_flow_change_baseline,aes(x=SUB,y=baseline_sum_n_no_flow_entries_per_year,color=dataset),
-             size=2,alpha=0.5, position=position_jitter(height=0.1,width=0)) +
+             shape=17,size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
-  ylab("Number of Days with No Flow/Year") +
+  ylab("Number of Days with No Flow/yr") +
   scale_color_manual(values=c("grey75","grey50","black")) +
+  ylim(-1,25) +
   theme_bw() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
@@ -688,12 +689,13 @@ ggplot() +
   geom_pointrange(data=no_flow_change_projection_summary,
                   aes(x=SUB,y=mean_n_no_flow_entries_per_year,ymin=min_n_no_flow_entries_per_year,ymax=max_n_no_flow_entries_per_year),
                   shape=32) +
-  geom_point(data=all_models_no_flow_change,aes(x=SUB,y=projection_sum_n_no_flow_entries_per_year,color=dataset),
-             size=2,alpha=0.5, position=position_jitter(height=0.1,width=0)) +
+  geom_point(data=no_flow_change_projection,aes(x=SUB,y=projection_sum_n_no_flow_entries_per_year,color=dataset),
+             size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
-  ylab("Number of Days with No Flow/Year") +
+  ylab("Number of Days with No Flow/yr") +
   scale_color_manual(values=c("grey80","grey60","grey40","black")) +
+  ylim(-1,25) +
   theme_bw() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
@@ -702,7 +704,7 @@ ggplot() +
 dev.off()
 
 
-# ---- 5.7 calculate number of consecutive days with no flow (using backcast baseline) ----
+# ---- 5.7 calculate number of consecutive days with no flow (backcast) ----
 
 
 consec_no_flow_df=miroc_baseline_rch_data %>%
@@ -774,7 +776,7 @@ for (i in 1:num_subs) {
 
 
 
-# ---- 5.8 plot number of consecutive days with no flow (using backcast baseline) ----
+# ---- 5.8 plot number of consecutive days with no flow (backcast) ----
 
 
 
@@ -785,7 +787,7 @@ for (i in 1:num_subs) {
 #write_csv(all_models_no_flow_counts,"no_flow_counts.csv")
 
 
-# ---- 6.1 check normality of data (baseline backcast) ----
+# ---- 6.1 check normality of data (backcast) ----
 
 # make new data frame without zero values (b/c just looking at actual flows)
 # miroc baseline (backcast)
@@ -974,7 +976,7 @@ ggplot(hadley4_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
 # in conclusion...need to log transform FLOW_OUTcms data for outlier calcs
 
 
-# ---- 6.2 calculate outlier cutoffs and number of outlier low flows (not using and using backcast baseline) ----
+# ---- 6.2 calculate outlier cutoffs and number of outlier low flows (no backcast and backcast) ----
 
 # baseline (not backcast)
 #baseline_outlier_calcs=count_lowflow_outliers(baseline_rch_data)
@@ -1029,7 +1031,7 @@ hadley4_5_outlier_counts_using_baseline=hadley4_5_outlier_calcs_using_baseline[[
 hadley4_5_outlier_cutoffs_using_baseline=hadley4_5_outlier_calcs_using_baseline[[2]]
 
 
-# ---- 6.3 calculate % change in outlier low flows (using backcast baseline) ----
+# ---- 6.3 calculate % change in outlier low flows (backcast) ----
 
 # sum outlier counts data by subbasin
 # backcast baselines
@@ -1076,12 +1078,103 @@ yadkin_subs_shp_lowflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,lowf
 yadkin_subs_shp_lowflow_outliers_using_bcbaseline$dataset=factor(yadkin_subs_shp_lowflow_outliers_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 6.4 plot boxplots for low flow outlier context (using backcast baseline) ----
+# ---- 6.4 plot variation in days with low flow (backcast) ----
+
+# make dataframe with contributing errors to can use to plot
+contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+  distinct() %>% 
+  mutate(SUB=RCH) %>% 
+  select(-RCH)
+
+# join areas
+all_models_lowflow_change_area=lowflow_outlier_change_using_bcbaseline_projections %>%
+  left_join(contributing_areas,by='SUB')
+
+# backcast baselines (and recode them for plotting)
+baseline_num_yrs=length(unique(baseline_rch_data$YR))
+lowflow_change_baseline=all_models_lowflow_change_area %>%
+  select(SUB,AREAkm2,baseline_sum_n_minor_outliers,dataset) %>%
+  mutate(baseline_sum_n_minor_outliers_per_year=baseline_sum_n_minor_outliers/baseline_num_yrs) %>%
+  filter(dataset!="csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
+lowflow_change_baseline$dataset=recode(lowflow_change_baseline$dataset,"miroc8_5"="MIROC","csiro8_5"="CSIRO","hadley4_5"="Hadley")
+
+# backcast baseline ordered by subbasin area
+lowflow_change_baseline$SUB=factor(lowflow_change_baseline$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+lowflow_change_baseline$dataset=factor(lowflow_change_baseline$dataset,levels=c("MIROC","CSIRO","Hadley"))
+
+# backcast baseline summary for pointrange plot
+lowflow_change_baseline_summary=lowflow_change_baseline %>%
+  group_by(SUB,AREAkm2) %>%
+  summarize(min_n_minor_outliers_per_year=min(baseline_sum_n_minor_outliers_per_year),
+            max_n_minor_outliers_per_year=max(baseline_sum_n_minor_outliers_per_year),
+            mean_n_minor_outliers_per_year=mean(baseline_sum_n_minor_outliers_per_year))
+
+# backcast baselines plot
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("num_lowflow_baseline.pdf",width=11,height=8.5,pointsize=12)
+ggplot() +
+  geom_pointrange(data=lowflow_change_baseline_summary,
+                  aes(x=SUB,y=mean_n_minor_outliers_per_year,ymin=min_n_minor_outliers_per_year,ymax=max_n_minor_outliers_per_year),shape=32) +
+  geom_point(data=lowflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_year,color=dataset),
+             shape=17,size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+  #geom_smooth(method='loess',formula=y~x) +
+  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  ylab("Number of Minor LOFs/yr") +
+  scale_color_manual(values=c("grey75","grey50","black")) +
+  ylim(-1,30) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=16))
+dev.off()
+
+
+# projections
+miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR)) # all are equal to 21 but use miroc8_5_num_yrs for simplicity
+lowflow_change_projection=all_models_lowflow_change_area %>%
+  select(SUB,AREAkm2,projection_sum_n_minor_outliers,dataset) %>%
+  mutate(projection_sum_n_minor_outliers_per_year=projection_sum_n_minor_outliers/miroc8_5_num_yrs) # all are equal to 21 but use miroc8_5_num_yrs for simplicity 
+
+# projections ordered by subbasin area
+lowflow_change_projection$SUB=factor(lowflow_change_projection$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+lowflow_change_projection$dataset=factor(lowflow_change_projection$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
+# projections summary for pointrange plot
+lowflow_change_projection_summary=lowflow_change_projection %>%
+  group_by(SUB,AREAkm2) %>%
+  summarize(min_n_minor_outliers_per_year=min(projection_sum_n_minor_outliers_per_year),
+            max_n_minor_outliers_per_year=max(projection_sum_n_minor_outliers_per_year),
+            mean_n_minor_outliers_per_year=mean(projection_sum_n_minor_outliers_per_year))
+
+# projections plot
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("num_lowflow_projection.pdf",width=11,height=8.5,pointsize=12)
+ggplot() +
+  geom_pointrange(data=lowflow_change_projection_summary,
+                  aes(x=SUB,y=mean_n_minor_outliers_per_year,ymin=min_n_minor_outliers_per_year,ymax=max_n_minor_outliers_per_year),
+                  shape=32) +
+  geom_point(data=lowflow_change_projection,aes(x=SUB,y=projection_sum_n_minor_outliers_per_year,color=dataset),
+             size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+  #geom_smooth(method='loess',formula=y~x) +
+  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  ylab("Number of Minor LOFs/yr") +
+  scale_color_manual(values=c("grey80","grey60","grey40","black")) +
+  ylim(-1,30) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=16))
+dev.off()
+
+
+# ---- 6.5 plot boxplots for low flow outlier context (backcast) ----
 
 ggplot(lowflow_outlier_change_using_bcbaseline_projections) +
   geom_point(aes(x=dataset,y=minor_outlier_perc_change))
 
-# ---- 6.5 plot % change in outlier low flows on map (using backcast baseline) ----
+# ---- 6.6 plot % change in outlier low flows on map (backcast) ----
 
 # minor outliers (up to 500% change)
 setwd("/Users/ssaia/Desktop")
@@ -1090,7 +1183,7 @@ ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Minor Low Flow Outliers",limits=c(-100,500),na.value="grey75",high="darkred",low="darkblue") +
+  scale_fill_gradient2("% Change Number of Minor LOFs",limits=c(-100,500),na.value="grey75",high="darkred",low="darkblue") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -1104,7 +1197,7 @@ ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Minor Low Flow Outliers",na.value="grey75",limits=c(600,5000),high="darkred",low="white") +
+  scale_fill_gradient2("% Change in Number of Minor LOFs",na.value="grey75",limits=c(600,5000),high="darkred",low="white") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -1118,14 +1211,14 @@ ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=major_outlier_
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Major Low Flow Outliers",na.value="grey75",limits=c(-10,160)) +
+  scale_fill_gradient2("% Change Number of Major LOFs",na.value="grey75",limits=c(-10,160)) +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
 #theme(text = element_text(size = 20))
 dev.off()
 
-# ---- 6.6 export results from outlier analysis ----
+# ---- 6.7 export results from outlier analysis ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
