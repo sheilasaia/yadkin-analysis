@@ -13,17 +13,20 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
   # load libraries
   library(tidyverse)
   
-  # define variables and output dataframe
+  # define variables
   num_rchs=length(unique(baseline_outlier_counts_sum$RCH))
   dataset_temp=unique(projection_outlier_counts_sum$dataset)
+  
+  # define output dataframe
   change_df=data.frame(RCH=as.integer(),
-                       baseline_sum_n_minor_hiflow=as.numeric(),
-                       projection_sum_n_minor_hiflow=as.numeric(),
-                       baseline_sum_n_major_hiflow=as.numeric(),
-                       projection_sum_n_major_hiflow=as.numeric(),
+                       baseline_sum_n_minor_outliers=as.numeric(),
+                       projection_sum_n_minor_outliers=as.numeric(),
+                       baseline_sum_n_major_outliers=as.numeric(),
+                       projection_sum_n_major_outliers=as.numeric(),
                        minor_outlier_perc_change=as.numeric(),
                        major_outlier_perc_change=as.numeric(),
-                       dataset=as.character())
+                       dataset=as.character(),
+                       flow_option=as.character())
   
   # for loop for each subbasin
   for (i in 1:num_rchs) {
@@ -56,13 +59,14 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
 
       # save results to data frame
       change_df_temp=data.frame(RCH=i,
-                                baseline_sum_n_minor_hiflow=baseline_minor_temp,
-                                projection_sum_n_minor_hiflow=projection_minor_temp,
-                                baseline_sum_n_major_hiflow=baseline_major_temp,
-                                projection_sum_n_major_hiflow=projection_major_temp,
+                                baseline_sum_n_minor_outliers=baseline_minor_temp,
+                                projection_sum_n_minor_outliers=projection_minor_temp,
+                                baseline_sum_n_major_outliers=baseline_major_temp,
+                                projection_sum_n_major_outliers=projection_major_temp,
                                 minor_outlier_perc_change=minor_outlier_perc_change_temp,
                                 major_outlier_perc_change=major_outlier_perc_change_temp,
-                                dataset=dataset_temp)
+                                dataset=dataset_temp,
+                                flow_option=flow_option)
       
       # bind results to change_df
       change_df=bind_rows(change_df,change_df_temp)
@@ -96,20 +100,21 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
       
       # save results to data frame
       change_df_temp=data.frame(RCH=i,
-                                baseline_sum_n_minor_hiflow=baseline_minor_temp,
-                                projection_sum_n_minor_hiflow=projection_minor_temp,
-                                baseline_sum_n_major_hiflow=baseline_major_temp,
-                                projection_sum_n_major_hiflow=projection_major_temp,
+                                baseline_sum_n_minor_outliers=baseline_minor_temp,
+                                projection_sum_n_minor_outliers=projection_minor_temp,
+                                baseline_sum_n_major_outliers=baseline_major_temp,
+                                projection_sum_n_major_outliers=projection_major_temp,
                                 minor_outlier_perc_change=minor_outlier_perc_change_temp,
                                 major_outlier_perc_change=major_outlier_perc_change_temp,
-                                dataset=dataset_temp)
+                                dataset=dataset_temp,
+                                flow_option=flow_option)
       
       # bind results to change_df
       change_df=bind_rows(change_df,change_df_temp)
     }
     
     else {
-      print("The flow_otion used was not valid.")
+      print("The flow_option used was not valid.")
     }
   }
   
