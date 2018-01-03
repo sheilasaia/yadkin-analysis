@@ -366,6 +366,7 @@ dev.off()
 
 # ---- 6.2 reclass flow and sovi data for plotting ----
 
+mean_us_sovi=mean(us_sovi_hist$sovi_total)
 
 # ---- 6.3 point cloud of reclassified data ----
 
