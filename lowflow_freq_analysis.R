@@ -101,7 +101,8 @@ hadley4_5_rch_data=reformat_rch_file(hadley4_5_rch_raw_data)
 
 # shape file (.shp)
 # add SUB column to .shp file
-yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
+yadkin_subs_shp=yadkin_subs_shp %>% 
+  mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
 
