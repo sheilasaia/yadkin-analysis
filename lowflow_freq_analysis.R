@@ -449,7 +449,7 @@ dev.off()
 #write_csv(lowflow_10yr_projections_bc,"lowflow_100yr_perc_change_bc.csv")
 
 
-# ---- 5.1 count number of flows that equal zero ----
+# ---- 5.1 count number of days with no flow ----
 
 # baseline (not backcast)
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
@@ -705,7 +705,6 @@ dev.off()
 
 
 # ---- 5.7 calculate number of consecutive days with no flow (backcast) ----
-
 
 consec_no_flow_df=miroc_baseline_rch_data %>%
   mutate(date_ymd=ymd(sprintf('%04d%02d%02d', YR, MO, DA))) %>% select(-DA) %>%
@@ -1031,32 +1030,48 @@ hadley4_5_outlier_counts_using_baseline=hadley4_5_outlier_calcs_using_baseline[[
 hadley4_5_outlier_cutoffs_using_baseline=hadley4_5_outlier_calcs_using_baseline[[2]]
 
 
-# ---- 6.3 calculate % change in outlier low flows (backcast) ----
-
 # sum outlier counts data by subbasin
 # backcast baselines
 miroc_baseline_outlier_counts_sum=miroc_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="baseline")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="miroc_baseline",datatype="baseline")
 csiro_baseline_outlier_counts_sum=csiro_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="baseline")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="csiro_baseline",datatype="baseline")
 hadley_baseline_outlier_counts_sum=hadley_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="baseline")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="hadley_baseline",datatype="baseline")
+
 # projections
 miroc8_5_outlier_counts_using_baseline_sum=miroc8_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="miroc8_5")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="miroc8_5",datatype="projection")
 csiro8_5_outlier_counts_using_baseline_sum=csiro8_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="csiro8_5")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="csiro8_5",datatype="projection")
 csiro4_5_outlier_counts_using_baseline_sum=csiro4_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="csiro4_5")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="csiro4_5",datatype="projection")
 hadley4_5_outlier_counts_using_baseline_sum=hadley4_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
-  mutate(dataset="hadley4_5")
+  group_by(RCH) %>% 
+  summarize(sum_minor_lowflow=sum(n_minor_lowflow),sum_major_lowflow=sum(n_major_lowflow)) %>%
+  mutate(dataset="hadley4_5",datatype="projection")
+
+all_models_lowflow_outlier_counts=bind_rows(miroc_baseline_outlier_counts_sum,
+                                            csiro_baseline_outlier_counts_sum,
+                                            hadley_baseline_outlier_counts_sum,
+                                            miroc8_5_outlier_counts_using_baseline_sum,
+                                            csiro8_5_outlier_counts_using_baseline_sum,
+                                            csiro4_5_outlier_counts_using_baseline_sum,
+                                            hadley4_5_outlier_counts_using_baseline_sum)
+
+# ---- 6.3 calculate % change in outlier low flows (backcast) ----
 
 # calculate % change 
 miroc8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
@@ -1065,13 +1080,15 @@ csiro4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_o
 hadley4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
 
 # bind rows
-lowflow_outlier_change_using_bcbaseline_projections=bind_rows(miroc8_5_lowflow_outlier_change_using_bcbaseline,
-                                                              csiro8_5_lowflow_outlier_change_using_bcbaseline,
-                                                              csiro4_5_lowflow_outlier_change_using_bcbaseline,
-                                                              hadley4_5_lowflow_outlier_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+all_models_lowflow_outlier_change=bind_rows(miroc8_5_lowflow_outlier_change_using_bcbaseline,
+                                            csiro8_5_lowflow_outlier_change_using_bcbaseline,
+                                            csiro4_5_lowflow_outlier_change_using_bcbaseline,
+                                            hadley4_5_lowflow_outlier_change_using_bcbaseline) %>% 
+  mutate(SUB=RCH) %>% 
+  select(-RCH)
 
 # add to shp file
-yadkin_subs_shp_lowflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,lowflow_outlier_change_using_bcbaseline_projections,by="SUB")
+yadkin_subs_shp_lowflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,all_models_lowflow_outlier_change,by="SUB")
 #glimpse(yadkin_subs_shp_lowflow_outliers_using_bcbaseline)
 
 # adjust levels
@@ -1087,7 +1104,7 @@ contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
   select(-RCH)
 
 # join areas
-all_models_lowflow_change_area=lowflow_outlier_change_using_bcbaseline_projections %>%
+all_models_lowflow_change_area=all_models_lowflow_outlier_change %>%
   left_join(contributing_areas,by='SUB')
 
 # backcast baselines (and recode them for plotting)
@@ -1171,7 +1188,7 @@ dev.off()
 
 # ---- 6.5 plot boxplots for low flow outlier context (backcast) ----
 
-ggplot(lowflow_outlier_change_using_bcbaseline_projections) +
+ggplot(all_models_lowflow_outlier_change) +
   geom_point(aes(x=dataset,y=minor_outlier_perc_change))
 
 # ---- 6.6 plot % change in outlier low flows on map (backcast) ----
@@ -1220,13 +1237,16 @@ dev.off()
 
 # ---- 6.7 export results from outlier analysis ----
 
+# just export percent change
+all_models_lowflow_outlier_change_sel=all_models_lowflow_outlier_change %>%
+  select(SUB,dataset,minor_outlier_perc_change,major_outlier_perc_change)
+
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(lowflow_outlier_change_using_bcbaseline_projections,"lowflow_outlier_calcs_data.csv")
+#write_csv(all_models_lowflow_outlier_change_sel,"lowflow_outlier_perc_change_data.csv")
 
 
-
-# ---- 7.1 calculate lowflow counts below threshold ----
+# ---- x.1 calculate lowflow counts below threshold ----
 
 # find days where flow_out equals lowflow
 my_threshold=0.01 # in cms
@@ -1286,13 +1306,13 @@ hadley4_5_lowflow_thresh_counts=hadley4_5_lowflow_data %>% group_by(RCH,YR) %>%
 
 # combine all
 all_models_lowflow_thresh_counts=bind_rows(baseline_lowflow_thresh_counts,
-                                       miroc8_5_lowflow_thresh_counts,
-                                       csiro8_5_lowflow_thresh_counts,
-                                       csiro4_5_lowflow_thresh_counts,
-                                       hadley4_5_lowflow_thresh_counts)
+                                           miroc8_5_lowflow_thresh_counts,
+                                           csiro8_5_lowflow_thresh_counts,
+                                           csiro4_5_lowflow_thresh_counts,
+                                           hadley4_5_lowflow_thresh_counts)
 
 
-# ---- 7.2 plot lowflow counts vs time (bar plot) ----
+# ---- x.2 plot lowflow counts vs time (bar plot) ----
 
 # baseline
 ggplot(baseline_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
@@ -1339,7 +1359,7 @@ ggplot(hadley4_5_lowflow_thresh_counts,aes(x=YR,y=num_lowflow_days)) +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
 
 
-# ---- 7.3 plot lowflow counts in space (map) ----
+# ---- x.3 plot lowflow counts in space (map) ----
 
 # select only necessary down data
 all_models_lowflow_thresh_counts_sum=all_models_lowflow_thresh_counts %>% 
