@@ -1,5 +1,5 @@
 # yadkin sovi analysis (atsdr 2010-2014 tract level data)
-# last updated 20171215
+# last updated 20180103
 
 # ---- 1 set up -----
 
@@ -358,17 +358,154 @@ ggplot(yadkin_sub_shp_sovi_theme1to4,aes(fill=area_wt_sovi)) +
 dev.off()
 
 
-# ---- 6.1 import high/low/zero flow data ----
+# ---- 6.1 import high flow and low flow outlier percent change data ----
 
-#yadkin_sovi_total_sub_data
-#yadkin_sub_shp_sovi_total
+# set working direcorty and input data
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+hiflow_change_data=read_csv("hiflow_outlier_perc_change_data.csv",col_names=TRUE)
+lowflow_change_data=read_csv("lowflow_outlier_perc_change_data.csv",col_names=TRUE)
 
 
 # ---- 6.2 reclass flow and sovi data for plotting ----
 
+# calculate mean sovi for us
 mean_us_sovi=mean(us_sovi_hist$sovi_total)
+sd_us_sovi=sd(us_sovi_hist$sovi_total)
+min_us_sovi=min(us_sovi_hist$sovi_total)
+max_us_sovi=max(us_sovi_hist$sovi_total)
+
+# define number of years
+num_yrs=21 # baseline and projection are both 21 years
+
+# high flow data
+hiflow_change_data_sel=hiflow_change_data %>%
+  select(SUB:minor_outlier_perc_change) %>% # select minor outliers from flow data 
+  mutate(minor_outlier_perc_change_per_yr=minor_outlier_perc_change/num_yrs) %>% # per year output
+  left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
+  mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"high","low")) %>% # make new class variable based on us sovi mean
+  mutate(risk_class=ifelse(minor_outlier_perc_change_per_yr>0,"high","low")) %>% # make new class variable based on outlier flows
+  mutate(risk_vuln_class=ifelse(vuln_class=="high"&risk_class=="high","high",
+                                ifelse(vuln_class=="low"&risk_class=="low","low",
+                                       ifelse(vuln_class=="low"&risk_class=="high","med",
+                                              ifelse(vuln_class=="high"&risk_class=="low","med","NA"))))) # combine risk and vulnerability
+# low flow data
+lowflow_change_data_sel=lowflow_change_data %>%
+  select(SUB:minor_outlier_perc_change) %>% # select minor outliers from flow data 
+  mutate(minor_outlier_perc_change_per_yr=minor_outlier_perc_change/num_yrs) %>% # per year output
+  left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
+  mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"high","low")) %>% # make new class variable based on us sovi mean
+  mutate(risk_class=ifelse(minor_outlier_perc_change_per_yr>0,"high","low")) %>% # make new class variable based on outlier flows
+  mutate(risk_vuln_class=ifelse(vuln_class=="high"&risk_class=="high","high",
+                                ifelse(vuln_class=="low"&risk_class=="low","low",
+                                       ifelse(vuln_class=="low"&risk_class=="high","med",
+                                              ifelse(vuln_class=="high"&risk_class=="low","med","NA"))))) # combine risk and vulnerability
 
 # ---- 6.3 point cloud of reclassified data ----
 
+# omit na's for plotting
+hiflow_change_data_sel_naomit=hiflow_change_data_sel %>% na.omit()
+lowflow_change_data_sel_naomit=lowflow_change_data_sel %>% na.omit()
+
+# define factor levels
+hiflow_change_data_sel_naomit$risk_vuln_class=factor(hiflow_change_data_sel_naomit$risk_vuln_class,levels=c("high","med","low"))
+hiflow_change_data_sel_naomit$dataset=factor(hiflow_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+lowflow_change_data_sel_naomit$risk_vuln_class=factor(lowflow_change_data_sel_naomit$risk_vuln_class,levels=c("high","med","low"))
+lowflow_change_data_sel_naomit$dataset=factor(lowflow_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
+# high flow data
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_risk_vuln_per_yr_pointplot.pdf",width=11,height=8.5)
+ggplot(data=hiflow_change_data_sel_naomit,
+       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=risk_vuln_class)) +
+  geom_point(aes(shape=dataset),size=4,alpha=0.75) +
+  geom_hline(yintercept=0) +
+  geom_vline(xintercept=mean_us_sovi) +
+  labs(x="Subbasin SoVI",y="% Change in Number of Minor HOFs/yr",
+       color="Class",shape="Dataset") +
+  xlim(0,14) +
+  ylim(-10,60) +
+  theme_bw() +
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("black","grey50","grey75")) +
+  #scale_fill_manual(values=rep("black",4)) +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=16))
+dev.off()
+
+# low flow data
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lowflow_risk_vuln_per_yr_pointplot.pdf",width=11,height=8.5)
+ggplot(data=lowflow_change_data_sel_naomit,
+       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=risk_vuln_class,shape=dataset)) +
+  geom_point(size=4,alpha=0.75) +
+  #geom_point(shape=1,size=3,color="black") +
+  geom_hline(yintercept=0) +
+  geom_vline(xintercept=mean_us_sovi) +
+  labs(x="Subbasin SoVI",y="% Change in Number of Minor LOFs/yr",
+       color="Class",shape="Dataset") +
+  xlim(0,14) +
+  ylim(-10,220) +
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("black","grey50","grey75")) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=16))
+dev.off()
+
+# zoom
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lowflow_risk_vuln_per_yr_pointplot_zoom.pdf",width=11,height=8.5)
+ggplot(data=lowflow_change_data_sel_naomit,
+       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=risk_vuln_class,shape=dataset)) +
+  geom_point(size=4,alpha=0.75) +
+  #geom_point(shape=1,size=3,color="black") +
+  geom_hline(yintercept=0) +
+  geom_vline(xintercept=mean_us_sovi) +
+  labs(x="Subbasin SoVI",y="% Change in Number of Minor LOFs/yr",
+       color="Class",shape="Dataset") +
+  xlim(0,14) +
+  ylim(-10,100) +
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("black","grey50","grey75")) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=16))
+dev.off()
+
 
 # ---- 6.4 spatial distribution of reclassified data ----
+
+# add to shp file
+yadkin_sub_shp_risk_vuln_hiflow=left_join(yadkin_sub_shp,hiflow_change_data_sel,by="SUB")
+#glimpse(yadkin_sub_shp_risk_vuln_hiflow)
+yadkin_sub_shp_risk_vuln_lowflow=left_join(yadkin_sub_shp,lowflow_change_data_sel,by="SUB")
+#glimpse(yadkin_sub_shp_risk_vuln_lowflow)
+
+# define factor levels
+yadkin_sub_shp_risk_vuln_hiflow$risk_vuln_class=factor(yadkin_sub_shp_risk_vuln_hiflow$risk_vuln_class,levels=c("high","med","low"))
+yadkin_sub_shp_risk_vuln_hiflow$dataset=factor(yadkin_sub_shp_risk_vuln_hiflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+yadkin_sub_shp_risk_vuln_lowflow$risk_vuln_class=factor(yadkin_sub_shp_risk_vuln_lowflow$risk_vuln_class,levels=c("high","med","low"))
+yadkin_sub_shp_risk_vuln_lowflow$dataset=factor(yadkin_sub_shp_risk_vuln_lowflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
+# high flow data
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_risk_vuln_per_yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_sub_shp_risk_vuln_hiflow,aes(fill=risk_vuln_class)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_risk_vuln_hiflow is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values=c("red","orange","yellow"),na.value="grey75") +
+  theme_bw()
+dev.off()
+
+# low flow data
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("lowflow_risk_vuln_per_yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_sub_shp_risk_vuln_lowflow,aes(fill=risk_vuln_class)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_risk_vuln_lowflow is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values=c("red","orange","yellow"),na.value="grey75") +
+  theme_bw()
+dev.off()
+
