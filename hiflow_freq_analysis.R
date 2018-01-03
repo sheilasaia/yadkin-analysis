@@ -653,7 +653,43 @@ hadley4_5_outlier_counts_using_baseline=hadley4_5_outlier_calcs_using_baseline[[
 hadley4_5_outlier_cutoffs_using_baseline=hadley4_5_outlier_calcs_using_baseline[[2]]
 
 
-# ---- 5.3 calculate % change in outlier high flows (no backcast) ----
+# sum outlier counts data by subbasin
+# backcast baselines
+miroc_baseline_outlier_counts_sum=miroc_baseline_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="miroc_baseline",datatype="baseline")
+csiro_baseline_outlier_counts_sum=csiro_baseline_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro_baseline",datatype="baseline")
+hadley_baseline_outlier_counts_sum=hadley_baseline_outlier_counts %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="hadley_baseline",datatype="baseline")
+
+# projections
+miroc8_5_outlier_counts_using_baseline_sum=miroc8_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="miroc8_5",datatype="projection")
+csiro8_5_outlier_counts_using_baseline_sum=csiro8_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro8_5",datatype="projection")
+csiro4_5_outlier_counts_using_baseline_sum=csiro4_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="csiro4_5",datatype="projection")
+hadley4_5_outlier_counts_using_baseline_sum=hadley4_5_outlier_counts_using_baseline %>%
+  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  mutate(dataset="hadley4_5",datatype="projection")
+
+# combine data
+all_models_hiflow_outlier_counts=bind_rows(miroc_baseline_outlier_counts_sum,
+                                           csiro_baseline_outlier_counts_sum,
+                                           hadley_baseline_outlier_counts_sum,
+                                           miroc8_5_outlier_counts_using_baseline_sum,
+                                           csiro8_5_outlier_counts_using_baseline_sum,
+                                           csiro4_5_outlier_counts_using_baseline_sum,
+                                           hadley4_5_outlier_counts_using_baseline_sum)
+
+
+# ---- x.3 calculate % change in outlier high flows (no backcast) ----
 
 # sum outlier counts data by subbasin
 baseline_outlier_counts_sum=baseline_outlier_counts %>% filter(YR>1987) %>% 
@@ -680,42 +716,17 @@ csiro4_5_hiflow_outlier_change=outlier_change(baseline_outlier_counts_sum,csiro4
 hadley4_5_hiflow_outlier_change=outlier_change(baseline_outlier_counts_sum,hadley4_5_outlier_counts_sum,flow_option="hiflow")
 
 # bind rows
-hiflow_outlier_change_projections=bind_rows(miroc8_5_hiflow_outlier_change,
+hiflow_outlier_change_no_bcbaseline_projections=bind_rows(miroc8_5_hiflow_outlier_change,
                                            csiro8_5_hiflow_outlier_change,
                                            csiro4_5_hiflow_outlier_change,
                                            hadley4_5_hiflow_outlier_change) %>% mutate(SUB=RCH) %>% select(-RCH)
 
 # add to shp file
-yadkin_subs_shp_hiflow_outliers=left_join(yadkin_subs_shp,hiflow_outlier_change_projections,by="SUB")
+yadkin_subs_shp_hiflow_outliers=left_join(yadkin_subs_shp,hiflow_outlier_change_no_bcbaseline_projections,by="SUB")
 #glimpse(yadkin_subs_shp_hiflow_outliers)
 
 
 # ---- 5.4 calculate % change in outlier high flows (backcast) ----
-
-# sum outlier counts data by subbasin
-# backcast baselines
-miroc_baseline_outlier_counts_sum=miroc_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="baseline")
-csiro_baseline_outlier_counts_sum=csiro_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="baseline")
-hadley_baseline_outlier_counts_sum=hadley_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="baseline")
-# projections
-miroc8_5_outlier_counts_using_baseline_sum=miroc8_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="miroc8_5")
-csiro8_5_outlier_counts_using_baseline_sum=csiro8_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="csiro8_5")
-csiro4_5_outlier_counts_using_baseline_sum=csiro4_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="csiro4_5")
-hadley4_5_outlier_counts_using_baseline_sum=hadley4_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
-  mutate(dataset="hadley4_5")
 
 # calculate % change 
 miroc8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="hiflow")
@@ -724,13 +735,14 @@ csiro4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_ou
 hadley4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="hiflow")
 
 # bind rows
-hiflow_outlier_change_using_bcbaseline_projections=bind_rows(miroc8_5_hiflow_outlier_change_using_bcbaseline,
-                                                             csiro8_5_hiflow_outlier_change_using_bcbaseline,
-                                                             csiro4_5_hiflow_outlier_change_using_bcbaseline,
-                                                             hadley4_5_hiflow_outlier_change_using_bcbaseline) %>% mutate(SUB=RCH) %>% select(-RCH)
+all_models_hiflow_outlier_change=bind_rows(miroc8_5_hiflow_outlier_change_using_bcbaseline,
+                                           csiro8_5_hiflow_outlier_change_using_bcbaseline,
+                                           csiro4_5_hiflow_outlier_change_using_bcbaseline,
+                                           hadley4_5_hiflow_outlier_change_using_bcbaseline) %>% 
+  mutate(SUB=RCH) %>% select(-RCH)
 
 # add to shp file
-yadkin_subs_shp_hiflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,hiflow_outlier_change_using_bcbaseline_projections,by="SUB")
+yadkin_subs_shp_hiflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,all_models_hiflow_outlier_change,by="SUB")
 #glimpse(yadkin_subs_shp_hiflow_outliers_using_bcbaseline)
 
 # adjust levels
@@ -746,7 +758,7 @@ contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
   select(-RCH)
 
 # join areas
-all_models_hiflow_change_area=hiflow_outlier_change_using_bcbaseline_projections %>%
+all_models_hiflow_change_area=all_models_hiflow_outlier_change %>%
   left_join(contributing_areas,by='SUB')
 
 # backcast baselines (and recode them for plotting)
@@ -828,7 +840,7 @@ ggplot() +
 dev.off()
 
 
-# ---- 5.6 plot % change in outlier high flows on map (no backcast) ----
+# ---- x.6 plot % change in outlier high flows on map (no backcast) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
@@ -905,9 +917,13 @@ dev.off()
 
 # ---- 5.8 export results from outlier analysis ----
 
+# just export percent change
+all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
+  select(SUB,dataset,minor_outlier_perc_change,major_outlier_perc_change)
+
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(hiflow_outlier_change_using_bcbaseline_projections,"hiflow_outlier_calcs_data.csv")
+#write_csv(all_models_hiflow_outlier_change_sel,"hiflow_outlier_perc_change_data.csv")
 
 
 # ---- 6.1 plot flow distributions ----
