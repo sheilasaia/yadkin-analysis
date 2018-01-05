@@ -728,11 +728,15 @@ yadkin_subs_shp_hiflow_outliers=left_join(yadkin_subs_shp,hiflow_outlier_change_
 
 # ---- 5.4 calculate % change in outlier high flows (backcast) ----
 
+# specify number of years of baseline/projection
+# for this script to work these have to be equal
+baseline_num_yrs=length(unique(baseline_rch_data$YR))
+
 # calculate % change 
-miroc8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="hiflow")
-csiro8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="hiflow")
-csiro4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="hiflow")
-hadley4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="hiflow")
+miroc8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+csiro8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+csiro4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+hadley4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
 
 # bind rows
 all_models_hiflow_outlier_change=bind_rows(miroc8_5_hiflow_outlier_change_using_bcbaseline,
@@ -764,8 +768,7 @@ all_models_hiflow_change_area=all_models_hiflow_outlier_change %>%
 # backcast baselines (and recode them for plotting)
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
 hiflow_change_baseline=all_models_hiflow_change_area %>%
-  select(SUB,AREAkm2,baseline_sum_n_minor_outliers,dataset) %>%
-  mutate(baseline_sum_n_minor_outliers_per_year=baseline_sum_n_minor_outliers/baseline_num_yrs) %>%
+  select(SUB,AREAkm2,baseline_sum_n_minor_outliers_per_yr,dataset) %>%
   filter(dataset!="csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
 hiflow_change_baseline$dataset=recode(hiflow_change_baseline$dataset,"miroc8_5"="MIROC","csiro8_5"="CSIRO","hadley4_5"="Hadley")
 
@@ -776,17 +779,17 @@ hiflow_change_baseline$dataset=factor(hiflow_change_baseline$dataset,levels=c("M
 # backcast baseline summary for pointrange plot
 hiflow_change_baseline_summary=hiflow_change_baseline %>%
   group_by(SUB,AREAkm2) %>%
-  summarize(min_n_minor_outliers_per_year=min(baseline_sum_n_minor_outliers_per_year),
-            max_n_minor_outliers_per_year=max(baseline_sum_n_minor_outliers_per_year),
-            mean_n_minor_outliers_per_year=mean(baseline_sum_n_minor_outliers_per_year))
+  summarize(min_n_minor_outliers_per_yr=min(baseline_sum_n_minor_outliers_per_yr),
+            max_n_minor_outliers_per_yr=max(baseline_sum_n_minor_outliers_per_yr),
+            mean_n_minor_outliers_per_yr=mean(baseline_sum_n_minor_outliers_per_yr))
 
 # backcast baselines plot
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("num_hiflow_baseline.pdf",width=11,height=8.5,pointsize=12)
 ggplot() +
   geom_pointrange(data=hiflow_change_baseline_summary,
-                  aes(x=SUB,y=mean_n_minor_outliers_per_year,ymin=min_n_minor_outliers_per_year,ymax=max_n_minor_outliers_per_year),shape=32) +
-  geom_point(data=hiflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_year,color=dataset),
+                  aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),shape=32) +
+  geom_point(data=hiflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_yr,color=dataset),
              shape=17,size=4,alpha=0.75, position=position_jitter(height=0.075,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
@@ -805,7 +808,7 @@ dev.off()
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR)) # all are equal to 21 but use miroc8_5_num_yrs for simplicity
 hiflow_change_projection=all_models_hiflow_change_area %>%
   select(SUB,AREAkm2,projection_sum_n_minor_outliers,dataset) %>%
-  mutate(projection_sum_n_minor_outliers_per_year=projection_sum_n_minor_outliers/miroc8_5_num_yrs) # all are equal to 21 but use miroc8_5_num_yrs for simplicity 
+  mutate(projection_sum_n_minor_outliers_per_yr=projection_sum_n_minor_outliers/miroc8_5_num_yrs) # all are equal to 21 but use miroc8_5_num_yrs for simplicity 
 
 # projections ordered by subbasin area
 hiflow_change_projection$SUB=factor(hiflow_change_projection$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
@@ -814,18 +817,18 @@ hiflow_change_projection$dataset=factor(hiflow_change_projection$dataset,levels=
 # projections summary for pointrange plot
 hiflow_change_projection_summary=hiflow_change_projection %>%
   group_by(SUB,AREAkm2) %>%
-  summarize(min_n_minor_outliers_per_year=min(projection_sum_n_minor_outliers_per_year),
-            max_n_minor_outliers_per_year=max(projection_sum_n_minor_outliers_per_year),
-            mean_n_minor_outliers_per_year=mean(projection_sum_n_minor_outliers_per_year))
+  summarize(min_n_minor_outliers_per_yr=min(projection_sum_n_minor_outliers_per_yr),
+            max_n_minor_outliers_per_yr=max(projection_sum_n_minor_outliers_per_yr),
+            mean_n_minor_outliers_per_yr=mean(projection_sum_n_minor_outliers_per_yr))
 
 # projections plot
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("num_hiflow_projection.pdf",width=11,height=8.5,pointsize=12)
 ggplot() +
   geom_pointrange(data=hiflow_change_projection_summary,
-                  aes(x=SUB,y=mean_n_minor_outliers_per_year,ymin=min_n_minor_outliers_per_year,ymax=max_n_minor_outliers_per_year),
+                  aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),
                   shape=32) +
-  geom_point(data=hiflow_change_projection,aes(x=SUB,y=projection_sum_n_minor_outliers_per_year,color=dataset),
+  geom_point(data=hiflow_change_projection,aes(x=SUB,y=projection_sum_n_minor_outliers_per_yr,color=dataset),
              size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
@@ -873,28 +876,14 @@ dev.off()
 
 # ---- 5.7 plot % change in outlier high flows on map (backcast) ----
 
-# minor outliers (below 500%)
+# minor outliers
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_minor_outlier_change_using_baseline_bc_low.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change)) +
+cairo_pdf("hiflow_minor_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Minor High Flow Outliers",na.value="grey75",limits=c(-100,500),high="darkblue",low="darkred") +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
-dev.off()
-
-# minor outliers (above 500%)
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_minor_outlier_change_using_baseline_bc_up.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Minor High Flow Outliers",na.value="grey75",limits=c(500,1300),high="darkblue",low="white") +
+  scale_fill_gradient2("% Change # Minor High Flow Outliers/yr",na.value="grey75",limits=c(-20,60),high="darkblue",low="darkred") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -903,12 +892,12 @@ dev.off()
 
 # major outliers
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_major_outlier_change_using_baseline_bc.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_perc_change)) +
+cairo_pdf("hiflow_major_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Major High Flow Outliers",na.value="grey75",limits=c(-10,160)) +
+  scale_fill_gradient2("% Change # Major High Flow Outliers/yr",na.value="grey75",limits=c(-10,20)) +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -919,7 +908,8 @@ dev.off()
 
 # just export percent change
 all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
-  select(SUB,dataset,minor_outlier_perc_change,major_outlier_perc_change)
+  select(SUB,dataset,minor_outlier_perc_change,minor_outlier_perc_change_per_yr,
+         major_outlier_perc_change,major_outlier_perc_change_per_yr)
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")

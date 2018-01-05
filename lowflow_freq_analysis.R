@@ -527,11 +527,15 @@ all_models_no_flow_counts=all_models_no_flow_counts_by_sub %>% group_by(dataset,
 
 # ---- 5.2 calculate % change in number days with no flow (backcast) ----
 
+# number of years in simulation
+# for this script to work we must assume basleine and projection are equal in simulation length
+baseline_num_yrs=length(unique(hadley_baseline_rch_data$YR))
+
 # calculate % change 
-miroc8_5_no_flow_change_using_bcbaseline=no_flow_change(miroc_baseline_obs_no_flow_counts,miroc8_5_obs_no_flow_counts)
-csiro8_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_flow_counts,csiro8_5_obs_no_flow_counts)
-csiro4_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_flow_counts,csiro4_5_obs_no_flow_counts)
-hadley4_5_no_flow_change_using_bcbaseline=no_flow_change(hadley_baseline_obs_no_flow_counts,hadley4_5_obs_no_flow_counts)
+miroc8_5_no_flow_change_using_bcbaseline=no_flow_change(miroc_baseline_obs_no_flow_counts,miroc8_5_obs_no_flow_counts,baseline_num_yrs)
+csiro8_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_flow_counts,csiro8_5_obs_no_flow_counts,baseline_num_yrs)
+csiro4_5_no_flow_change_using_bcbaseline=no_flow_change(csiro_baseline_obs_no_flow_counts,csiro4_5_obs_no_flow_counts,baseline_num_yrs)
+hadley4_5_no_flow_change_using_bcbaseline=no_flow_change(hadley_baseline_obs_no_flow_counts,hadley4_5_obs_no_flow_counts,baseline_num_yrs)
 
 # bind rows
 all_models_no_flow_change=bind_rows(miroc8_5_no_flow_change_using_bcbaseline,
@@ -587,28 +591,28 @@ dev.off()
 
 # ---- 5.5 plot % change in days with no flow on map (backcast) ----
 
-# results below 500 % change
+# results below 40 % change
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("no_flow_change_using_baseline_bc_low.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
+cairo_pdf("no_flow_change_using_bcbaseline_low.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Days with Flow = 0",na.value="grey75",limits=c(-100,500),high="darkred",low="darkblue") +
+  scale_fill_gradient2("% Change # Days with Flow = 0/yr",na.value="grey75",limits=c(-10,40),high="darkred",low="darkblue") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
 #theme(text = element_text(size = 20))
 dev.off()
 
-# results above 500 % change
+# results above 40 % change
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("no_flow_change_using_baseline_bc_up.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change)) +
+cairo_pdf("no_flow_change_using_bcbaseline_up.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_no_flow_using_bcbaseline,aes(fill=no_flow_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Days with Flow = 0",na.value="grey75",limits=c(500,4500),high="darkred",low="white") +
+  scale_fill_gradient2("% Change # Days with Flow = 0/yr",na.value="grey75",limits=c(40,205),high="darkred",low="white") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -782,9 +786,13 @@ for (i in 1:num_subs) {
 
 # ---- 5.9 export results ----
 
+# just export percent change
+all_models_no_flow_change_sel=all_models_no_flow_change %>%
+  select(SUB,dataset,no_flow_perc_change,no_flow_perc_change_per_yr)
+
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(all_models_no_flow_counts,"no_flow_counts.csv")
+#write_csv(all_models_no_flow_change_sel,"no_flow_perc_change_data.csv")
 
 
 # ---- 6.1 check normality of data (backcast) ----
@@ -1074,11 +1082,15 @@ all_models_lowflow_outlier_counts=bind_rows(miroc_baseline_outlier_counts_sum,
 
 # ---- 6.3 calculate % change in outlier low flows (backcast) ----
 
+# specify number of years of baseline/projection
+# for this script to work these have to be equal
+baseline_num_yrs=length(unique(baseline_rch_data$YR))
+
 # calculate % change 
-miroc8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
-csiro8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
-csiro4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
-hadley4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="lowflow")
+miroc8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="lowflow",baseline_num_yrs)
+csiro8_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="lowflow",baseline_num_yrs)
+csiro4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="lowflow",baseline_num_yrs)
+hadley4_5_lowflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="lowflow",baseline_num_yrs)
 
 # bind rows
 all_models_lowflow_outlier_change=bind_rows(miroc8_5_lowflow_outlier_change_using_bcbaseline,
@@ -1194,28 +1206,28 @@ ggplot(all_models_lowflow_outlier_change) +
 
 # ---- 6.6 plot % change in outlier low flows on map (backcast) ----
 
-# minor outliers (up to 500% change)
+# minor outliers (up to 100% change)
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_minor_outlier_change_using_baseline_bc_low.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change)) +
+cairo_pdf("lowflow_minor_outlier_change_using_bcbaseline_low.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change Number of Minor LOFs",limits=c(-100,500),na.value="grey75",high="darkred",low="darkblue") +
+  scale_fill_gradient2("% Change Number of Minor LOFs/yr",limits=c(-25,100),na.value="grey75",high="darkred",low="darkblue") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
 #theme(text = element_text(size = 20))
 dev.off()
 
-# minor outliers (beyond 500% change)
+# minor outliers (beyond 100% change)
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_minor_outlier_change_using_baseline_bc_up.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change)) +
+cairo_pdf("lowflow_minor_outlier_change_using_bcbaseline_up.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_lowflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change in Number of Minor LOFs",na.value="grey75",limits=c(600,5000),high="darkred",low="white") +
+  scale_fill_gradient2("% Change in Number of Minor LOFs",na.value="grey75",limits=c(100,220),high="darkred",low="white") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
 #theme(axis.title = element_text(size = 20)) +
@@ -1240,7 +1252,8 @@ dev.off()
 
 # just export percent change
 all_models_lowflow_outlier_change_sel=all_models_lowflow_outlier_change %>%
-  select(SUB,dataset,minor_outlier_perc_change,major_outlier_perc_change)
+  select(SUB,dataset,minor_outlier_perc_change,minor_outlier_perc_change_per_yr,
+         major_outlier_perc_change,major_outlier_perc_change_per_yr)
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
