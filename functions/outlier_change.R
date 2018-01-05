@@ -5,10 +5,11 @@
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
-outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_sum,flow_option) {
+outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_sum,flow_option,num_yrs) {
   # required to run count_hiflow_outliers() or count_lowlfow_outliers(), 
   # save first list output (=counts), and sum counts by RCH
-  # possible flow_option calls: "hiflow" or "lowflow" 
+  # possible flow_option calls: "hiflow" or "lowflow"
+  # script assumes that the projection is the same number of years (num_yrs) as the baseline dataset
   
   # load libraries
   library(tidyverse)
@@ -24,7 +25,9 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
                        baseline_sum_n_major_outliers=as.numeric(),
                        projection_sum_n_major_outliers=as.numeric(),
                        minor_outlier_perc_change=as.numeric(),
+                       minor_outlier_perc_change_per_yr=as.numeric(),
                        major_outlier_perc_change=as.numeric(),
+                       major_outlier_perc_change_per_yr=as.numeric(),
                        dataset=as.character(),
                        flow_option=as.character())
   
@@ -64,7 +67,9 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
                                 baseline_sum_n_major_outliers=baseline_major_temp,
                                 projection_sum_n_major_outliers=projection_major_temp,
                                 minor_outlier_perc_change=minor_outlier_perc_change_temp,
+                                minor_outlier_perc_change_per_yr=minor_outlier_perc_change_temp/num_yrs,
                                 major_outlier_perc_change=major_outlier_perc_change_temp,
+                                major_outlier_perc_change_per_yr=major_outlier_perc_change_temp/num_yrs,
                                 dataset=dataset_temp,
                                 flow_option=flow_option)
       
@@ -105,7 +110,9 @@ outlier_change=function(baseline_outlier_counts_sum,projection_outlier_counts_su
                                 baseline_sum_n_major_outliers=baseline_major_temp,
                                 projection_sum_n_major_outliers=projection_major_temp,
                                 minor_outlier_perc_change=minor_outlier_perc_change_temp,
+                                minor_outlier_perc_change_per_yr=minor_outlier_perc_change_temp/num_yrs,
                                 major_outlier_perc_change=major_outlier_perc_change_temp,
+                                major_outlier_perc_change_per_yr=major_outlier_perc_change_temp/num_yrs,
                                 dataset=dataset_temp,
                                 flow_option=flow_option)
       

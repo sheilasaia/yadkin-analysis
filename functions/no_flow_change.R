@@ -5,7 +5,8 @@
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
-no_flow_change=function(baseline_no_flow_counts,projection_no_flow_counts) {
+no_flow_change=function(baseline_no_flow_counts,projection_no_flow_counts,num_yrs) {
+  # assumes number of years of baseline dataset is same as number of years of projection (num_yrs)
   
   # load libraries
   library(tidyverse)
@@ -17,6 +18,7 @@ no_flow_change=function(baseline_no_flow_counts,projection_no_flow_counts) {
                        baseline_sum_n_no_flow_entries=as.numeric(),
                        projection_sum_n_no_flow_entries=as.numeric(),
                        no_flow_perc_change=as.numeric(),
+                       no_flow_perc_change_per_yr=as.numeric(),
                        dataset=as.character())
   
   # for loop for each subbasin
@@ -43,6 +45,7 @@ no_flow_change=function(baseline_no_flow_counts,projection_no_flow_counts) {
                               baseline_sum_n_no_flow_entries=baseline_sum_n_no_flow_entries_temp,
                               projection_sum_n_no_flow_entries=projection_sum_n_no_flow_entries_temp,
                               no_flow_perc_change=no_flow_perc_change_temp,
+                              no_flow_perc_change_per_yr=no_flow_perc_change_temp/num_yrs,
                               dataset=dataset_temp)
     
     # bind results to change_df
