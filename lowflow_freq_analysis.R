@@ -652,12 +652,12 @@ no_flow_change_baseline_summary=no_flow_change_baseline %>%
 
 # backcast baseline plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_no_flow_baseline.pdf",width=11,height=8.5,pointsize=12)
+cairo_pdf("num_no_flow_baseline.pdf",width=11,height=8.5,pointsize=18)
 ggplot() +
   geom_pointrange(data=no_flow_change_baseline_summary,
                   aes(x=SUB,y=mean_n_no_flow_entries_per_year,ymin=min_n_no_flow_entries_per_year,ymax=max_n_no_flow_entries_per_year),shape=32) +
   geom_point(data=no_flow_change_baseline,aes(x=SUB,y=baseline_sum_n_no_flow_entries_per_year,color=dataset),
-             shape=17,size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+             shape=17,size=5,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
   ylab("Number of Days with No Flow/yr") +
@@ -667,7 +667,7 @@ ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=16))
+        text=element_text(size=18))
 dev.off()
 
 
@@ -689,13 +689,13 @@ no_flow_change_projection_summary=no_flow_change_projection %>%
 
 # projections plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_no_flow_projection.pdf",width=11,height=8.5,pointsize=12)
+cairo_pdf("num_no_flow_projection.pdf",width=11,height=8.5,pointsize=18)
 ggplot() +
   geom_pointrange(data=no_flow_change_projection_summary,
                   aes(x=SUB,y=mean_n_no_flow_entries_per_year,ymin=min_n_no_flow_entries_per_year,ymax=max_n_no_flow_entries_per_year),
                   shape=32) +
   geom_point(data=no_flow_change_projection,aes(x=SUB,y=projection_sum_n_no_flow_entries_per_year,color=dataset),
-             size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+             size=5,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
   ylab("Number of Days with No Flow/yr") +
@@ -705,7 +705,7 @@ ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=16))
+        text=element_text(size=18))
 dev.off()
 
 
@@ -1141,12 +1141,12 @@ lowflow_change_baseline_summary=lowflow_change_baseline %>%
 
 # backcast baselines plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_lowflow_baseline.pdf",width=11,height=8.5,pointsize=12)
+cairo_pdf("num_lowflow_baseline.pdf",width=11,height=8.5,pointsize=18)
 ggplot() +
   geom_pointrange(data=lowflow_change_baseline_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_year,ymin=min_n_minor_outliers_per_year,ymax=max_n_minor_outliers_per_year),shape=32) +
   geom_point(data=lowflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_year,color=dataset),
-             shape=17,size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+             shape=17,size=5,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
   ylab("Number of Minor LOFs/yr") +
@@ -1156,7 +1156,7 @@ ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=16))
+        text=element_text(size=18))
 dev.off()
 
 
@@ -1179,13 +1179,13 @@ lowflow_change_projection_summary=lowflow_change_projection %>%
 
 # projections plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_lowflow_projection.pdf",width=11,height=8.5,pointsize=12)
+cairo_pdf("num_lowflow_projection.pdf",width=11,height=8.5,pointsize=18)
 ggplot() +
   geom_pointrange(data=lowflow_change_projection_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_year,ymin=min_n_minor_outliers_per_year,ymax=max_n_minor_outliers_per_year),
                   shape=32) +
   geom_point(data=lowflow_change_projection,aes(x=SUB,y=projection_sum_n_minor_outliers_per_year,color=dataset),
-             size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+             size=5,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
   ylab("Number of Minor LOFs/yr") +
@@ -1195,7 +1195,7 @@ ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=16))
+        text=element_text(size=18))
 dev.off()
 
 
