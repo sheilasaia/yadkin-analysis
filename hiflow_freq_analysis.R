@@ -768,7 +768,8 @@ all_models_hiflow_change_area=all_models_hiflow_outlier_change %>%
 # backcast baselines (and recode them for plotting)
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
 hiflow_change_baseline=all_models_hiflow_change_area %>%
-  select(SUB,AREAkm2,baseline_sum_n_minor_outliers_per_yr,dataset) %>%
+  select(SUB,AREAkm2,baseline_sum_n_minor_outliers,dataset) %>%
+  mutate(baseline_sum_n_minor_outliers_per_yr=baseline_sum_n_minor_outliers/baseline_num_yrs) %>%
   filter(dataset!="csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
 hiflow_change_baseline$dataset=recode(hiflow_change_baseline$dataset,"miroc8_5"="MIROC","csiro8_5"="CSIRO","hadley4_5"="Hadley")
 
@@ -785,12 +786,12 @@ hiflow_change_baseline_summary=hiflow_change_baseline %>%
 
 # backcast baselines plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_hiflow_baseline.pdf",width=11,height=8.5,pointsize=12)
+cairo_pdf("num_hiflow_baseline.pdf",width=11,height=8.5,pointsize=18)
 ggplot() +
   geom_pointrange(data=hiflow_change_baseline_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),shape=32) +
   geom_point(data=hiflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_yr,color=dataset),
-             shape=17,size=4,alpha=0.75, position=position_jitter(height=0.075,width=0)) +
+             shape=17,size=5,alpha=0.75, position=position_jitter(height=0.075,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
   ylab("Number of Minor HOFs/yr") +
@@ -800,7 +801,7 @@ ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=16))
+        text=element_text(size=18))
 dev.off()
 
 
@@ -823,13 +824,13 @@ hiflow_change_projection_summary=hiflow_change_projection %>%
 
 # projections plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_hiflow_projection.pdf",width=11,height=8.5,pointsize=12)
+cairo_pdf("num_hiflow_projection.pdf",width=11,height=8.5,pointsize=18)
 ggplot() +
   geom_pointrange(data=hiflow_change_projection_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),
                   shape=32) +
   geom_point(data=hiflow_change_projection,aes(x=SUB,y=projection_sum_n_minor_outliers_per_yr,color=dataset),
-             size=4,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
+             size=5,alpha=0.75, position=position_jitter(height=0.1,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
   xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
   ylab("Number of Minor HOFs/yr") +
@@ -839,7 +840,7 @@ ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=16))
+        text=element_text(size=18))
 dev.off()
 
 
