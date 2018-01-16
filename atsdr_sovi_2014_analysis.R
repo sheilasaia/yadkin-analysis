@@ -504,3 +504,42 @@ ggplot(yadkin_sub_shp_risk_vuln_lowflow,aes(fill=risk_vuln_class)) +
   theme_bw()
 dev.off()
 
+
+# ---- 7.1 reformat census data for pca analysis ----
+
+# select only estimate columns
+yadkin_tract_est_data = yadkin_census_tracts_data %>% 
+  select(fips, contains("E_")) %>%
+  rename_all(tolower)
+
+# take z-score of 15 variables
+yadkin_tract_est_data_zscore = yadkin_tract_est_data %>%
+  select(e_pov:e_groupq) %>%
+  map(function(x) scale(x)) %>%
+  as.data.frame()
+
+
+# ---- 7.2 principle component analysis ----
+
+# calculate principle components
+sovi_pca=prcomp(yadkin_tract_est_data_zscore,scale=FALSE) #already scaled it
+print(sovi_pca)
+plot(sovi_pca, type = "l")
+summary(sovi_pca)
+# first two components only account for 57% of variance (to get over 95% we have to go to PC 11!)
+sovi_pca_results=data.frame(var=names(yadkin_tract_est_data_zscore),pc1_loadings=sovi_pca$rotation[1:15],pc2_loadings=sovi_pca$rotation[16:30])
+biplot(sovi_pca)
+
+# take out e_pci and redo pca
+yadkin_tract_est_data_zscore_no_income = yadkin_tract_est_data_zscore %>%
+  select(-e_pci)
+
+# calculate principle components
+sovi_pca_no_income=prcomp(yadkin_tract_est_data_zscore_no_income,scale=FALSE) #already scaled it
+print(sovi_pca_no_income)
+plot(sovi_pca_no_income, type = "l")
+summary(sovi_pca_no_income)
+# first two components only account for 58% of variance (to get over 95% we have to go to PC 10!)
+# this is slightly higher than the pca with income included but not much more
+sovi_pca_results_no_income=data.frame(var=names(yadkin_tract_est_data_zscore_no_income),pc1_loadings=sovi_pca_no_income$rotation[1:14],pc2_loadings=sovi_pca_no_income$rotation[15:28])
+biplot(sovi_pca_no_income)
