@@ -793,6 +793,7 @@ all_models_no_flow_change_sel=all_models_no_flow_change %>%
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 #write_csv(all_models_no_flow_change_sel,"no_flow_perc_change_data.csv")
+#write_csv(contributing_areas,"subbasin_contributing_areas_data.csv")
 
 
 # ---- 6.1 check normality of data (backcast) ----
