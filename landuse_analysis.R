@@ -19,27 +19,32 @@ setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers")
 # baseline (1992)
 baseline_lu=read_csv("yadlurec_1992.txt",col_names=TRUE) %>% 
   select(VALUE:AREA_PERC) %>%
-  arrange(VALUE) %>% mutate(dataset="baseline")
+  arrange(VALUE) %>% 
+  mutate(dataset="baseline")
   
 # miroc 8.5 (2060)
 miroc8_5_lu=read_csv("yadluA_2060.txt",col_names=TRUE) %>% 
   select(VALUE:AREA_PERC) %>%
-  arrange(VALUE) %>% mutate(dataset="miroc8_5")
+  arrange(VALUE) %>% 
+  mutate(dataset="miroc8_5")
 
 # csiro 8.5 (2060)
 csiro8_5_lu=read_csv("yadluB_2060.txt",col_names=TRUE) %>% 
   select(VALUE:AREA_PERC) %>%
-  arrange(VALUE) %>% mutate(dataset="csiro8_5")
+  arrange(VALUE) %>% 
+  mutate(dataset="csiro8_5")
 
 # csiro 4.5 (2060)
 csiro4_5_lu=read_csv("yadluC_2060.txt",col_names=TRUE) %>% 
   select(VALUE:AREA_PERC) %>%
-  arrange(VALUE) %>% mutate(dataset="csiro4_5")
+  arrange(VALUE) %>% 
+  mutate(dataset="csiro4_5")
 
 # hadley 4.5 (2060)
 hadley4_5_lu=read_csv("yadluD_2060.txt",col_names=TRUE) %>% 
   select(VALUE:AREA_PERC) %>%
-  arrange(VALUE) %>% mutate(dataset="hadley4_5")
+  arrange(VALUE) %>% 
+  mutate(dataset="hadley4_5")
 
 
 # set directory and load subbasin percent use
@@ -54,25 +59,29 @@ baseline_lu_sub=read_csv("lu1992_allsubs.csv",col_names=TRUE) %>%
 # miroc 8.5 (2060)
 miroc8_5_lu_temp=read_csv("luA2060_allsubs.csv",col_names=TRUE) %>% 
   select(SUB:AREA_PERC) %>%
-  arrange(SUB,VALUE) %>% mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
+  arrange(SUB,VALUE) %>% 
+  mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
   select(sub_id,AREA_PERC)
 
 # csiro 8.5 (2060)
 csiro8_5_lu_temp=read_csv("luB2060_allsubs.csv",col_names=TRUE) %>% 
   select(SUB:AREA_PERC) %>%
-  arrange(SUB,VALUE) %>% mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
+  arrange(SUB,VALUE) %>% 
+  mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
   select(sub_id,AREA_PERC)
 
 # csiro 4.5 (2060)
 csiro4_5_lu_temp=read_csv("luC2060_allsubs.csv",col_names=TRUE) %>% 
   select(SUB:AREA_PERC) %>%
-  arrange(SUB,VALUE) %>% mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
+  arrange(SUB,VALUE) %>% 
+  mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
   select(sub_id,AREA_PERC)
 
 # hadley 4.5 (2060)
 hadley4_5_lu_temp=read_csv("luD2060_allsubs.csv",col_names=TRUE) %>% 
   select(SUB:AREA_PERC) %>%
-  arrange(SUB,VALUE) %>% mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
+  arrange(SUB,VALUE) %>% 
+  mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
   select(sub_id,AREA_PERC)
 
 # gis data
@@ -180,10 +189,17 @@ sublu_reclass_data$DESCRIPTION[sublu_reclass_data$DESCRIPTION=="wetland"]="wetla
 sublu_reclass_data$DESCRIPTION[sublu_reclass_data$DESCRIPTION=="water"]="wetlands_and_water"
 
 # reset sub_id in sublu_reclass_data (for % diff calc)
-sublu_reclass_data=sublu_reclass_data %>% select(SUB,AREA_PERC,DESCRIPTION,dataset) %>%
+sublu_reclass_data=sublu_reclass_data %>% 
+  select(SUB,AREA_PERC,DESCRIPTION,dataset) %>%
   mutate(sub_id=paste0("subid_",SUB,"_",DESCRIPTION)) %>%
   group_by(SUB,DESCRIPTION,dataset,sub_id) %>%
   summarize(AREA_PERC=sum(AREA_PERC))
+
+# summarize baseline % landuse
+yadlu_reclass_baseline_summary = yadlu_reclass_data %>% 
+  filter(dataset == "baseline") %>% 
+  group_by(DESCRIPTION) %>%
+  summarize(sum_area_perc = sum(AREA_PERC))
 
 # ---- 4.2 plot watershed wide data (reclassified categories) ----
 
