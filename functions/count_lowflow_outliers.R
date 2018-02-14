@@ -69,7 +69,7 @@ count_lowflow_outliers=function(rch_data) {
     
     # format bounds information
     output_bounds_temp_df=data.frame(RCH=i,
-                                     mean_daily_flow_cms_no_zeros=exp(mean(temp_log_df$FLOW_OUTcms)),
+                                     mean_daily_flow_cms_no_zeros=exp(mean(temp_log_df$log_FLOW_OUTcms)),
                                      median_daily_flow_cms_no_zeros=exp(q2),
                                      minor_outlier_cutoff=exp(lowbound_minor_outlier),
                                      major_outlier_cutoff=exp(lowbound_major_outlier))

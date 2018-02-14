@@ -12,7 +12,8 @@ count_hiflow_outliers=function(rch_data) {
   library(tidyverse) # data management
   
   # select necessary info
-  rch_data_sel=rch_data %>% select(RCH,MO,YR,FLOW_OUTcms)
+  rch_data_sel=rch_data %>% 
+    select(RCH,MO,YR,FLOW_OUTcms)
   
   # define output data frames
   output_counts_df=data.frame(RCH=as.integer(),
@@ -32,7 +33,8 @@ count_hiflow_outliers=function(rch_data) {
   for (i in 1:num_rchs) {
     
     # select one subbasin
-    temp_df=rch_data_sel %>% filter(RCH==i) %>%
+    temp_df=rch_data_sel %>% 
+      filter(RCH==i) %>%
       mutate(dataset="all_data")
     
     temp_log_df=temp_df %>%
@@ -69,7 +71,7 @@ count_hiflow_outliers=function(rch_data) {
     
     # format bounds information
     output_bounds_temp_df=data.frame(RCH=i,
-                                     mean_daily_flow_cms_no_zeros=exp(mean(temp_df$FLOW_OUTcms)),
+                                     mean_daily_flow_cms_no_zeros=exp(mean(temp_log_df$log_FLOW_OUTcms)),
                                      median_daily_flow_cms_no_zeros=exp(q2),
                                      minor_outlier_cutoff=exp(hibound_minor_outlier),
                                      major_outlier_cutoff=exp(hibound_major_outlier))
