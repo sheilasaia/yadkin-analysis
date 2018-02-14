@@ -147,14 +147,22 @@ hadley4_5_model_lowflow_calcs=model_freq_calcs_all_rchs(hadley4_5_obs_lowflow_ca
 # ---- 3.2 plot low flow freq. baselines for each subbasin (no backcast and backcast comparison) ----
 
 # omit zero values from observations
-baseline_obs_lowflow_calcs_nozeros=baseline_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
-miroc_baseline_obs_lowflow_calcs_nozeros=miroc_baseline_obs_lowflow_calcs %>% filter(obs_min_flow_log_cms_adj>0)
-miroc8_5_obs_lowflow_calcs_nozeros=miroc8_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
-csiro_baseline_obs_lowflow_calcs_nozeros=csiro_baseline_obs_lowflow_calcs %>% filter(obs_min_flow_log_cms_adj>0)
-csiro8_5_obs_lowflow_calcs_nozeros=csiro8_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
-csiro4_5_obs_lowflow_calcs_nozeros=csiro4_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
-hadley_baseline_obs_lowflow_calcs_nozeros=hadley_baseline_obs_lowflow_calcs %>% filter(obs_min_flow_log_cms_adj>0)
-hadley4_5_obs_lowflow_calcs_nozeros=hadley4_5_obs_lowflow_calcs %>% filter(obs_min_flow_cms_adj>0)
+baseline_obs_lowflow_calcs_nozeros=baseline_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_cms_adj>0)
+miroc_baseline_obs_lowflow_calcs_nozeros=miroc_baseline_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_log_cms_adj>0)
+miroc8_5_obs_lowflow_calcs_nozeros=miroc8_5_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_cms_adj>0)
+csiro_baseline_obs_lowflow_calcs_nozeros=csiro_baseline_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_log_cms_adj>0)
+csiro8_5_obs_lowflow_calcs_nozeros=csiro8_5_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_cms_adj>0)
+csiro4_5_obs_lowflow_calcs_nozeros=csiro4_5_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_cms_adj>0)
+hadley_baseline_obs_lowflow_calcs_nozeros=hadley_baseline_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_log_cms_adj>0)
+hadley4_5_obs_lowflow_calcs_nozeros=hadley4_5_obs_lowflow_calcs %>% 
+  filter(obs_min_flow_cms_adj>0)
 
 # omit NAs from model outputs
 baseline_model_lowflow_calcs_noNA=baseline_model_lowflow_calcs %>% na.omit()
@@ -476,35 +484,40 @@ miroc8_5_obs_no_flow_counts=miroc8_5_rch_data %>%
 # csiro baseline backcast (for comparison with csiro 8.5 and 4.5 projections)
 csiro_baseline_num_yrs=length(unique(csiro_baseline_rch_data$YR))
 csiro_baseline_obs_no_flow_counts=csiro_baseline_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  group_by(RCH) %>% 
+  summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/csiro_baseline_num_yrs,
          dataset="csiro_bcbaseline",datatype="baseline")
 
 # csiro 8.5
 csiro8_5_num_yrs=length(unique(csiro8_5_rch_data$YR))
 csiro8_5_obs_no_flow_counts=csiro8_5_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  group_by(RCH) %>% 
+  summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/csiro8_5_num_yrs,
          dataset="csiro8_5",datatype="projection")
 
 # csiro 4.5
 csiro4_5_num_yrs=length(unique(csiro4_5_rch_data$YR))
 csiro4_5_obs_no_flow_counts=csiro4_5_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  group_by(RCH) %>% 
+  summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/csiro4_5_num_yrs,
          dataset="csiro4_5",datatype="projection")
 
 # hadley baseline backcast
 hadley_baseline_num_yrs=length(unique(hadley_baseline_rch_data$YR))
 hadley_baseline_obs_no_flow_counts=hadley_baseline_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  group_by(RCH) %>% 
+  summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/hadley_baseline_num_yrs,
          dataset="hadley_bcbaseline",datatype="baseline")
 
 # hadley 4.5
 hadley4_5_num_yrs=length(unique(hadley4_5_rch_data$YR))
 hadley4_5_obs_no_flow_counts=hadley4_5_rch_data %>%
-  group_by(RCH) %>% summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
+  group_by(RCH) %>% 
+  summarise(sum_n_no_flow_entries=sum(FLOW_OUTcms==0)) %>%
   mutate(n_no_flow_entries_per_yr=sum_n_no_flow_entries/hadley4_5_num_yrs,
          dataset="hadley4_5",datatype="projection")
 
@@ -520,7 +533,8 @@ all_models_no_flow_counts_by_sub=bind_rows(baseline_obs_no_flow_counts,
 
 # summarize for each dataset (sum of subbasins)
 num_subs=length(unique(baseline_rch_data$RCH))
-all_models_no_flow_counts=all_models_no_flow_counts_by_sub %>% group_by(dataset,datatype) %>%
+all_models_no_flow_counts=all_models_no_flow_counts_by_sub %>% 
+  group_by(dataset,datatype) %>%
   summarize(sum_n_no_flow_entries_by_dataset=sum(sum_n_no_flow_entries),
             sum_n_no_flow_entries_by_dataset_per_year_per_subbasin=sum(sum_n_no_flow_entries)/baseline_num_yrs/num_subs)
 
@@ -782,7 +796,7 @@ for (i in 1:num_subs) {
 
 # ---- 5.8 plot number of consecutive days with no flow (backcast) ----
 
-
+# use rle()! and tibble time?
 
 # ---- 5.9 export results ----
 
@@ -985,7 +999,7 @@ ggplot(hadley4_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
 # in conclusion...need to log transform FLOW_OUTcms data for outlier calcs
 
 
-# ---- 6.2 calculate outlier cutoffs and number of outlier low flows (no backcast and backcast) ----
+# ---- 6.2 calculate outlier cutoffs and number of outlier low flows (backcast) ----
 
 # baseline (not backcast)
 #baseline_outlier_calcs=count_lowflow_outliers(baseline_rch_data)
