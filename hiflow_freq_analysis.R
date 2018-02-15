@@ -26,6 +26,7 @@ source(paste0(functions_path,"flow_change.R")) # determines % change in flows fo
 source(paste0(functions_path,"count_hiflow_outliers.R")) # counts number of minor and major outliers for risk analysis
 source(paste0(functions_path,"count_hiflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
 source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
+source(paste0(functions_path,"outlier_flow_cutoff_to_rp.R")) # determines return period for outlier cutoff flow
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -100,7 +101,8 @@ hadley4_5_rch_data=reformat_rch_file(hadley4_5_rch_raw_data)
 
 # shape file (.shp)
 # add SUB column to .shp file
-yadkin_subs_shp=yadkin_subs_shp %>% mutate(SUB=Subbasin)
+yadkin_subs_shp=yadkin_subs_shp %>% 
+  mutate(SUB=Subbasin)
 #glimpse(yadkin_subs_shp)
 
 # join areas for yadkin_net_data (=weights)
@@ -402,7 +404,7 @@ ggplot(yadkin_subs_shp_hiflow_100yr_bc,aes(fill=perc_change)) +
 dev.off()
 
 
-# ---- 4.8 export results for sovi analysis (backcast) ----
+# ---- 4.8 export high flow frequency results (backcast) ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -656,27 +658,34 @@ hadley4_5_outlier_cutoffs_using_baseline=hadley4_5_outlier_calcs_using_baseline[
 # sum outlier counts data by subbasin
 # backcast baselines
 miroc_baseline_outlier_counts_sum=miroc_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="miroc_baseline",datatype="baseline")
 csiro_baseline_outlier_counts_sum=csiro_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="csiro_baseline",datatype="baseline")
 hadley_baseline_outlier_counts_sum=hadley_baseline_outlier_counts %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="hadley_baseline",datatype="baseline")
 
 # projections
 miroc8_5_outlier_counts_using_baseline_sum=miroc8_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="miroc8_5",datatype="projection")
 csiro8_5_outlier_counts_using_baseline_sum=csiro8_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="csiro8_5",datatype="projection")
 csiro4_5_outlier_counts_using_baseline_sum=csiro4_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="csiro4_5",datatype="projection")
 hadley4_5_outlier_counts_using_baseline_sum=hadley4_5_outlier_counts_using_baseline %>%
-  group_by(RCH) %>% summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
+  group_by(RCH) %>% 
+  summarize(sum_minor_hiflow=sum(n_minor_hiflow),sum_major_hiflow=sum(n_major_hiflow)) %>%
   mutate(dataset="hadley4_5",datatype="projection")
 
 # combine data
@@ -743,7 +752,8 @@ all_models_hiflow_outlier_change=bind_rows(miroc8_5_hiflow_outlier_change_using_
                                            csiro8_5_hiflow_outlier_change_using_bcbaseline,
                                            csiro4_5_hiflow_outlier_change_using_bcbaseline,
                                            hadley4_5_hiflow_outlier_change_using_bcbaseline) %>% 
-  mutate(SUB=RCH) %>% select(-RCH)
+  mutate(SUB=RCH) %>% 
+  select(-RCH)
 
 # add to shp file
 yadkin_subs_shp_hiflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,all_models_hiflow_outlier_change,by="SUB")
@@ -905,7 +915,7 @@ ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_p
 #theme(text = element_text(size = 20))
 dev.off()
 
-# ---- 5.8 export results from outlier analysis ----
+# ---- 5.8 export outlier high flow results ----
 
 # just export percent change
 all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
@@ -917,28 +927,70 @@ all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
 #write_csv(all_models_hiflow_outlier_change_sel,"hiflow_outlier_perc_change_data.csv")
 
 
-# ---- 6.1 plot flow distributions ----
+# ---- 6.1 calculate return period for outlier cutoffs ----
+
+# calculate 
+miroc_baseline_outlier_cutoff_rp = outlier_flow_cutoff_to_rp(miroc_baseline_model_calcs,miroc_baseline_outlier_cutoffs)
+csiro_baseline_outlier_cutoff_rp = outlier_flow_cutoff_to_rp(csiro_baseline_model_calcs,csiro_baseline_outlier_cutoffs)
+hadley_baseline_outlier_cutoff_rp = outlier_flow_cutoff_to_rp(hadley_baseline_model_calcs,hadley_baseline_outlier_cutoffs)
+
+# make dataframe with contributing errors to can use to plot
+contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+  distinct() %>% 
+  mutate(SUB=RCH) #%>% 
+  #select(-RCH)
+
+# join areas
+blah=miroc_baseline_outlier_cutoff_rp %>%
+  left_join(contributing_areas,by='RCH')
+
+# ---- 6.2 plot excedence probability of outlier cutoffs for subbasins ---- 
+
+plot(minor_prob_exced~AREAkm2, data = blah,pch=16)
+
+
+
+# ---- 7.1 plot flow distributions ----
 
 # join backcast baseline and projection data for overlapping joyplots
-baseline_rch_data_sel=baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="true_baseline") %>% mutate(datatype="true_baseline")
-miroc_baseline_rch_data_sel=miroc_baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="miroc_baseline") %>% mutate(datatype="backcast_baseline")
-csiro_baseline_rch_data_sel=csiro_baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="csiro_baseline") %>% mutate(datatype="backcast_baseline")
-hadley_baseline_rch_data_sel=hadley_baseline_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="hadley_baseline") %>% mutate(datatype="backcast_baseline")
-miroc8_5_rch_data_sel=miroc8_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="miroc8_5") %>% mutate(datatype="projection")
-csiro8_5_rch_data_sel=csiro8_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="csiro8_5") %>% mutate(datatype="projection")
-csiro4_5_rch_data_sel=csiro4_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="csiro4_5") %>% mutate(datatype="projection")
-hadley4_5_rch_data_sel=hadley4_5_rch_data %>% select(RCH,MO,YR,FLOW_OUTcms) %>%
-  mutate(dataset="hadley4_5") %>% mutate(datatype="projection")
-all_rch_data_sel=bind_rows(baseline_rch_data_sel,
-                           miroc_baseline_rch_data_sel,csiro_baseline_rch_data_sel,hadley_baseline_rch_data_sel,
-                           miroc8_5_rch_data_sel,csiro8_5_rch_data_sel,csiro4_5_rch_data_sel,hadley4_5_rch_data_sel)
+baseline_rch_data_sel=baseline_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="true_baseline") %>% 
+  mutate(datatype="true_baseline")
+miroc_baseline_rch_data_sel=miroc_baseline_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="miroc_baseline") %>% 
+  mutate(datatype="backcast_baseline")
+csiro_baseline_rch_data_sel=csiro_baseline_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="csiro_baseline") %>% 
+  mutate(datatype="backcast_baseline")
+hadley_baseline_rch_data_sel=hadley_baseline_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="hadley_baseline") %>% 
+  mutate(datatype="backcast_baseline")
+miroc8_5_rch_data_sel=miroc8_5_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="miroc8_5") %>% 
+  mutate(datatype="projection")
+csiro8_5_rch_data_sel=csiro8_5_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="csiro8_5") %>% 
+  mutate(datatype="projection")
+csiro4_5_rch_data_sel=csiro4_5_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="csiro4_5") %>% 
+  mutate(datatype="projection")
+hadley4_5_rch_data_sel=hadley4_5_rch_data %>% 
+  select(RCH,MO,YR,FLOW_OUTcms) %>%
+  mutate(dataset="hadley4_5") %>% 
+  mutate(datatype="projection")
+
+
+all_rch_data_sel=bind_rows(baseline_rch_data_sel,miroc_baseline_rch_data_sel,
+                           csiro_baseline_rch_data_sel,hadley_baseline_rch_data_sel,
+                           miroc8_5_rch_data_sel,csiro8_5_rch_data_sel,
+                           csiro4_5_rch_data_sel,hadley4_5_rch_data_sel)
 all_rch_data_sel$dataset=factor(all_rch_data_sel$dataset,levels=rev(c("true_baseline","miroc_baseline","miroc8_5","csiro_baseline","csiro8_5","csiro4_5","hadley_baseline","hadley4_5")))
 all_rch_data_sel$datatype=factor(all_rch_data_sel$datatype,levels=c("true_baseline","backcast_baseline","projection"))
 
@@ -991,7 +1043,7 @@ ggplot(my_sub_true_baseline_to_bcbaseline,aes(x=FLOW_OUTcms,y=dataset,fill=datat
   theme_bw()
 
 
-# ---- 6.x plot flow distrubutions and cutoffs for outlet ----
+# ---- 7.x plot flow distrubutions and cutoffs for outlet ----
 
 blah$dataset=factor(blah$dataset,levels=c("major_outlier","minor_outlier","all_data"))
 ggplot(blah,aes(x=FLOW_OUTcms,fill=dataset)) +
@@ -1020,7 +1072,7 @@ ggplot(baseline_outlet_outlier_summary,aes(x=YR,y=n_minor_hiflow)) +
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 
-# ---- 6.x plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
+# ---- 7.x plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
 
 # select outlet data
 baseline_outlet_rch_data=baseline_rch_data %>% filter(RCH==28)
