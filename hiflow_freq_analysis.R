@@ -166,25 +166,7 @@ ggplot() +
       panel.background = element_blank())
 
 
-# ---- 3.3 plot high flow freq. results for each subbasin (no backcast) ----
-
-# plot observations and models together
-ggplot() +
-  geom_point(aes(x=obs_return_period_yr,y=obs_max_flow_cms_adj),baseline_obs_calcs,size=1) +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_calcs,color="black") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_calcs,color="green") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
-  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley4_5_model_calcs,color="blue") +
-  facet_wrap(~RCH,ncol=7,nrow=4) +
-  xlab("Return Period (yr)") + 
-  ylab("Flow Out (cms)") +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank())
-
-
-# ---- 3.4 plot high flow freq. results for each subbasin (backcast) ----
+# ---- 3.3 plot high flow freq. results for each subbasin (backcast) ----
 
 # plot observations and models together
 ggplot() +
@@ -204,109 +186,7 @@ ggplot() +
         panel.background = element_blank())
 
 
-# ---- 4.1 calculate % change in flows for given return period (no backcast) ----
-
-# miroc 8.5
-miroc8_5_10yr_flow=flow_change(10,baseline_model_calcs,miroc8_5_model_calcs)
-miroc8_5_100yr_flow=flow_change(100,baseline_model_calcs,miroc8_5_model_calcs)
-
-# csiro 8.5
-csiro8_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro8_5_model_calcs)
-csiro8_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro8_5_model_calcs)
-
-# csiro 4.5
-csiro4_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro4_5_model_calcs)
-csiro4_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro4_5_model_calcs)
-
-# hadley 4.5
-hadley4_5_10yr_flow=flow_change(10,baseline_model_calcs,hadley4_5_model_calcs)
-hadley4_5_100yr_flow=flow_change(100,baseline_model_calcs,hadley4_5_model_calcs)
-
-
-# ---- 4.2 reformat calculations for plots (no backcast) ----
-
-# 10 yr flow
-# select data to add to shp file
-miroc8_5_10yr_flow_sel=miroc8_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="miroc8_5",perc_change=flow_change_perc)
-csiro8_5_10yr_flow_sel=csiro8_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="csiro8_5",perc_change=flow_change_perc)
-csiro4_5_10yr_flow_sel=csiro4_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="csiro4_5",perc_change=flow_change_perc)
-hadley4_5_10yr_flow_sel=hadley4_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="hadley4_5",perc_change=flow_change_perc)
-# RCH is generally equal to SUB and need SUB column for joining to .shp file
-
-# gather projections
-hiflow_10yr_projections=bind_rows(miroc8_5_10yr_flow_sel,
-                                 csiro8_5_10yr_flow_sel,
-                                 csiro4_5_10yr_flow_sel,
-                                 hadley4_5_10yr_flow_sel)
-
-# add to shp file
-yadkin_subs_shp_hiflow_10yr=left_join(yadkin_subs_shp,hiflow_10yr_projections,by="SUB")
-#glimpse(yadkin_subs_shp_hiflow_10yr)
-
-
-# 100 yr flow
-# select data to add to shp file
-miroc8_5_100yr_flow_sel=miroc8_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="miroc8_5",perc_change=flow_change_perc)
-csiro8_5_100yr_flow_sel=csiro8_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="csiro8_5",perc_change=flow_change_perc)
-csiro4_5_100yr_flow_sel=csiro4_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="csiro4_5",perc_change=flow_change_perc)
-hadley4_5_100yr_flow_sel=hadley4_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
-  transmute(SUB=RCH,dataset="hadley4_5",perc_change=flow_change_perc)
-# RCH is generally equal to SUB and need SUB column for joining to .shp file
-
-# gather projections
-hiflow_100yr_projections=bind_rows(miroc8_5_100yr_flow_sel,
-                                  csiro8_5_100yr_flow_sel,
-                                  csiro4_5_100yr_flow_sel,
-                                  hadley4_5_100yr_flow_sel)
-
-# add to shp file
-yadkin_subs_shp_hiflow_100yr=left_join(yadkin_subs_shp,hiflow_100yr_projections,by="SUB")
-#glimpse(yadkin_subs_shp_hiflow_100yr)
-
-# ---- 4.3 plot % change in flows on map (no backcast) ----
-
-# 10 yr
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_10yr_change.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_10yr,aes(fill=perc_change)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_10yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change 10yr Flow",na.value="grey75",limits=c(-60,60)) +
-  theme_bw() #+
-  #theme(axis.text = element_text(size = 20)) +
-  #theme(axis.title = element_text(size = 20)) +
-  #theme(text = element_text(size = 20))
-dev.off()
-
-# 100 yr
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_100yr_change.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_100yr,aes(fill=perc_change)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_100yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change 100yr Flow",na.value="grey75") +
-  theme_bw()
-dev.off()
-
-
-# ---- 4.4 export results for sovi analysis (no backcast) ----
-
-# export to results
-#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-#write_csv(hiflow_10yr_projections,"hiflow_10yr_perc_change.csv")
-#write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
-
-
-# ---- 4.5 calculate % change in flows for given return period (backcast) ----
+# ---- 4.1 calculate % change in flows for given return period (backcast) ----
 
 # using baseline backcast for each projection rather than true baseline
 
@@ -327,7 +207,7 @@ hadley4_5_10yr_flow_bc=flow_change(10,hadley_baseline_model_calcs,hadley4_5_mode
 hadley4_5_100yr_flow_bc=flow_change(100,hadley_baseline_model_calcs,hadley4_5_model_calcs)
 
 
-# ---- 4.6 reformat calculations for plots (backcast) ----
+# ---- 4.2 reformat calculations for plots (backcast) ----
 
 # using baseline backcast for each projection rather than true baseline
 
@@ -376,7 +256,7 @@ hiflow_100yr_projections_bc=bind_rows(miroc8_5_100yr_flow_bc_sel,
 yadkin_subs_shp_hiflow_100yr_bc=left_join(yadkin_subs_shp,hiflow_100yr_projections_bc,by="SUB")
 #glimpse(yadkin_subs_shp_hiflow_100yr_bc)
 
-# ---- 4.7 plot % change in flows on map (backcast) ----
+# ---- 4.3 plot % change in flows on map (backcast) ----
 
 # 10 yr
 setwd("/Users/ssaia/Desktop")
@@ -404,12 +284,33 @@ ggplot(yadkin_subs_shp_hiflow_100yr_bc,aes(fill=perc_change)) +
 dev.off()
 
 
-# ---- 4.8 export high flow frequency results (backcast) ----
+# ---- 4.4 export high flow frequency results (backcast) ----
 
 # export to results
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 #write_csv(hiflow_10yr_projections_bc,"hiflow_10yr_perc_change_bc.csv")
 #write_csv(hiflow_10yr_projections_bc,"hiflow_100yr_perc_change_bc.csv")
+
+# ---- 5.1 calculate % change in number of flows for a given return period (backcast) ----
+
+# count flows >= flow of a given return period
+return_period = 10 # must have 1/return_period in my_model_p_list
+num_rchs = 28
+temp_cutoff_flow = miroc_baseline_model_calcs %>%
+  filter(model_return_period_yr == return_period)
+
+i=1
+temp_cutoff_flow_sel = temp_cutoff_flow$model_flow_cms[temp_cutoff_flow$RCH==i]
+temp_sel_df = miroc_baseline_rch_data %>% 
+  filter(RCH==i)
+temp_sel_flow_df = temp_sel_df %>%
+  mutate(notes = if_else(
+    FLOW_OUTcms >= temp_cutoff_flow_sel, 1, 0))
+output_counts_temp_df = temp_sel_flow_df %>%
+  group_by(RCH, YR) %>% 
+  summarize(n_flows=sum(notes==1))
+
+
 
 # ---- 5.1 check normality of data (backcast) ----
 
@@ -698,7 +599,7 @@ all_models_hiflow_outlier_counts=bind_rows(miroc_baseline_outlier_counts_sum,
                                            hadley4_5_outlier_counts_using_baseline_sum)
 
 
-# ---- x.3 calculate % change in outlier high flows (no backcast) ----
+# ---- 5.x calculate % change in outlier high flows (no backcast) ----
 
 # sum outlier counts data by subbasin
 baseline_outlier_counts_sum=baseline_outlier_counts %>% filter(YR>1987) %>% 
@@ -854,7 +755,7 @@ ggplot() +
 dev.off()
 
 
-# ---- x.6 plot % change in outlier high flows on map (no backcast) ----
+# ---- 5.x plot % change in outlier high flows on map (no backcast) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
@@ -1223,4 +1124,126 @@ hadley4_5_100years=return_period_diff(100,2,baseline_model_calcs,hadley4_5_model
 # miroc 8.5
 miroc8_5_10years=return_period_diff(10,2,baseline_model_calcs,miroc8_5_model_calcs)
 miroc8_5_100years=return_period_diff(100,2,baseline_model_calcs,miroc8_5_model_calcs)
+
+
+# ---- 3.x plot high flow freq. results for each subbasin (no backcast) ----
+
+# plot observations and models together
+ggplot() +
+  geom_point(aes(x=obs_return_period_yr,y=obs_max_flow_cms_adj),baseline_obs_calcs,size=1) +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),baseline_model_calcs,color="black") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_calcs,color="green") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro8_5_model_calcs,color="red") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro4_5_model_calcs,color="orange") +
+  geom_line(aes(x=model_return_period_yr,y=model_flow_cms),hadley4_5_model_calcs,color="blue") +
+  facet_wrap(~RCH,ncol=7,nrow=4) +
+  xlab("Return Period (yr)") + 
+  ylab("Flow Out (cms)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank())
+
+
+
+# ---- 4.x calculate % change in flows for given return period (no backcast) ----
+
+# miroc 8.5
+miroc8_5_10yr_flow=flow_change(10,baseline_model_calcs,miroc8_5_model_calcs)
+miroc8_5_100yr_flow=flow_change(100,baseline_model_calcs,miroc8_5_model_calcs)
+
+# csiro 8.5
+csiro8_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro8_5_model_calcs)
+csiro8_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro8_5_model_calcs)
+
+# csiro 4.5
+csiro4_5_10yr_flow=flow_change(10,baseline_model_calcs,csiro4_5_model_calcs)
+csiro4_5_100yr_flow=flow_change(100,baseline_model_calcs,csiro4_5_model_calcs)
+
+# hadley 4.5
+hadley4_5_10yr_flow=flow_change(10,baseline_model_calcs,hadley4_5_model_calcs)
+hadley4_5_100yr_flow=flow_change(100,baseline_model_calcs,hadley4_5_model_calcs)
+
+
+# ---- 4.x reformat calculations for plots (no backcast) ----
+
+# 10 yr flow
+# select data to add to shp file
+miroc8_5_10yr_flow_sel=miroc8_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="miroc8_5",perc_change=flow_change_perc)
+csiro8_5_10yr_flow_sel=csiro8_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="csiro8_5",perc_change=flow_change_perc)
+csiro4_5_10yr_flow_sel=csiro4_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="csiro4_5",perc_change=flow_change_perc)
+hadley4_5_10yr_flow_sel=hadley4_5_10yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="hadley4_5",perc_change=flow_change_perc)
+# RCH is generally equal to SUB and need SUB column for joining to .shp file
+
+# gather projections
+hiflow_10yr_projections=bind_rows(miroc8_5_10yr_flow_sel,
+                                  csiro8_5_10yr_flow_sel,
+                                  csiro4_5_10yr_flow_sel,
+                                  hadley4_5_10yr_flow_sel)
+
+# add to shp file
+yadkin_subs_shp_hiflow_10yr=left_join(yadkin_subs_shp,hiflow_10yr_projections,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_10yr)
+
+
+# 100 yr flow
+# select data to add to shp file
+miroc8_5_100yr_flow_sel=miroc8_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="miroc8_5",perc_change=flow_change_perc)
+csiro8_5_100yr_flow_sel=csiro8_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="csiro8_5",perc_change=flow_change_perc)
+csiro4_5_100yr_flow_sel=csiro4_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="csiro4_5",perc_change=flow_change_perc)
+hadley4_5_100yr_flow_sel=hadley4_5_100yr_flow %>% select(RCH,flow_change_perc) %>%
+  transmute(SUB=RCH,dataset="hadley4_5",perc_change=flow_change_perc)
+# RCH is generally equal to SUB and need SUB column for joining to .shp file
+
+# gather projections
+hiflow_100yr_projections=bind_rows(miroc8_5_100yr_flow_sel,
+                                   csiro8_5_100yr_flow_sel,
+                                   csiro4_5_100yr_flow_sel,
+                                   hadley4_5_100yr_flow_sel)
+
+# add to shp file
+yadkin_subs_shp_hiflow_100yr=left_join(yadkin_subs_shp,hiflow_100yr_projections,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_100yr)
+
+# ---- 4.x plot % change in flows on map (no backcast) ----
+
+# 10 yr
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_10yr_change.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_10yr,aes(fill=perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_10yr is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change 10yr Flow",na.value="grey75",limits=c(-60,60)) +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# 100 yr
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_100yr_change.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_100yr,aes(fill=perc_change)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_100yr is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change 100yr Flow",na.value="grey75") +
+  theme_bw()
+dev.off()
+
+
+# ---- 4.x export results for sovi analysis (no backcast) ----
+
+# export to results
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(hiflow_10yr_projections,"hiflow_10yr_perc_change.csv")
+#write_csv(hiflow_10yr_projections,"hiflow_100yr_perc_change.csv")
+
 
