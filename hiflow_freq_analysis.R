@@ -212,7 +212,7 @@ hadley4_5_100yr_flow_bc=flow_change(100,hadley_baseline_model_calcs,hadley4_5_mo
 
 # using baseline backcast for each projection rather than true baseline
 
-# 10 yr flow
+# 10 yr
 # select data to add to shp file
 miroc8_5_10yr_flow_bc_sel=miroc8_5_10yr_flow_bc %>% select(RCH,flow_change_perc) %>%
   transmute(SUB=RCH,dataset="miroc8_5",perc_change=flow_change_perc)
@@ -292,22 +292,79 @@ dev.off()
 #write_csv(hiflow_10yr_projections_bc,"hiflow_10yr_perc_change_bc.csv")
 #write_csv(hiflow_10yr_projections_bc,"hiflow_100yr_perc_change_bc.csv")
 
-# ---- 5.1 calculate % change in number of flows for a given return period (backcast) ----
+# ---- 5.1 calculate % change in number of flows at/above a given return period (backcast) ----
 
-# 10-year return period
-miroc8_5_10yr_n_flow_change = rp_n_flow_change(10, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data)
-csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data)
-csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data)
-hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data)
+# 10 yr
+miroc8_5_10yr_n_flow_change = rp_n_flow_change(10, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data) %>%
+  mutate(dataset = "miroc8_5")
+csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data) %>%
+  mutate(dataset = "csiro4_5")
+csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data) %>%
+  mutate(dataset = "csiro8_5")
+hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data) %>%
+  mutate(dataset = "hadley4_5")
 
-# 100-year return period
-miroc8_5_25yr_n_flow_change = rp_n_flow_change(25, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data)
-csiro4_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data)
-csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data)
-hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data)
+# 100 yr
+miroc8_5_25yr_n_flow_change = rp_n_flow_change(25, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data) %>%
+  mutate(dataset = "miroc8_5")
+csiro4_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data) %>%
+  mutate(dataset = "csiro4_5")
+csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data) %>%
+  mutate(dataset = "csiro8_5")
+hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data) %>%
+  mutate(dataset = "hadley4_5")
 
 
-# ---- 5.1 check normality of data (backcast) ----
+# ---- 5.2 reformat calcs for plots (backcast) ----
+
+# combine data for plotting
+n_flow_change_10yr = rbind(miroc8_5_10yr_n_flow_change,csiro4_5_10yr_n_flow_change,
+                           csiro8_5_10yr_n_flow_change,hadley4_5_10yr_n_flow_change) %>%
+  mutate(SUB = RCH)
+n_flow_change_25yr = rbind(miroc8_5_25yr_n_flow_change,csiro4_5_25yr_n_flow_change,
+                           csiro8_5_25yr_n_flow_change,hadley4_5_25yr_n_flow_change) %>%
+  mutate(SUB = RCH)
+
+# add to shp file
+yadkin_subs_shp_n_flow_change_10yr=left_join(yadkin_subs_shp,n_flow_change_10yr,by="SUB")
+yadkin_subs_shp_n_flow_change_25yr=left_join(yadkin_subs_shp,n_flow_change_25yr,by="SUB")
+
+
+# ---- 5.3 plot variation in number of flows at/above a given return period (backcast) ----
+
+
+
+# ---- 5.4 plot % change in number of flows for a given return period on map (backcast) ----
+
+# 10 yr
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("change_n_flows_10yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Flows >= 10-yr Flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# 25 yr
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("change_n_flows_25yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Flows >= 25-yr Flow",na.value="grey75", limits = c(0,65), high="darkblue",low="darkred") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# ---- 6.1 check normality of data (backcast) ----
 
 # make new data frame without zero values (b/c just looking at actual flows)
 # miroc baseline (backcast)
@@ -496,7 +553,7 @@ ggplot(hadley4_5_rch_data_log_no_zeros,aes(x=log_FLOW_OUTcms)) +
 # in conclusion...need to log transform FLOW_OUTcms data for outlier calcs
 
 
-# ---- 5.2 calculate outlier cutoffs and number of outlier high flows (no backcast and backcast) ----
+# ---- 6.2 calculate outlier cutoffs and number of outlier high flows (no backcast and backcast) ----
 
 # baseline (not backcast)
 #baseline_outlier_calcs=count_hiflow_outliers(baseline_rch_data)
@@ -594,7 +651,7 @@ all_models_hiflow_outlier_counts=bind_rows(miroc_baseline_outlier_counts_sum,
                                            hadley4_5_outlier_counts_using_baseline_sum)
 
 
-# ---- 5.x calculate % change in outlier high flows (no backcast) ----
+# ---- 6.x calculate % change in outlier high flows (no backcast) ----
 
 # sum outlier counts data by subbasin
 baseline_outlier_counts_sum=baseline_outlier_counts %>% filter(YR>1987) %>% 
@@ -631,7 +688,7 @@ yadkin_subs_shp_hiflow_outliers=left_join(yadkin_subs_shp,hiflow_outlier_change_
 #glimpse(yadkin_subs_shp_hiflow_outliers)
 
 
-# ---- 5.4 calculate % change in outlier high flows (backcast) ----
+# ---- 6.4 calculate % change in outlier high flows (backcast) ----
 
 # specify number of years of baseline/projection
 # for this script to work these have to be equal
@@ -659,7 +716,7 @@ yadkin_subs_shp_hiflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,all_m
 yadkin_subs_shp_hiflow_outliers_using_bcbaseline$dataset=factor(yadkin_subs_shp_hiflow_outliers_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 5.5 plot variation in days with high flow (backcast) ----
+# ---- 6.5 plot variation in days with high flow (backcast) ----
 
 # make dataframe with contributing errors to can use to plot
 contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
@@ -750,7 +807,7 @@ ggplot() +
 dev.off()
 
 
-# ---- 5.x plot % change in outlier high flows on map (no backcast) ----
+# ---- 6.x plot % change in outlier high flows on map (no backcast) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
@@ -781,7 +838,7 @@ ggplot(yadkin_subs_shp_hiflow_outliers,aes(fill=major_outlier_perc_change)) +
 dev.off()
 
 
-# ---- 5.7 plot % change in outlier high flows on map (backcast) ----
+# ---- 6.7 plot % change in outlier high flows on map (backcast) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
@@ -811,7 +868,7 @@ ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_p
 #theme(text = element_text(size = 20))
 dev.off()
 
-# ---- 5.8 export outlier high flow results ----
+# ---- 6.8 export outlier high flow results ----
 
 # just export percent change
 all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
@@ -823,7 +880,7 @@ all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
 #write_csv(all_models_hiflow_outlier_change_sel,"hiflow_outlier_perc_change_data.csv")
 
 
-# ---- 6.1 calculate return period for outlier cutoffs ----
+# ---- 7.1 calculate return period for outlier cutoffs ----
 
 # calculate 
 miroc_baseline_outlier_cutoff_rp = outlier_flow_cutoff_to_rp(miroc_baseline_model_calcs,miroc_baseline_outlier_cutoffs)
@@ -840,13 +897,13 @@ contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
 blah=miroc_baseline_outlier_cutoff_rp %>%
   left_join(contributing_areas,by='RCH')
 
-# ---- 6.2 plot excedence probability of outlier cutoffs for subbasins ---- 
+# ---- 7.2 plot excedence probability of outlier cutoffs for subbasins ---- 
 
 plot(minor_prob_exced~AREAkm2, data = blah,pch=16)
 
 
 
-# ---- 7.1 plot flow distributions ----
+# ---- 8.1 plot flow distributions ----
 
 # join backcast baseline and projection data for overlapping joyplots
 baseline_rch_data_sel=baseline_rch_data %>% 
@@ -939,7 +996,7 @@ ggplot(my_sub_true_baseline_to_bcbaseline,aes(x=FLOW_OUTcms,y=dataset,fill=datat
   theme_bw()
 
 
-# ---- 7.x plot flow distrubutions and cutoffs for outlet ----
+# ---- 8.x plot flow distrubutions and cutoffs for outlet ----
 
 blah$dataset=factor(blah$dataset,levels=c("major_outlier","minor_outlier","all_data"))
 ggplot(blah,aes(x=FLOW_OUTcms,fill=dataset)) +
@@ -968,7 +1025,7 @@ ggplot(baseline_outlet_outlier_summary,aes(x=YR,y=n_minor_hiflow)) +
         panel.background = element_blank(), axis.line = element_line(colour = "black"))
 
 
-# ---- 7.x plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
+# ---- 8.x plot distributions of outflow for each subbasin by month and by year (Joyplot) ----
 
 # select outlet data
 baseline_outlet_rch_data=baseline_rch_data %>% filter(RCH==28)
