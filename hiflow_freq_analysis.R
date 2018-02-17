@@ -27,6 +27,7 @@ source(paste0(functions_path,"count_hiflow_outliers.R")) # counts number of mino
 source(paste0(functions_path,"count_hiflow_outliers_using_baseline.R")) # counts number of minor and major outliers for risk analysis based on baseline cutoffs
 source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
 source(paste0(functions_path,"outlier_flow_cutoff_to_rp.R")) # determines return period for outlier cutoff flow
+source(paste0(functions_path,"rp_n_flow_change.R")) # determines percent change in flows greater to or equal to a specied return period
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -293,23 +294,17 @@ dev.off()
 
 # ---- 5.1 calculate % change in number of flows for a given return period (backcast) ----
 
-# count flows >= flow of a given return period
-return_period = 10 # must have 1/return_period in my_model_p_list
-num_rchs = 28
-temp_cutoff_flow = miroc_baseline_model_calcs %>%
-  filter(model_return_period_yr == return_period)
+# 10-year return period
+miroc8_5_10yr_n_flow_change = rp_n_flow_change(10, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data)
+csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data)
+csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data)
+hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data)
 
-i=1
-temp_cutoff_flow_sel = temp_cutoff_flow$model_flow_cms[temp_cutoff_flow$RCH==i]
-temp_sel_df = miroc_baseline_rch_data %>% 
-  filter(RCH==i)
-temp_sel_flow_df = temp_sel_df %>%
-  mutate(notes = if_else(
-    FLOW_OUTcms >= temp_cutoff_flow_sel, 1, 0))
-output_counts_temp_df = temp_sel_flow_df %>%
-  group_by(RCH, YR) %>% 
-  summarize(n_flows=sum(notes==1))
-
+# 100-year return period
+miroc8_5_25yr_n_flow_change = rp_n_flow_change(25, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data)
+csiro4_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data)
+csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data)
+hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data)
 
 
 # ---- 5.1 check normality of data (backcast) ----
