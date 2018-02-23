@@ -13,7 +13,7 @@ rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data
   library(tidyverse) # data management
   
   # define variables
-  num_sim_years = length(unique(baseline_rch_data$YR))
+  num_sim_yrs = length(unique(baseline_rch_data$YR))
   num_rchs = length(unique(baseline_rch_data$RCH))
   model_calcs_return_period_sel = baseline_model_calcs %>%
     filter(model_return_period_yr == return_period)
@@ -50,7 +50,7 @@ rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data
     
     # combine ouputs into one data frame
     output_df_temp = left_join(baseline_counts_temp,projection_counts_temp, by = "RCH") %>%
-      mutate(perc_change_per_yr = (((n_proj_flows - n_base_flows)/n_base_flows) * 100)/num_sim_years)
+      mutate(perc_change_per_yr = (((n_proj_flows - n_base_flows)/n_base_flows) * 100)/num_sim_yrs)
 
     # fix divide by zero error
       
