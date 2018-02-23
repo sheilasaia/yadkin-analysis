@@ -1,14 +1,14 @@
-# reformat SWAT .rch file for frequency analysis
+# reformat_rch_file function
 
-# purpose: prepare SWAT .rch file (observations) for low flow frequency analysis
-# last updated: 20170912
+# purpose: prepare SWAT .rch file for analysis
+# last updated: 2018218
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
 # reformat SWAT, raw .rch file for other analyses
 reformat_rch_file=function(raw_rch_data) {
   # import raw_rch_data into R session using: 
-  # raw_rch_data_raw=read_table2("output.rch",col_names=FALSE,skip=9)
+  # raw_rch_data_raw=read_table2("output.rch", col_names=FALSE, skip=9)
   
   # load libraries
   library(tidyverse) # data management
@@ -25,10 +25,11 @@ reformat_rch_file=function(raw_rch_data) {
                   "TOTNkg","TOTPkg","NO3_mg_l","WTMPdegc")
   
   # reassign column names
-  colnames(raw_rch_data)=rch_col_names
+  colnames(raw_rch_data) = rch_col_names
   
   # remove unnecessary columns
-  rch_data=raw_rch_data %>% select(RCH,MO:FLOW_OUTcms)
+  rch_data = raw_rch_data %>% 
+  select(RCH, MO:FLOW_OUTcms)
   
   return(rch_data)
 }
