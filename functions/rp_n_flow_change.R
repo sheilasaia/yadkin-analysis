@@ -18,6 +18,7 @@ rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data
   model_calcs_return_period_sel = baseline_model_calcs %>%
     filter(model_return_period_yr == return_period)
   output_df = data.frame(RCH = as.numeric(),
+                         cutoff_flow_cms = as.numeric(),
                          n_base_flows = as.numeric(), 
                          n_proj_flows = as.numeric(),
                          perc_change_per_yr = as.numeric())
@@ -50,10 +51,11 @@ rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data
     
     # combine ouputs into one data frame
     output_df_temp = left_join(baseline_counts_temp,projection_counts_temp, by = "RCH") %>%
-      mutate(perc_change_per_yr = (((n_proj_flows - n_base_flows)/n_base_flows) * 100)/num_sim_yrs)
+      mutate(perc_change_per_yr = (((n_proj_flows - n_base_flows)/n_base_flows) * 100)/num_sim_yrs,
+             cutoff_flow_cms = cutoff_flow_sel_temp) %>%
+      select(RCH, cutoff_flow_cms, n_base_flows:perc_change_per_yr) # include flow and rearrange
 
     # fix divide by zero error
-      
     output_df_temp$perc_change_per_yr[output_df_temp$perc_change_per_yr == Inf | output_df_temp$perc_change_per_yr == "NaN"] = NA
     
     # append to output_df
