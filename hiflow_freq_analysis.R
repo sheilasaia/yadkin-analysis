@@ -28,6 +28,7 @@ source(paste0(functions_path,"count_hiflow_outliers_using_baseline.R")) # counts
 source(paste0(functions_path,"outlier_change.R")) # determines % change in minor and major outliers
 source(paste0(functions_path,"outlier_flow_cutoff_to_rp.R")) # determines return period for outlier cutoff flow
 source(paste0(functions_path,"rp_n_flow_change.R")) # determines percent change in flows greater to or equal to a specied return period
+source(paste0(functions_path,"multiplot.R")) # for creating plots with multiple figures
 
 # download kn_table for outlier analysis
 setwd("/Users/ssaia/Documents/GitHub/yadkin-analysis/")
@@ -330,6 +331,39 @@ yadkin_subs_shp_n_flow_change_10yr=left_join(yadkin_subs_shp,n_flow_change_10yr,
 yadkin_subs_shp_n_flow_change_25yr=left_join(yadkin_subs_shp,n_flow_change_25yr,by="SUB")
 
 
+# ---- 5.3 plot on map (backcast) ----
+
+# 10 yr
+yadkin_subs_shp_n_flow_change_10yr$dataset=factor(yadkin_subs_shp_n_flow_change_10yr$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("change_num_hiflows_10yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Flows >= 10yr Flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# 25 yr
+yadkin_subs_shp_n_flow_change_25yr$dataset=factor(yadkin_subs_shp_n_flow_change_25yr$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("change_num_hiflows_25yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Flows >= 25yr Flow",na.value="grey75", limits = c(-5,90), high="darkblue",low="darkred") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+
 # ---- 5.3 calcuate variation (backcast) ----
 
 # make dataframe with contributing errors to can use to plot
@@ -370,6 +404,7 @@ n_flow_change_10yr_projection=n_flow_change_10yr_area %>%
 
 # projection ordered by subbasin area
 n_flow_change_10yr_projection$SUB=factor(n_flow_change_10yr_projection$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_10yr_projection$dataset=factor(n_flow_change_10yr_projection$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 # projection summary for pointrange plot
 n_flow_change_10yr_projection_summary=n_flow_change_10yr_projection %>%
@@ -411,6 +446,7 @@ n_flow_change_25yr_projection=n_flow_change_25yr_area %>%
 
 # projection ordered by subbasin area
 n_flow_change_25yr_projection$SUB=factor(n_flow_change_25yr_projection$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_25yr_projection$dataset=factor(n_flow_change_25yr_projection$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 # projection summary for pointrange plot
 n_flow_change_25yr_projection_summary=n_flow_change_25yr_projection %>%
@@ -420,14 +456,14 @@ n_flow_change_25yr_projection_summary=n_flow_change_25yr_projection %>%
             mean_n_flows_per_yr=mean(projection_n_flows_per_yr)) # all are cumulative for length of projection
 
 
-
-# ---- 5.4 plot variation (backcast) ----
+# ---- 5.5 plot variation (backcast) ----
 
 # 10yr flow
+# make a list to hold plots
+my_10yr_plots = list()
+
 # backcast baselines variation plot
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_flow_change_10yr_baseline.pdf",width=11,height=8.5,pointsize=18)
-ggplot() +
+my_10yr_plots[[1]] = ggplot() +
   geom_pointrange(data=n_flow_change_10yr_baseline_summary,
                   aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
   geom_point(data=n_flow_change_10yr_baseline,aes(x=SUB,y=baseline_n_flows_per_yr,color=dataset),
@@ -443,12 +479,9 @@ ggplot() +
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
         text=element_text(size=18),
         legend.position = c(0.2, 0.8))
-dev.off()
 
 # projection variation plot
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_flow_change_10yr_projection.pdf",width=11,height=8.5,pointsize=18)
-ggplot() +
+my_10yr_plots[[2]] = ggplot() +
   geom_pointrange(data=n_flow_change_10yr_projection_summary,
                   aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
   geom_point(data=n_flow_change_10yr_projection,aes(x=SUB,y=projection_n_flows_per_yr,color=dataset),
@@ -464,14 +497,19 @@ ggplot() +
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
         text=element_text(size=18),
         legend.position = c(0.2, 0.8))
+
+# save plot
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("num_10yr_hiflows_variation.pdf",width=15,height=8.5,pointsize=18)
+multiplot(plotlist=my_10yr_plots,cols=2)
 dev.off()
 
-
 # 25yr flow
+# make a list to hold plots
+my_25yr_plots = list()
+
 # backcast baselines variation plot
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_flow_change_25yr_baseline.pdf",width=11,height=8.5,pointsize=18)
-ggplot() +
+my_25yr_plots[[1]] = ggplot() +
   geom_pointrange(data=n_flow_change_25yr_baseline_summary,
                   aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
   geom_point(data=n_flow_change_25yr_baseline,aes(x=SUB,y=baseline_n_flows_per_yr,color=dataset),
@@ -487,12 +525,9 @@ ggplot() +
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
         text=element_text(size=18),
         legend.position = c(0.8, 0.8))
-dev.off()
 
 # projection variation plot
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_flow_change_25yr_projection.pdf",width=11,height=8.5,pointsize=18)
-ggplot() +
+my_25yr_plots[[2]] = ggplot() +
   geom_pointrange(data=n_flow_change_25yr_projection_summary,
                   aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
   geom_point(data=n_flow_change_25yr_projection,aes(x=SUB,y=projection_n_flows_per_yr,color=dataset),
@@ -508,37 +543,20 @@ ggplot() +
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
         text=element_text(size=18),
         legend.position = c(0.8, 0.8))
-dev.off()
 
-# ---- 5.4 plot on map (backcast) ----
-
-# 10 yr
+# save plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("change_n_flows_10yr_map.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows >= 10-yr Flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
+cairo_pdf("num_25yr_hiflows_variation.pdf",width=15,height=8.5,pointsize=18)
+multiplot(plotlist=my_25yr_plots,cols=2)
 dev.off()
 
-# 25 yr
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("change_n_flows_25yr_map.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows >= 25-yr Flow",na.value="grey75", limits = c(0,65), high="darkblue",low="darkred") +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
-dev.off()
+
+# ---- 5.6 export results (backcast) ----
+
+# export results
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(n_flow_change_10yr_area,"num_hiflow_change_10yr_calcs.csv")
+#write_csv(n_flow_change_25yr_area,"num_hiflow_change_25yr_calcs.csv")
 
 # ---- 6.1 check normality of data (backcast) ----
 
@@ -855,7 +873,38 @@ yadkin_subs_shp_hiflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,all_m
 yadkin_subs_shp_hiflow_outliers_using_bcbaseline$dataset=factor(yadkin_subs_shp_hiflow_outliers_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 6.4 plot variation (backcast) ----
+# ---- 6.4 plot on map (backcast) ----
+
+# minor outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_minor_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Minor High Flow Outliers/yr",na.value="grey75",limits=c(-20,60),high="darkblue",low="darkred") +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+# major outliers
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_major_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% Change # Major High Flow Outliers/yr",na.value="grey75",limits=c(-10,20)) +
+  theme_bw() #+
+#theme(axis.text = element_text(size = 20)) +
+#theme(axis.title = element_text(size = 20)) +
+#theme(text = element_text(size = 20))
+dev.off()
+
+
+# ---- 6.5 calculate variation (backcast) ----
 
 # make dataframe with contributing errors to can use to plot
 contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
@@ -886,27 +935,6 @@ hiflow_change_baseline_summary=hiflow_change_baseline %>%
             max_n_minor_outliers_per_yr=max(baseline_sum_n_minor_outliers_per_yr),
             mean_n_minor_outliers_per_yr=mean(baseline_sum_n_minor_outliers_per_yr))
 
-# backcast baselines plot
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_hiflow_baseline.pdf",width=11,height=8.5,pointsize=18)
-ggplot() +
-  geom_pointrange(data=hiflow_change_baseline_summary,
-                  aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),shape=32) +
-  geom_point(data=hiflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_yr,color=dataset),
-             shape=17,size=5,alpha=0.75, position=position_jitter(height=0.075,width=0)) +
-  #geom_smooth(method='loess',formula=y~x) +
-  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
-  ylab("Number of Minor HOFs/yr") +
-  scale_color_manual(values=c("grey75","grey50","black")) +
-  ylim(-1,20) +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
-        panel.background=element_blank(),
-        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=18))
-dev.off()
-
-
 # projections
 miroc8_5_num_yrs=length(unique(miroc8_5_rch_data$YR)) # all are equal to 21 but use miroc8_5_num_yrs for simplicity
 hiflow_change_projection=all_models_hiflow_change_area %>%
@@ -924,10 +952,31 @@ hiflow_change_projection_summary=hiflow_change_projection %>%
             max_n_minor_outliers_per_yr=max(projection_sum_n_minor_outliers_per_yr),
             mean_n_minor_outliers_per_yr=mean(projection_sum_n_minor_outliers_per_yr))
 
+
+# ---- 6.6 plot variation (backcast) ----
+
+# make a list to hold plots
+my_outlier_plots = list()
+
+# backcast baselines plot
+my_outlier_plots[[1]] = ggplot() +
+  geom_pointrange(data=hiflow_change_baseline_summary,
+                  aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),shape=32) +
+  geom_point(data=hiflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_yr,color=dataset),
+             shape=17,size=5,alpha=0.75, position=position_jitter(height=0.075,width=0)) +
+  #geom_smooth(method='loess',formula=y~x) +
+  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  ylab("Number of Minor HOFs/yr") +
+  scale_color_manual(values=c("grey75","grey50","black")) +
+  ylim(-1,20) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=18))
+
 # projections plot
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_hiflow_projection.pdf",width=11,height=8.5,pointsize=18)
-ggplot() +
+my_outlier_plots[[2]] = ggplot() +
   geom_pointrange(data=hiflow_change_projection_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),
                   shape=32) +
@@ -943,40 +992,14 @@ ggplot() +
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
         text=element_text(size=18))
-dev.off()
 
-
-# ---- 6.5 plot on map (backcast) ----
-
-# minor outliers
+# save plots
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_minor_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change_per_yr)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Minor High Flow Outliers/yr",na.value="grey75",limits=c(-20,60),high="darkblue",low="darkred") +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
+cairo_pdf("num_outlier_hiflows_variation.pdf",width=15,height=8.5,pointsize=18)
+multiplot(plotlist=my_outlier_plots,cols=2)
 dev.off()
 
-# major outliers
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_major_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_perc_change_per_yr)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Major High Flow Outliers/yr",na.value="grey75",limits=c(-10,20)) +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
-dev.off()
-
-# ---- 6.6 export results ----
+# ---- 6.7 export results ----
 
 # just export percent change
 all_models_hiflow_outlier_change_sel=all_models_hiflow_outlier_change %>%
