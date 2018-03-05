@@ -377,29 +377,29 @@ lowflow_outlier_change_data=read_csv("lowflow_outlier_perc_change_data.csv",col_
 # calculate mean sovi for us
 mean_us_sovi=mean(us_sovi_hist$sovi_total)
 sd_us_sovi=sd(us_sovi_hist$sovi_total)
-min_us_sovi=min(us_sovi_hist$sovi_total)
-max_us_sovi=max(us_sovi_hist$sovi_total)
+mean_yadkin_sovi=mean(yadkin_sovi_hist$sovi_total)
+sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
 
 # high flow data
 hiflow_outlier_change_data_sel=hiflow_outlier_change_data %>%
   select(SUB:minor_outlier_perc_change_per_yr) %>% # select minor outliers from flow data 
   left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
   mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"higher","lower")) %>% # make new class variable based on us sovi mean
-  mutate(risk_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
-  mutate(risk_vuln_class=ifelse(vuln_class=="higher"&risk_class=="higher","higher",
-                                ifelse(vuln_class=="lower"&risk_class=="lower","lower",
-                                       ifelse(vuln_class=="lower"&risk_class=="higher","moderate",
-                                              ifelse(vuln_class=="higher"&risk_class=="lower","moderate","NA"))))) # combine risk and vulnerability
+  mutate(impact_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
+  mutate(impact_vuln_class=ifelse(vuln_class=="higher"&impact_class=="higher","higher",
+                                ifelse(vuln_class=="lower"&impact_class=="lower","lower",
+                                       ifelse(vuln_class=="lower"&impact_class=="higher","moderate",
+                                              ifelse(vuln_class=="higher"&impact_class=="lower","moderate","NA"))))) # combine impact and vulnerability
 # low flow data
 lowflow_outlier_change_data_sel=lowflow_outlier_change_data %>%
   select(SUB:minor_outlier_perc_change_per_yr) %>% # select minor outliers from flow data 
   left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
   mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"higher","lower")) %>% # make new class variable based on us sovi mean
-  mutate(risk_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
-  mutate(risk_vuln_class=ifelse(vuln_class=="higher"&risk_class=="higher","higher",
-                                ifelse(vuln_class=="lower"&risk_class=="lower","lower",
-                                       ifelse(vuln_class=="lower"&risk_class=="higher","moderate",
-                                              ifelse(vuln_class=="higher"&risk_class=="lower","moderate","NA"))))) # combine risk and vulnerability
+  mutate(impact_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
+  mutate(impact_vuln_class=ifelse(vuln_class=="higher"&impact_class=="higher","higher",
+                                ifelse(vuln_class=="lower"&impact_class=="lower","lower",
+                                       ifelse(vuln_class=="lower"&impact_class=="higher","moderate",
+                                              ifelse(vuln_class=="higher"&impact_class=="lower","moderate","NA"))))) # combine impact and vulnerability
 
 # reclassify using an ellipse
 blah = hiflow_outlier_change_data %>%
@@ -460,16 +460,16 @@ hiflow_outlier_change_data_sel_naomit=hiflow_outlier_change_data_sel %>% na.omit
 lowflow_outlier_change_data_sel_naomit=lowflow_outlier_change_data_sel %>% na.omit()
 
 # define factor levels
-hiflow_outlier_change_data_sel_naomit$risk_vuln_class=factor(hiflow_outlier_change_data_sel_naomit$risk_vuln_class,levels=c("higher","moderate","lower"))
+hiflow_outlier_change_data_sel_naomit$impact_vuln_class=factor(hiflow_outlier_change_data_sel_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
 hiflow_outlier_change_data_sel_naomit$dataset=factor(hiflow_outlier_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-lowflow_outlier_change_data_sel_naomit$risk_vuln_class=factor(lowflow_outlier_change_data_sel_naomit$risk_vuln_class,levels=c("higher","moderate","lower"))
+lowflow_outlier_change_data_sel_naomit$impact_vuln_class=factor(lowflow_outlier_change_data_sel_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
 lowflow_outlier_change_data_sel_naomit$dataset=factor(lowflow_outlier_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 # high flow data
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_risk_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
+cairo_pdf("hiflow_impact_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
 ggplot(data=hiflow_outlier_change_data_sel_naomit,
-       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=risk_vuln_class)) +
+       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class)) +
   geom_point(aes(shape=dataset),size=5,alpha=0.75) +
   geom_hline(yintercept=0) +
   geom_vline(xintercept=mean_us_sovi) +
@@ -487,9 +487,9 @@ dev.off()
 
 # low flow data
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_risk_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
+cairo_pdf("lowflow_impact_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
 ggplot(data=lowflow_outlier_change_data_sel_naomit,
-       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=risk_vuln_class,shape=dataset)) +
+       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
   geom_point(size=5,alpha=0.75) +
   #geom_point(shape=1,size=3,color="black") +
   geom_hline(yintercept=0) +
@@ -507,9 +507,9 @@ dev.off()
 
 # zoom
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_risk_vuln_per_yr_pointplot_zoom.pdf",width=11,height=8.5)
+cairo_pdf("lowflow_impact_vuln_per_yr_pointplot_zoom.pdf",width=11,height=8.5)
 ggplot(data=lowflow_outlier_change_data_sel_naomit,
-       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=risk_vuln_class,shape=dataset)) +
+       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
   geom_point(size=4,alpha=0.75) +
   #geom_point(shape=1,size=3,color="black") +
   geom_hline(yintercept=0) +
@@ -529,35 +529,35 @@ dev.off()
 # ---- 6.4 plot on map ----
 
 # add to shp file
-yadkin_sub_shp_risk_vuln_hiflow=left_join(yadkin_sub_shp,hiflow_outlier_change_data_sel,by="SUB")
-#glimpse(yadkin_sub_shp_risk_vuln_hiflow)
-yadkin_sub_shp_risk_vuln_lowflow=left_join(yadkin_sub_shp,lowflow_outlier_change_data_sel,by="SUB")
-#glimpse(yadkin_sub_shp_risk_vuln_lowflow)
+yadkin_sub_shp_impact_vuln_hiflow=left_join(yadkin_sub_shp,hiflow_outlier_change_data_sel,by="SUB")
+#glimpse(yadkin_sub_shp_impact_vuln_hiflow)
+yadkin_sub_shp_impact_vuln_lowflow=left_join(yadkin_sub_shp,lowflow_outlier_change_data_sel,by="SUB")
+#glimpse(yadkin_sub_shp_impact_vuln_lowflow)
 
 # define factor levels
-yadkin_sub_shp_risk_vuln_hiflow$risk_vuln_class=factor(yadkin_sub_shp_risk_vuln_hiflow$risk_vuln_class,levels=c("higher","moderate","lower"))
-yadkin_sub_shp_risk_vuln_hiflow$dataset=factor(yadkin_sub_shp_risk_vuln_hiflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-yadkin_sub_shp_risk_vuln_lowflow$risk_vuln_class=factor(yadkin_sub_shp_risk_vuln_lowflow$risk_vuln_class,levels=c("higher","moderate","lower"))
-yadkin_sub_shp_risk_vuln_lowflow$dataset=factor(yadkin_sub_shp_risk_vuln_lowflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+yadkin_sub_shp_impact_vuln_hiflow$impact_vuln_class=factor(yadkin_sub_shp_impact_vuln_hiflow$impact_vuln_class,levels=c("higher","moderate","lower"))
+yadkin_sub_shp_impact_vuln_hiflow$dataset=factor(yadkin_sub_shp_impact_vuln_hiflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+yadkin_sub_shp_impact_vuln_lowflow$impact_vuln_class=factor(yadkin_sub_shp_impact_vuln_lowflow$impact_vuln_class,levels=c("higher","moderate","lower"))
+yadkin_sub_shp_impact_vuln_lowflow$dataset=factor(yadkin_sub_shp_impact_vuln_lowflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 # high flow data
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_risk_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_risk_vuln_hiflow,aes(fill=risk_vuln_class)) +
+cairo_pdf("hiflow_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
+ggplot(yadkin_sub_shp_impact_vuln_hiflow,aes(fill=impact_vuln_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_risk_vuln_hiflow is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_hiflow is base utm 17N so convert to Albers for CONUS
   scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
   theme_bw()
 dev.off()
 
 # low flow data
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_risk_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_risk_vuln_lowflow,aes(fill=risk_vuln_class)) +
+cairo_pdf("lowflow_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
+ggplot(yadkin_sub_shp_impact_vuln_lowflow,aes(fill=impact_vuln_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_risk_vuln_lowflow is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_lowflow is base utm 17N so convert to Albers for CONUS
   scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
   theme_bw()
 dev.off()
@@ -577,34 +577,31 @@ hiflow_25yr_change_data = read_csv("num_hiflow_change_25yr_calcs.csv", col_names
 # calculate mean sovi for us
 mean_us_sovi = mean(us_sovi_hist$sovi_total)
 sd_us_sovi = sd(us_sovi_hist$sovi_total)
-min_us_sovi = min(us_sovi_hist$sovi_total)
-max_us_sovi = max(us_sovi_hist$sovi_total)
+mean_yadkin_sovi=mean(yadkin_sovi_hist$sovi_total)
+sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
 
 # 10yr hiflow data (basic gradation)
 hiflow_10yr_change_data_sel = hiflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>% # select minor outliers from flow data 
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
   mutate(vuln_class = ifelse(area_wt_sovi > mean_us_sovi, "higher", "lower")) %>% # make new class variable based on us sovi mean
-  mutate(risk_class = ifelse(perc_change_per_yr > 0, "higher", "lower")) %>% # make new class variable based on outlier flows
-  mutate(risk_vuln_class = ifelse(vuln_class == "higher" & risk_class == "higher", "higher",
-                                ifelse(vuln_class == "lower" & risk_class == "lower", "lower",
-                                       ifelse(vuln_class == "lower" & risk_class == "higher", "moderate",
-                                              ifelse(vuln_class == "higher" & risk_class == "lower", "moderate", "NA"))))) # combine risk and vulnerability
+  mutate(impact_class = ifelse(perc_change_per_yr > 0, "higher", "lower")) %>% # make new class variable based on outlier flows
+  mutate(impact_vuln_class = ifelse(vuln_class == "higher" & impact_class == "higher", "higher",
+                                ifelse(vuln_class == "lower" & impact_class == "lower", "lower",
+                                       ifelse(vuln_class == "lower" & impact_class == "higher", "moderate",
+                                              ifelse(vuln_class == "higher" & impact_class == "lower", "moderate", "NA"))))) # combine impact and vulnerability
 
 # 10yr hiflow data (more gradation)
 hiflow_10yr_change_data_sel_2 = hiflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>% # select minor outliers from flow data 
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
-
-                        
-                        
-                        
-  mutate(vuln_class = ifelse(area_wt_sovi > mean_us_sovi, "higher", "lower")) %>% # make new class variable based on us sovi mean
-  mutate(risk_class = ifelse(perc_change_per_yr > 0, "higher", "lower")) %>% # make new class variable based on outlier flows
-  mutate(risk_vuln_class = ifelse(vuln_class == "higher" & risk_class == "higher", "higher",
-                                  ifelse(vuln_class == "lower" & risk_class == "lower", "lower",
-                                         ifelse(vuln_class == "lower" & risk_class == "higher", "moderate",
-                                                ifelse(vuln_class == "higher" & risk_class == "lower", "moderate", "NA"))))) # combine risk and vulnerability
+  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi, 1, 
+                             ifelse(area_wt_sovi < mean_us_sovi | area_wt_sovi <= mean_us_sovi + sd_us_sovi, 2, 3))) %>%
+  mutate(impact_class = ifelse(perc_change_per_yr <= 0, 1, 
+                             ifelse(perc_change_per_yr < 0 | perc_change_per_yr <= 50 + sd_us_sovi, 2, 3))) %>%
+  mutate(impact_vuln_class_num = impact_class + vuln_class) %>%
+  mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 3, "lower",
+                                    ifelse(impact_vuln_class_num == 4 , "moderate", "higher")))
 
 
 # 25yr hiflow data (basic)
@@ -612,11 +609,11 @@ hiflow_25yr_change_data_sel_2 = hiflow_25yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>% # select minor outliers from flow data 
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
   mutate(vuln_class = ifelse(area_wt_sovi > mean_us_sovi, "higher", "lower")) %>% # make new class variable based on us sovi mean
-  mutate(risk_class = ifelse(perc_change_per_yr > 0, "higher", "lower")) %>% # make new class variable based on outlier flows
-  mutate(risk_vuln_class = ifelse(vuln_class == "higher" & risk_class == "higher", "higher",
-                                  ifelse(vuln_class == "lower" & risk_class == "lower", "lower",
-                                         ifelse(vuln_class == "lower" & risk_class == "higher", "moderate",
-                                                ifelse(vuln_class == "higher" & risk_class == "lower", "moderate", "NA"))))) # combine risk and vulnerability
+  mutate(impact_class = ifelse(perc_change_per_yr > 0, "higher", "lower")) %>% # make new class variable based on outlier flows
+  mutate(impact_vuln_class = ifelse(vuln_class == "higher" & impact_class == "higher", "higher",
+                                  ifelse(vuln_class == "lower" & impact_class == "lower", "lower",
+                                         ifelse(vuln_class == "lower" & impact_class == "higher", "moderate",
+                                                ifelse(vuln_class == "higher" & impact_class == "lower", "moderate", "NA"))))) # combine impact and vulnerability
 
 # ---- 7.x ellipse reclassify ----
 
@@ -674,20 +671,63 @@ lines(testx5, testy5)
 # ---- 7.3 plot on matrix ----
 
 # omit na's for plotting
-hiflow_10yr_change_data_sel_naomit=hiflow_10yr_change_data_sel %>% na.omit()
-hiflow_25yr_change_data_sel_naomit=hiflow_25yr_change_data_sel %>% na.omit()
+hiflow_10yr_change_data_sel_naomit = hiflow_10yr_change_data_sel %>% na.omit()
+hiflow_25yr_change_data_sel_naomit = hiflow_25yr_change_data_sel %>% na.omit()
+hiflow_10yr_change_data_sel_2_naomit = hiflow_10yr_change_data_sel_2 %>% na.omit()
 
 # define factor levels
-hiflow_10yr_change_data_sel_naomit$risk_vuln_class=factor(hiflow_10yr_change_data_sel_naomit$risk_vuln_class,levels=c("higher","moderate","lower"))
+hiflow_10yr_change_data_sel_naomit$impact_vuln_class=factor(hiflow_10yr_change_data_sel_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
 hiflow_10yr_change_data_sel_naomit$dataset=factor(hiflow_10yr_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-hiflow_25yr_change_data_sel_naomit$risk_vuln_class=factor(hiflow_25yr_change_data_sel_naomit$risk_vuln_class,levels=c("higher","moderate","lower"))
+hiflow_25yr_change_data_sel_naomit$impact_vuln_class=factor(hiflow_25yr_change_data_sel_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
 hiflow_25yr_change_data_sel_naomit$dataset=factor(hiflow_25yr_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+hiflow_10yr_change_data_sel_2_naomit$impact_vuln_class=factor(hiflow_10yr_change_data_sel_2_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
+hiflow_10yr_change_data_sel_2_naomit$dataset=factor(hiflow_10yr_change_data_sel_2_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
 
 # 10yr hiflow data
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("hiflow_risk_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_impact_vuln_per_yr_pointplot_10yr.pdf",width=11,height=8.5,pointsize=18)
 ggplot(data = hiflow_10yr_change_data_sel_naomit,
-       mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = risk_vuln_class, shape = dataset)) +
+       mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
+  geom_point(size = 5, alpha = 0.75) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  labs(x = "Subbasin SoVI", y = "% Change in Number of Flows/Yr >= 10yr Flow", 
+       color = "Class", shape = "Dataset") +
+  xlim(0, 14) +
+  ylim(-10, 150) +
+  theme_bw() +
+  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  #scale_color_manual(values = c("black", "grey50", "grey75")) +
+  scale_color_manual(values = c("red", "orange", "gold")) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 18))
+dev.off()
+
+# 25yr hiflow data
+ggplot(data = hiflow_25yr_change_data_sel_naomit,
+       mapping = aes(x = area_wt_sovi, y = perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
+  geom_point(size = 5, alpha = 0.75) +
+  #geom_point(shape=1,size=3,color="black") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  labs(x = "Subbasin SoVI", y = "% Change in Number of Flows/Yr >= 25yr Flow",
+       color = "Class", shape = "Dataset") +
+  xlim(0, 14) +
+  ylim(-10, 100) +
+  scale_shape_manual(values = c(15, 16, 17, 18)) +
+  #scale_color_manual(values = c("black", "grey50", "grey75")) +
+  scale_color_manual(values = c("red", "orange", "gold")) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), text = element_text(size = 18))
+
+
+# 10yr hiflow data (more gradation)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_impact_vuln_per_yr_pointplot_10yr_more_gradation.pdf",width=11,height=8.5,pointsize=18)
+ggplot(data = hiflow_10yr_change_data_sel_2_naomit,
+       mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
@@ -703,66 +743,59 @@ ggplot(data = hiflow_10yr_change_data_sel_naomit,
   scale_color_manual(values = c("red", "orange", "gold")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 18))
-#dev.off()
-
-# 25yr hiflow data
-ggplot(data = hiflow_25yr_change_data_sel_naomit,
-       mapping = aes(x = area_wt_sovi, y = perc_change_per_yr,color=risk_vuln_class,shape=dataset)) +
-  geom_point(size = 5, alpha = 0.75) +
-  #geom_point(shape=1,size=3,color="black") +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_hline(yintercept = 50, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
-  labs(x = "Subbasin SoVI", y = "% Change in Number of Flows/Yr >= 25yr Flow",
-       color = "Class", shape = "Dataset") +
-  xlim(0, 14) +
-  ylim(-10, 100) +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
-  #scale_color_manual(values = c("black", "grey50", "grey75")) +
-  scale_color_manual(values = c("red", "orange", "gold")) +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-        panel.background = element_blank(), text = element_text(size = 18))
-
+dev.off()
 
 # ---- 7.4 plot on map ----
 
 # add to shp file
-yadkin_sub_shp_risk_vuln_hiflow10yr = left_join(yadkin_sub_shp, hiflow_10yr_change_data_sel, by = "SUB")
-#glimpse(yadkin_sub_shp_risk_vuln_hiflow10yr)
-yadkin_sub_shp_risk_vuln_hiflow25yr = left_join(yadkin_sub_shp, hiflow_25yr_change_data_sel, by = "SUB")
-#glimpse(yadkin_sub_shp_risk_vuln_hiflow25yr)
+yadkin_sub_shp_impact_vuln_hiflow10yr = left_join(yadkin_sub_shp, hiflow_10yr_change_data_sel, by = "SUB")
+#glimpse(yadkin_sub_shp_impact_vuln_hiflow10yr)
+yadkin_sub_shp_impact_vuln_hiflow25yr = left_join(yadkin_sub_shp, hiflow_25yr_change_data_sel, by = "SUB")
+#glimpse(yadkin_sub_shp_impact_vuln_hiflow25yr)
+yadkin_sub_shp_impact_vuln_hiflow10yr_2 = left_join(yadkin_sub_shp, hiflow_10yr_change_data_sel_2, by = "SUB")
+#glimpse(yadkin_sub_shp_impact_vuln_hiflow10yr_2)
 
 # define factor levels
-yadkin_sub_shp_risk_vuln_hiflow10yr$risk_vuln_class = factor(yadkin_sub_shp_risk_vuln_hiflow10yr$risk_vuln_class,levels = c("higher", "moderate", "lower"))
-yadkin_sub_shp_risk_vuln_hiflow10yr$dataset = factor(yadkin_sub_shp_risk_vuln_hiflow10yr$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
-yadkin_sub_shp_risk_vuln_hiflow25yr$risk_vuln_class = factor(yadkin_sub_shp_risk_vuln_hiflow25yr$risk_vuln_class, levels = c("higher", "moderate", "lower"))
-yadkin_sub_shp_risk_vuln_hiflow25yr$dataset = factor(yadkin_sub_shp_risk_vuln_hiflow25yr$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+yadkin_sub_shp_impact_vuln_hiflow10yr$impact_vuln_class = factor(yadkin_sub_shp_impact_vuln_hiflow10yr$impact_vuln_class,levels = c("higher", "moderate", "lower"))
+yadkin_sub_shp_impact_vuln_hiflow10yr$dataset = factor(yadkin_sub_shp_impact_vuln_hiflow10yr$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+yadkin_sub_shp_impact_vuln_hiflow25yr$impact_vuln_class = factor(yadkin_sub_shp_impact_vuln_hiflow25yr$impact_vuln_class, levels = c("higher", "moderate", "lower"))
+yadkin_sub_shp_impact_vuln_hiflow25yr$dataset = factor(yadkin_sub_shp_impact_vuln_hiflow25yr$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+yadkin_sub_shp_impact_vuln_hiflow10yr_2$impact_vuln_class = factor(yadkin_sub_shp_impact_vuln_hiflow10yr_2$impact_vuln_class, levels = c("higher", "moderate", "lower"))
+yadkin_sub_shp_impact_vuln_hiflow10yr_2$dataset = factor(yadkin_sub_shp_impact_vuln_hiflow10yr_2$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+
 
 # 10yr hiflow data
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow10yr_risk_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_risk_vuln_hiflow10yr,aes(fill=risk_vuln_class)) +
+cairo_pdf("hiflow10yr_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
+ggplot(yadkin_sub_shp_impact_vuln_hiflow10yr,aes(fill=impact_vuln_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_risk_vuln_hiflow10yr is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_hiflow10yr is base utm 17N so convert to Albers for CONUS
   scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
   theme_bw()
 dev.off()
 
 # 25yr hiflow data
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow25yr_risk_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_risk_vuln_hiflow25yr,aes(fill=risk_vuln_class)) +
+cairo_pdf("hiflow25yr_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
+ggplot(yadkin_sub_shp_impact_vuln_hiflow25yr,aes(fill=impact_vuln_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_risk_vuln_hiflow25yr is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_hiflow25yr is base utm 17N so convert to Albers for CONUS
   scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
   theme_bw()
 dev.off()
 
-
+# 10yr hiflow data (more gradation)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow10yr_impact_vuln_per_yr_map_more_gradation.pdf",width=11,height=8.5,pointsize=18)
+ggplot(yadkin_sub_shp_impact_vuln_hiflow10yr_2,aes(fill=impact_vuln_class)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_hiflow10yr_2 is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
+  theme_bw()
+dev.off()
 
 
 
