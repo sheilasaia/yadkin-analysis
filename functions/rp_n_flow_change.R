@@ -5,9 +5,10 @@
 # author: sheila saia
 # contact: ssaia [at] ncsu [dot] edu
 
-rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data, projection_rch_data) {
+rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data, projection_rch_data, flow_option) {
   # get baseline_model_calcs from model_freq_calcs_all_rchs()
   # get baseline_rch_data and projection_rch_data from reformat_rch_file()
+  # flow_option must be either 'lowflow' or 'hiflow'
   
   # load libraries
   library(tidyverse) # data management
@@ -33,13 +34,27 @@ rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data
     projected_rch_data_temp = projection_rch_data %>%
       filter(RCH == i)
     
-    # tally instances where flow is greater than or equal to cutoff
-    baseline_sel_flows = baseline_rch_data_temp %>%
-      mutate(my_tally = if_else(
-        FLOW_OUTcms >= cutoff_flow_sel_temp, 1, 0))
-    projected_sel_flow = projected_rch_data_temp %>%
-      mutate(my_tally = if_else(
-        FLOW_OUTcms >= cutoff_flow_sel_temp, 1, 0))
+    if (flow_option == 'hiflow') {
+      # tally instances where flow is greater than or equal to cutoff
+      baseline_sel_flows = baseline_rch_data_temp %>%
+        mutate(my_tally = if_else(
+          FLOW_OUTcms >= cutoff_flow_sel_temp, 1, 0))
+      projected_sel_flow = projected_rch_data_temp %>%
+        mutate(my_tally = if_else(
+          FLOW_OUTcms >= cutoff_flow_sel_temp, 1, 0))
+    }
+    else if (flow_option == 'lowflow') {
+      # tally instances where flow is less than or equal to cutoff
+      baseline_sel_flows = baseline_rch_data_temp %>%
+        mutate(my_tally = if_else(
+          FLOW_OUTcms <= cutoff_flow_sel_temp, 1, 0))
+      projected_sel_flow = projected_rch_data_temp %>%
+        mutate(my_tally = if_else(
+          FLOW_OUTcms <= cutoff_flow_sel_temp, 1, 0))
+    }
+    else {
+      print('User specified flow_option is not valid.')
+    }
     
     # summarize tally of instances
     baseline_counts_temp = baseline_sel_flows %>%
