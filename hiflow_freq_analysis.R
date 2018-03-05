@@ -340,12 +340,9 @@ cairo_pdf("change_num_hiflows_10yr_map.pdf",width=11,height=8.5)
 ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_10yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change # Flows >= 10yr Flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
+  theme_bw()
 dev.off()
 
 # 25 yr
@@ -355,12 +352,9 @@ cairo_pdf("change_num_hiflows_25yr_map.pdf",width=11,height=8.5)
 ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_25yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change # Flows >= 25yr Flow",na.value="grey75", limits = c(-5,90), high="darkblue",low="darkred") +
-  theme_bw() #+
-#theme(axis.text = element_text(size = 20)) +
-#theme(axis.title = element_text(size = 20)) +
-#theme(text = element_text(size = 20))
+  theme_bw()
 dev.off()
 
 
