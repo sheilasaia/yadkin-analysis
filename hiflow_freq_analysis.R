@@ -70,9 +70,9 @@ yadkin_subs_shp_albers=read_sf("yadkin_subs_albers.shp",quiet=TRUE)
 yadkin_subs_shp=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
 
 # looking at gis data
-yadkin_subs_shp_albers_geom=st_geometry(yadkin_subs_shp_albers)
+#yadkin_subs_shp_albers_geom=st_geometry(yadkin_subs_shp_albers)
 #attributes(yadkin_subs_shp_albers_geom) # there is no epsg code for this projection so maybe this is why it's plotting so slow?
-yadkin_subs_shp_geom=st_geometry(yadkin_subs_shp)
+#yadkin_subs_shp_geom=st_geometry(yadkin_subs_shp)
 #attributes(yadkin_subs_shp_geom) # this has an epsg code!
 
 
@@ -296,23 +296,23 @@ dev.off()
 # ---- 5.1 calculate % change in NUMBER OF FLOWS at/above a given return period (backcast) ----
 
 # 10 yr
-miroc8_5_10yr_n_flow_change = rp_n_flow_change(10, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data) %>%
+miroc8_5_10yr_n_flow_change = rp_n_flow_change(10, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "miroc8_5")
-csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data) %>%
+csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "csiro4_5")
-csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data) %>%
+csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "csiro8_5")
-hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data) %>%
+hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "hadley4_5")
 
-# 100 yr
-miroc8_5_25yr_n_flow_change = rp_n_flow_change(25, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data) %>%
+# 25 yr
+miroc8_5_25yr_n_flow_change = rp_n_flow_change(25, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "miroc8_5")
-csiro4_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data) %>%
+csiro4_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "csiro4_5")
-csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data) %>%
+csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "csiro8_5")
-hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data) %>%
+hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = 'hiflow'') %>%
   mutate(dataset = "hadley4_5")
 
 
@@ -358,7 +358,7 @@ ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
 dev.off()
 
 
-# ---- 5.3 calcuate variation (backcast) ----
+# ---- 5.3 calculate variation (backcast) ----
 
 # make dataframe with contributing errors to can use to plot
 contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
