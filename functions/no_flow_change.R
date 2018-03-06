@@ -15,10 +15,9 @@ no_flow_change=function(baseline_no_flow_counts,projection_no_flow_counts,num_yr
   num_rchs=length(unique(baseline_no_flow_counts$RCH))
   dataset_temp=unique(projection_no_flow_counts$dataset)
   change_df=data.frame(RCH=as.integer(),
-                       baseline_sum_n_no_flow_entries=as.numeric(),
-                       projection_sum_n_no_flow_entries=as.numeric(),
-                       no_flow_perc_change=as.numeric(),
-                       no_flow_perc_change_per_yr=as.numeric(),
+                       n_base_flows=as.numeric(),
+                       n_proj_flows=as.numeric(),
+                       perc_change_per_yr=as.numeric(),
                        dataset=as.character())
   
   # for loop for each subbasin
@@ -26,26 +25,25 @@ no_flow_change=function(baseline_no_flow_counts,projection_no_flow_counts,num_yr
 
     # baseline data for specified subbasin
     baseline_no_flow_counts_temp=baseline_no_flow_counts %>% filter(RCH==i)
-    baseline_sum_n_no_flow_entries_temp=baseline_no_flow_counts_temp$sum_n_no_flow_entries
+    n_base_flows_temp=baseline_no_flow_counts_temp$sum_n_no_flow_entries
     
     # projection data for specified subbasin
     projection_no_flow_counts_temp=projection_no_flow_counts %>% filter(RCH==i)
-    projection_sum_n_no_flow_entries_temp=projection_no_flow_counts_temp$sum_n_no_flow_entries
+    n_proj_flows_temp=projection_no_flow_counts_temp$sum_n_no_flow_entries
     
     # find percent change
-    if (baseline_sum_n_no_flow_entries_temp==0) { # if starting point is zero then can't calculate percent change
-      no_flow_perc_change_temp=as.numeric("NA")
+    if (n_base_flows_temp==0) { # if starting point is zero then can't calculate percent change
+      perc_change_temp=as.numeric("NA")
     }
     else {
-      no_flow_perc_change_temp=((projection_sum_n_no_flow_entries_temp-baseline_sum_n_no_flow_entries_temp)/baseline_sum_n_no_flow_entries_temp)*100
+      perc_change_temp=((n_proj_flows_temp-n_base_flows_temp)/n_base_flows_temp)*100
     }
     
     # save results to data frame
     change_df_temp=data.frame(RCH=i,
-                              baseline_sum_n_no_flow_entries=baseline_sum_n_no_flow_entries_temp,
-                              projection_sum_n_no_flow_entries=projection_sum_n_no_flow_entries_temp,
-                              no_flow_perc_change=no_flow_perc_change_temp,
-                              no_flow_perc_change_per_yr=no_flow_perc_change_temp/num_yrs,
+                              n_base_flows=n_base_flows_temp,
+                              n_proj_flows=n_proj_flows_temp,
+                              perc_change_per_yr=perc_change_temp/num_yrs,
                               dataset=dataset_temp)
     
     # bind results to change_df
