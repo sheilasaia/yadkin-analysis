@@ -119,8 +119,8 @@ yadkin_subs_shp=yadkin_subs_shp %>%
 my_model_p_list=c(0.99,0.95,0.9,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.08,0.06,0.04,0.03,0.02,0.01)
 
 # baseline (not backcast)
-baseline_obs_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,1,"hiflow")
-baseline_model_calcs=model_freq_calcs_all_rchs(baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
+#baseline_obs_calcs=obs_freq_calcs_all_rchs(baseline_rch_data,1,"hiflow")
+#baseline_model_calcs=model_freq_calcs_all_rchs(baseline_obs_calcs,kn_table,my_model_p_list,0.4,"hiflow")
 
 # miroc baseline backcast
 miroc_baseline_obs_calcs=obs_freq_calcs_all_rchs(miroc_baseline_rch_data,1,"hiflow")
@@ -312,18 +312,23 @@ csiro4_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, c
   mutate(dataset = "csiro4_5")
 csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "csiro8_5")
-hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = 'hiflow'') %>%
+hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "hadley4_5")
 
 
 # ---- 5.2 reformat calcs for plots (backcast) ----
 
 # combine data for plotting
-n_flow_change_10yr = rbind(miroc8_5_10yr_n_flow_change,csiro4_5_10yr_n_flow_change,
-                           csiro8_5_10yr_n_flow_change,hadley4_5_10yr_n_flow_change) %>%
+n_flow_change_10yr = rbind(miroc8_5_10yr_n_flow_change,
+                           csiro4_5_10yr_n_flow_change,
+                           csiro8_5_10yr_n_flow_change,
+                           hadley4_5_10yr_n_flow_change) %>%
   mutate(SUB = RCH)
-n_flow_change_25yr = rbind(miroc8_5_25yr_n_flow_change,csiro4_5_25yr_n_flow_change,
-                           csiro8_5_25yr_n_flow_change,hadley4_5_25yr_n_flow_change) %>%
+
+n_flow_change_25yr = rbind(miroc8_5_25yr_n_flow_change,
+                           csiro4_5_25yr_n_flow_change,
+                           csiro8_5_25yr_n_flow_change,
+                           hadley4_5_25yr_n_flow_change) %>%
   mutate(SUB = RCH)
 
 # add to shp file
@@ -361,15 +366,16 @@ dev.off()
 # ---- 5.3 calculate variation (backcast) ----
 
 # make dataframe with contributing errors to can use to plot
-contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+contributing_areas = baseline_rch_data %>% 
+  select(RCH, AREAkm2) %>%
   distinct() %>% 
-  mutate(SUB=RCH) %>% 
+  mutate(SUB = RCH) %>% 
   select(-RCH)
 
 # 10yr flows
 # join areas
-n_flow_change_10yr_area=n_flow_change_10yr %>%
-  left_join(contributing_areas,by='SUB')
+n_flow_change_10yr_area = n_flow_change_10yr %>%
+  left_join(contributing_areas, by = 'SUB')
 
 # select only backcast baseline results (and recode them for plotting)
 baseline_num_yrs = length(unique(miroc_baseline_rch_data$YR))
@@ -494,8 +500,8 @@ my_10yr_plots[[2]] = ggplot() +
 
 # save plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("num_10yr_hiflows_variation.pdf",width=15,height=8.5,pointsize=18)
-multiplot(plotlist=my_10yr_plots,cols=2)
+cairo_pdf("num_10yr_hiflows_variation.pdf", width = 15, height = 8.5, pointsize = 18)
+multiplot(plotlist = my_10yr_plots, cols = 2)
 dev.off()
 
 # 25yr flow
@@ -846,36 +852,36 @@ all_models_hiflow_outlier_counts=bind_rows(miroc_baseline_outlier_counts_sum,
 baseline_num_yrs=length(unique(baseline_rch_data$YR))
 
 # calculate % change 
-miroc8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
-csiro8_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
-csiro4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
-hadley4_5_hiflow_outlier_change_using_bcbaseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+miroc8_5_hiflow_outlier_change_using_baseline=outlier_change(miroc_baseline_outlier_counts_sum,miroc8_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+csiro8_5_hiflow_outlier_change_using_baseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro8_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+csiro4_5_hiflow_outlier_change_using_baseline=outlier_change(csiro_baseline_outlier_counts_sum,csiro4_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
+hadley4_5_hiflow_outlier_change_using_baseline=outlier_change(hadley_baseline_outlier_counts_sum,hadley4_5_outlier_counts_using_baseline_sum,flow_option="hiflow",baseline_num_yrs)
 
 # bind rows
-all_models_hiflow_outlier_change=bind_rows(miroc8_5_hiflow_outlier_change_using_bcbaseline,
-                                           csiro8_5_hiflow_outlier_change_using_bcbaseline,
-                                           csiro4_5_hiflow_outlier_change_using_bcbaseline,
-                                           hadley4_5_hiflow_outlier_change_using_bcbaseline) %>% 
+all_models_hiflow_outlier_change=bind_rows(miroc8_5_hiflow_outlier_change_using_baseline,
+                                           csiro8_5_hiflow_outlier_change_using_baseline,
+                                           csiro4_5_hiflow_outlier_change_using_baseline,
+                                           hadley4_5_hiflow_outlier_change_using_baseline) %>% 
   mutate(SUB=RCH) %>% 
   select(-RCH)
 
 # add to shp file
-yadkin_subs_shp_hiflow_outliers_using_bcbaseline=left_join(yadkin_subs_shp,all_models_hiflow_outlier_change,by="SUB")
-#glimpse(yadkin_subs_shp_hiflow_outliers_using_bcbaseline)
+yadkin_subs_shp_hiflow_outliers_using_baseline=left_join(yadkin_subs_shp,all_models_hiflow_outlier_change,by="SUB")
+#glimpse(yadkin_subs_shp_hiflow_outliers_using_baseline)
 
 # adjust levels
-yadkin_subs_shp_hiflow_outliers_using_bcbaseline$dataset=factor(yadkin_subs_shp_hiflow_outliers_using_bcbaseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+yadkin_subs_shp_hiflow_outliers_using_baseline$dataset=factor(yadkin_subs_shp_hiflow_outliers_using_baseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
 # ---- 6.4 plot on map (backcast) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_minor_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=minor_outlier_perc_change_per_yr)) +
+cairo_pdf("hiflow_minor_outlier_change_using_baseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_baseline,aes(fill=minor_outlier_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_baseline is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change # Minor High Flow Outliers/yr",na.value="grey75",limits=c(-20,60),high="darkblue",low="darkred") +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
@@ -885,11 +891,11 @@ dev.off()
 
 # major outliers
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_major_outlier_change_using_bcbaseline.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hiflow_outliers_using_bcbaseline,aes(fill=major_outlier_perc_change_per_yr)) +
+cairo_pdf("hiflow_major_outlier_change_using_baseline.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_hiflow_outliers_using_baseline,aes(fill=major_outlier_perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_outliers_using_baseline is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% Change # Major High Flow Outliers/yr",na.value="grey75",limits=c(-10,20)) +
   theme_bw() #+
 #theme(axis.text = element_text(size = 20)) +
