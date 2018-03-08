@@ -379,15 +379,15 @@ n_flow_change_10yr_area = n_flow_change_10yr %>%
 
 # select only backcast baseline results (and recode them for plotting)
 baseline_num_yrs = length(unique(miroc_baseline_rch_data$YR))
-n_flow_change_10yr_baseline=n_flow_change_10yr_area %>%
-  select(SUB,AREAkm2,n_base_flows,dataset) %>%
-  mutate(baseline_n_flows_per_yr=n_base_flows/baseline_num_yrs) %>%
-  filter(dataset!="csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
-n_flow_change_10yr_baseline$dataset=recode(n_flow_change_10yr_baseline$dataset,"miroc8_5"="miroc","csiro8_5"="csiro","hadley4_5"="hadley")
+n_flow_change_10yr_baseline = n_flow_change_10yr_area %>%
+  select(SUB, AREAkm2, n_base_flows, dataset) %>%
+  mutate(baseline_n_flows_per_yr = n_base_flows / baseline_num_yrs) %>%
+  filter(dataset != "csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
+n_flow_change_10yr_baseline$dataset = recode(n_flow_change_10yr_baseline$dataset, "miroc8_5" = "miroc", "csiro8_5" = "csiro", "hadley4_5" = "hadley")
 
 # backcast baseline ordered by subbasin area
-n_flow_change_10yr_baseline$SUB=factor(n_flow_change_10yr_baseline$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
-n_flow_change_10yr_baseline$dataset=factor(n_flow_change_10yr_baseline$dataset,levels=c("miroc","csiro","hadley"))
+n_flow_change_10yr_baseline$SUB = factor(n_flow_change_10yr_baseline$SUB, levels = contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_10yr_baseline$dataset = factor(n_flow_change_10yr_baseline$dataset, levels = c("miroc", "csiro", "hadley"))
 
 # backcast baseline summary for pointrange plot
 n_flow_change_10yr_baseline_summary=n_flow_change_10yr_baseline %>%
@@ -434,9 +434,9 @@ n_flow_change_25yr_baseline$dataset=factor(n_flow_change_25yr_baseline$dataset,l
 # backcast baseline summary for pointrange plot
 n_flow_change_25yr_baseline_summary=n_flow_change_25yr_baseline %>%
   group_by(SUB,AREAkm2) %>%
-  summarize(min_n_flows_per_yr=min(baseline_n_flows_per_yr),
-            max_n_flows_per_yr=max(baseline_n_flows_per_yr),
-            mean_n_flows_per_yr=mean(baseline_n_flows_per_yr))
+  summarize(min_n_flows_per_yr=min(baseline_n_flows_per_yr, na.rm = TRUE),
+            max_n_flows_per_yr=max(baseline_n_flows_per_yr, na.rm = TRUE),
+            mean_n_flows_per_yr=mean(baseline_n_flows_per_yr, na.rm = TRUE))
 
 # select only projection results (and recode them for plotting)
 projection_num_yrs = length(unique(miroc8_5_rch_data$YR))
@@ -451,9 +451,9 @@ n_flow_change_25yr_projection$dataset=factor(n_flow_change_25yr_projection$datas
 # projection summary for pointrange plot
 n_flow_change_25yr_projection_summary=n_flow_change_25yr_projection %>%
   group_by(SUB,AREAkm2) %>%
-  summarize(min_n_flows_per_yr=min(projection_n_flows_per_yr),
-            max_n_flows_per_yr=max(projection_n_flows_per_yr),
-            mean_n_flows_per_yr=mean(projection_n_flows_per_yr)) # all are cumulative for length of projection
+  summarize(min_n_flows_per_yr=min(projection_n_flows_per_yr, na.rm = TRUE),
+            max_n_flows_per_yr=max(projection_n_flows_per_yr, na.rm = TRUE),
+            mean_n_flows_per_yr=mean(projection_n_flows_per_yr, na.rm = TRUE)) # all are cumulative for length of projection
 
 
 # ---- 5.5 plot variation (backcast) ----
@@ -469,7 +469,7 @@ my_10yr_plots[[1]] = ggplot() +
   geom_point(data=n_flow_change_10yr_baseline,aes(x=SUB,y=baseline_n_flows_per_yr,color=dataset),
              shape=17,size=5,alpha=0.75, position=position_jitter(height=0.005,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
-  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  xlab("SWAT Subbasin ID (by Increasing Conbributing Area)") +
   ylab("Number of Flows >= 10 yr Flow/Year") +
   scale_color_manual(values=c("grey75","grey50","black")) +
   ylim(-0.25,3) +
@@ -487,7 +487,7 @@ my_10yr_plots[[2]] = ggplot() +
   geom_point(data=n_flow_change_10yr_projection,aes(x=SUB,y=projection_n_flows_per_yr,color=dataset),
              shape=16,size=5,alpha=0.75, position=position_jitter(height=0.005,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
-  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  xlab("SWAT Subbasin ID (by Increasing Conbributing Area)") +
   ylab("Number of Flows >= 10 yr Flow/Year") +
   scale_color_manual(values=c("grey75","grey50","grey25","black")) +
   ylim(-0.25,3) +
@@ -515,7 +515,7 @@ my_25yr_plots[[1]] = ggplot() +
   geom_point(data=n_flow_change_25yr_baseline,aes(x=SUB,y=baseline_n_flows_per_yr,color=dataset),
              shape=17,size=5,alpha=0.75, position=position_jitter(height=0.01,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
-  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  xlab("SWAT Subbasin ID (by Increasing Conbributing Area)") +
   ylab("Number of Flows >= 25 yr Flow/Year") +
   scale_color_manual(values=c("grey75","grey50","black")) +
   ylim(-0.25,2) +
@@ -533,7 +533,7 @@ my_25yr_plots[[2]] = ggplot() +
   geom_point(data=n_flow_change_25yr_projection,aes(x=SUB,y=projection_n_flows_per_yr,color=dataset),
              shape=16,size=5,alpha=0.75, position=position_jitter(height=0.01,width=0)) +
   #geom_smooth(method='loess',formula=y~x) +
-  xlab("SWAT Subbasin Number (by Increasing Conbributing Area)") +
+  xlab("SWAT Subbasin ID (by Increasing Conbributing Area)") +
   ylab("Number of Flows >= 25 yr Flow/Year") +
   scale_color_manual(values=c("grey75","grey50","grey25","black")) +
   ylim(-0.25,2) +
