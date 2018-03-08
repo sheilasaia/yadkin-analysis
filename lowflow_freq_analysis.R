@@ -324,12 +324,12 @@ miroc8_5_10yr_n_flow_change = rp_n_flow_change(10, miroc_baseline_model_lowflow_
   mutate(dataset = "miroc8_5")
 # need to deal with coersion errors b/c of NAs!
 
-#csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_lowflow_calcs, csiro_baseline_rch_data, csiro4_5_rch_data, flow_option = "lowflow") %>%
-#  mutate(dataset = "csiro4_5")
-#csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_lowflow_calcs, csiro_baseline_rch_data, csiro8_5_rch_data, flow_option = "lowflow") %>%
-#  mutate(dataset = "csiro8_5")
-#hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_lowflow_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = "lowflow") %>%
-#  mutate(dataset = "hadley4_5")
+csiro4_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_lowflow_calcs, csiro_baseline_rch_data, csiro4_5_rch_data, flow_option = "lowflow") %>%
+  mutate(dataset = "csiro4_5")
+csiro8_5_10yr_n_flow_change = rp_n_flow_change(10, csiro_baseline_model_lowflow_calcs, csiro_baseline_rch_data, csiro8_5_rch_data, flow_option = "lowflow") %>%
+  mutate(dataset = "csiro8_5")
+hadley4_5_10yr_n_flow_change = rp_n_flow_change(10, hadley_baseline_model_lowflow_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = "lowflow") %>%
+  mutate(dataset = "hadley4_5")
 
 # 25 yr
 #miroc8_5_25yr_n_flow_change = rp_n_flow_change(25, miroc_baseline_model_lowflow_calcs, miroc_baseline_rch_data, miroc8_5_rch_data, flow_option = "lowflow") %>%
@@ -351,15 +351,15 @@ n_flow_change_10yr = rbind(miroc8_5_10yr_n_flow_change,
                            hadley4_5_10yr_n_flow_change) %>%
   mutate(SUB = RCH)
 
-n_flow_change_25yr = rbind(miroc8_5_25yr_n_flow_change,
-                           csiro4_5_25yr_n_flow_change,
-                           csiro8_5_25yr_n_flow_change,
-                           hadley4_5_25yr_n_flow_change) %>%
-  mutate(SUB = RCH)
+#n_flow_change_25yr = rbind(miroc8_5_25yr_n_flow_change,
+#                           csiro4_5_25yr_n_flow_change,
+#                           csiro8_5_25yr_n_flow_change,
+#                           hadley4_5_25yr_n_flow_change) %>%
+#  mutate(SUB = RCH)
 
 # add to shp file
 yadkin_subs_shp_n_flow_change_10yr=left_join(yadkin_subs_shp,n_flow_change_10yr,by="SUB")
-yadkin_subs_shp_n_flow_change_25yr=left_join(yadkin_subs_shp,n_flow_change_25yr,by="SUB")
+#yadkin_subs_shp_n_flow_change_25yr=left_join(yadkin_subs_shp,n_flow_change_25yr,by="SUB")
 
 
 # ---- 5.3 plot on map (backcast) ----
@@ -372,31 +372,122 @@ ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_10yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows <= 10yr Flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
+  scale_fill_gradient2("% Change # Flows <= 10yr Flow",na.value="grey75", limits = c(-5, 30), high="darkred",low="darkblue") +
   theme_bw()
 dev.off()
 
 # 25 yr
-yadkin_subs_shp_n_flow_change_25yr$dataset=factor(yadkin_subs_shp_n_flow_change_25yr$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("change_num_lowflows_25yr_map.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_25yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows <= 25yr Flow",na.value="grey75", limits = c(-5,90), high="darkblue",low="darkred") +
-  theme_bw()
-dev.off()
+#yadkin_subs_shp_n_flow_change_25yr$dataset=factor(yadkin_subs_shp_n_flow_change_25yr$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("change_num_lowflows_25yr_map.pdf",width=11,height=8.5)
+#ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
+#  facet_wrap(~dataset) +
+#  geom_sf() +
+#  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_25yr is base utm 17N so convert to Albers for CONUS
+#  scale_fill_gradient2("% Change # Flows <= 25yr Flow",na.value="grey75", limits = c(-5,90), high="darkred",low="darkblue") +
+#  theme_bw()
+#dev.off()
 
 
 # ---- 5.4 calculate variation (backcast) ----
 
+# make dataframe with contributing errors to can use to plot
+contributing_areas = baseline_rch_data %>% 
+  select(RCH, AREAkm2) %>%
+  distinct() %>% 
+  mutate(SUB = RCH) %>% 
+  select(-RCH)
+
+# 10yr flows
+# join areas
+n_flow_change_10yr_area = n_flow_change_10yr %>%
+  left_join(contributing_areas, by = 'SUB')
+
+# select only backcast baseline results (and recode them for plotting)
+baseline_num_yrs = length(unique(miroc_baseline_rch_data$YR))
+n_flow_change_10yr_baseline = n_flow_change_10yr_area %>%
+  select(SUB, AREAkm2, n_base_flows, dataset) %>%
+  mutate(baseline_n_flows_per_yr = n_base_flows / baseline_num_yrs) %>%
+  filter(dataset != "csiro4_5") # don't need both CSIRO datasets b/c backcast baselines are the same for both
+n_flow_change_10yr_baseline$dataset = recode(n_flow_change_10yr_baseline$dataset, "miroc8_5" = "miroc", "csiro8_5" = "csiro", "hadley4_5" = "hadley")
+
+# backcast baseline ordered by subbasin area
+n_flow_change_10yr_baseline$SUB = factor(n_flow_change_10yr_baseline$SUB, levels = contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_10yr_baseline$dataset = factor(n_flow_change_10yr_baseline$dataset, levels = c("miroc", "csiro", "hadley"))
+
+# backcast baseline summary for pointrange plot
+n_flow_change_10yr_baseline_summary=n_flow_change_10yr_baseline %>%
+  group_by(SUB,AREAkm2) %>%
+  summarize(min_n_flows_per_yr=min(baseline_n_flows_per_yr, na.rm = TRUE),
+            max_n_flows_per_yr=max(baseline_n_flows_per_yr, na.rm = TRUE),
+            mean_n_flows_per_yr=mean(baseline_n_flows_per_yr, na.rm = TRUE))
+
+# select only projection results (and recode them for plotting)
+projection_num_yrs = length(unique(miroc8_5_rch_data$YR))
+n_flow_change_10yr_projection=n_flow_change_10yr_area %>%
+  select(SUB,AREAkm2,n_proj_flows,dataset) %>%
+  mutate(projection_n_flows_per_yr=n_proj_flows/projection_num_yrs)
+
+# projection ordered by subbasin area
+n_flow_change_10yr_projection$SUB=factor(n_flow_change_10yr_projection$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_10yr_projection$dataset=factor(n_flow_change_10yr_projection$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
+# projection summary for pointrange plot
+n_flow_change_10yr_projection_summary=n_flow_change_10yr_projection %>%
+  group_by(SUB,AREAkm2) %>%
+  summarize(min_n_flows_per_yr=min(projection_n_flows_per_yr, na.rm = TRUE),
+            max_n_flows_per_yr=max(projection_n_flows_per_yr, na.rm = TRUE),
+            mean_n_flows_per_yr=mean(projection_n_flows_per_yr, na.rm = TRUE)) # all are cumulative for length of projection
 
 
 
 # ---- 5.5 plot variation (backcast) ----
 
+# 10yr flow
+# make a list to hold plots
+my_10yr_plots = list()
 
+# backcast baselines variation plot
+my_10yr_plots[[1]] = ggplot() +
+  geom_pointrange(data=n_flow_change_10yr_baseline_summary,
+                  aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
+  geom_point(data=n_flow_change_10yr_baseline,aes(x=SUB,y=baseline_n_flows_per_yr,color=dataset),
+             shape=17,size=5,alpha=0.75, position=position_jitter(height=0.005,width=0)) +
+  #geom_smooth(method='loess',formula=y~x) +
+  xlab("SWAT Subbasin ID (by Increasing Conbributing Area)") +
+  ylab("Number of Flows <= 10 yr Flow/yr") +
+  scale_color_manual(values=c("grey75","grey50","black")) +
+  ylim(-0.25,50) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=18),
+        legend.position = c(0.3, 0.8))
+
+# projection variation plot
+my_10yr_plots[[2]] = ggplot() +
+  geom_pointrange(data=n_flow_change_10yr_projection_summary,
+                  aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
+  geom_point(data=n_flow_change_10yr_projection,aes(x=SUB,y=projection_n_flows_per_yr,color=dataset),
+             shape=16,size=5,alpha=0.75, position=position_jitter(height=0.005,width=0)) +
+  #geom_smooth(method='loess',formula=y~x) +
+  xlab("SWAT Subbasin ID (by Increasing Conbributing Area)") +
+  ylab("Number of Flows <= 10 yr Flow/yr") +
+  scale_color_manual(values=c("grey75","grey50","grey25","black")) +
+  ylim(-0.25,50) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=18),
+        legend.position = c(0.4, 0.8))
+
+# save plot
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("num_10yr_lowflows_variation.pdf", width = 15, height = 8.5, pointsize = 18)
+multiplot(plotlist = my_10yr_plots, cols = 2)
+dev.off()
 
 
 # ---- 5.6 export results (backcast) ----
@@ -649,7 +740,8 @@ my_no_flow_plots[[1]] = ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=18))
+        text=element_text(size=18),
+        legend.position = c(0.8, 0.8))
 
 # projections variation plot
 my_no_flow_plots[[2]] = ggplot() +
@@ -667,7 +759,8 @@ my_no_flow_plots[[2]] = ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=18))
+        text=element_text(size=18),
+        legend.position = c(0.8, 0.8))
 
 # save plot
 setwd("/Users/ssaia/Desktop")
