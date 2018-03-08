@@ -17,7 +17,7 @@ rp_n_flow_change=function(return_period, baseline_model_calcs, baseline_rch_data
   num_sim_yrs = length(unique(baseline_rch_data$YR))
   num_rchs = length(unique(baseline_rch_data$RCH))
   model_calcs_return_period_sel = baseline_model_calcs %>%
-    filter(model_return_period_yr == return_period)
+    filter(model_return_period_yr == as.character(return_period)) # b/c of coersion somewhere
   output_df = data.frame(RCH = as.numeric(),
                          cutoff_flow_cms = as.numeric(),
                          n_base_flows = as.numeric(), 
