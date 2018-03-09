@@ -346,7 +346,7 @@ ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_10yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows >= 10yr Flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
+  scale_fill_gradient2("% change in number of days/yr with flows >= 10yr flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
   theme_bw()
 dev.off()
 
@@ -358,7 +358,7 @@ ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_25yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows >= 25yr Flow",na.value="grey75", limits = c(-5,90), high="darkblue",low="darkred") +
+  scale_fill_gradient2("% change in number of days with flow/yr >= 25yr flow",na.value="grey75", limits = c(-5,90), high="darkblue",low="darkred") +
   theme_bw()
 dev.off()
 

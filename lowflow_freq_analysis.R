@@ -372,7 +372,7 @@ ggplot(yadkin_subs_shp_n_flow_change_10yr,aes(fill=perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_10yr is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Flows <= 10yr Flow",na.value="grey75", limits = c(-5, 30), high="darkred",low="darkblue") +
+  scale_fill_gradient2("% change in number of days/yr with flows <= 10-yr flow",na.value="grey75", limits = c(-5, 30), high="darkred",low="darkblue") +
   theme_bw()
 dev.off()
 
@@ -384,7 +384,7 @@ dev.off()
 #  facet_wrap(~dataset) +
 #  geom_sf() +
 #  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_25yr is base utm 17N so convert to Albers for CONUS
-#  scale_fill_gradient2("% Change # Flows <= 25yr Flow",na.value="grey75", limits = c(-5,90), high="darkred",low="darkblue") +
+#  scale_fill_gradient2("% change in number of days with flows <= 25-yr flow/yr",na.value="grey75", limits = c(-5,90), high="darkred",low="darkblue") +
 #  theme_bw()
 #dev.off()
 
@@ -655,7 +655,7 @@ ggplot(yadkin_subs_shp_no_flow_using_baseline, aes(fill = perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs = st_crs(102003)) + # yadkin_subs_shp_no_flow_using_baseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Days with No Flow/yr", na.value="grey75", limits = c(-10, 50), high = "darkred", low = "darkblue") +
+  scale_fill_gradient2("% change number of days/yr with no flow", na.value="grey75", limits = c(-10, 50), high = "darkred", low = "darkblue") +
   theme_bw()
 dev.off()
 
@@ -666,7 +666,7 @@ ggplot(yadkin_subs_shp_no_flow_using_baseline, aes(fill = perc_change_per_yr)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs = st_crs(102003)) + # yadkin_subs_shp_lowflow_outliers_using_baseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change # Days with No Flow/yr", na.value = "grey75", limits = c(50, 205), high = "darkred", low = "white") +
+  scale_fill_gradient2("% change number of days/yr with no flow", na.value = "grey75", limits = c(50, 205), high = "darkred", low = "white") +
   theme_bw()
 dev.off()
 
