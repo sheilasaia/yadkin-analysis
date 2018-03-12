@@ -518,25 +518,26 @@ sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
 hiflow_10yr_change_data_sel_2 = hiflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>%
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
-  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi, 1, 
-                             ifelse(area_wt_sovi < mean_us_sovi | area_wt_sovi <= mean_us_sovi + sd_us_sovi, 2, 3))) %>%
-  mutate(impact_class = ifelse(perc_change_per_yr <= 0, 1, 
-                             ifelse(perc_change_per_yr < 0 | perc_change_per_yr <= 50 + sd_us_sovi, 2, 3))) %>%
+  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi + sd_us_sovi, 1, 
+                             ifelse(area_wt_sovi > mean_us_sovi + sd_us_sovi & area_wt_sovi <= mean_us_sovi + 2 * sd_us_sovi, 2, 3))) %>%
+  mutate(impact_class = ifelse(perc_change_per_yr <= 25, 1, 
+                               ifelse(perc_change_per_yr > 25 & perc_change_per_yr <= 50, 2, 3))) %>%
   mutate(impact_vuln_class_num = impact_class + vuln_class) %>%
-  mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 3, "lower",
-                                    ifelse(impact_vuln_class_num == 4 , "moderate", "higher")))
+  mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 2, "lower",
+                                    ifelse(impact_vuln_class_num == 3 , "moderate", "higher")))
+
 
 # 10yr lowflow data (more gradation)
 lowflow_10yr_change_data_sel_2 = lowflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>% 
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
-  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi, 1, 
-                             ifelse(area_wt_sovi < mean_us_sovi | area_wt_sovi <= mean_us_sovi + sd_us_sovi, 2, 3))) %>%
-  mutate(impact_class = ifelse(perc_change_per_yr <= 0, 1, 
-                               ifelse(perc_change_per_yr < 0 | perc_change_per_yr <= 50 + sd_us_sovi, 2, 3))) %>%
+  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi + sd_us_sovi, 1, 
+                             ifelse(area_wt_sovi > mean_us_sovi & area_wt_sovi <= mean_us_sovi + 2 * sd_us_sovi, 2, 3))) %>%
+  mutate(impact_class = ifelse(perc_change_per_yr <= 25, 1, 
+                               ifelse(perc_change_per_yr > 25 & perc_change_per_yr <= 50, 2, 3))) %>%
   mutate(impact_vuln_class_num = impact_class + vuln_class) %>%
-  mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 3, "lower",
-                                    ifelse(impact_vuln_class_num == 4 , "moderate", "higher")))
+  mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 2, "lower",
+                                    ifelse(impact_vuln_class_num == 3 , "moderate", "higher")))
 
 
 # ---- 7.3 plot on matrix ----
@@ -560,8 +561,10 @@ my_point_plots[[1]] = ggplot(data = hiflow_10yr_change_data_sel_2_naomit,
   geom_point(size = 5, alpha = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
+  geom_hline(yintercept = 25, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   labs(x = "Subbasin SoVI", y = "% change in number of days/yr with flows >= 10-yr flow", 
        color = "Class", shape = "Dataset") +
   xlim(0, 14) +
@@ -578,9 +581,11 @@ my_point_plots[[2]] = ggplot(data = lowflow_10yr_change_data_sel_2_naomit,
        mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
   geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 25, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   labs(x = "Subbasin SoVI", y = "% change in number of days/yr with flows <= 10-yr flow", 
        color = "Class", shape = "Dataset") +
   xlim(0, 14) +
@@ -588,7 +593,7 @@ my_point_plots[[2]] = ggplot(data = lowflow_10yr_change_data_sel_2_naomit,
   theme_bw() +
   scale_shape_manual(values = c(15, 16, 17, 18)) +
   #scale_color_manual(values = c("black", "grey50", "grey75")) +
-  scale_color_manual(values = c("darkorange1", "gold")) +
+  scale_color_manual(values = c("darkorange1","gold")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 18))
 
@@ -631,7 +636,7 @@ ggplot(yadkin_sub_shp_impact_vuln_lowflow_10yr_2, aes(fill = impact_vuln_class))
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_impact_vuln_lowflow_10yr_2 is base utm 17N so convert to Albers for CONUS
-  scale_fill_manual(values = c("darkorange1", "gold"), na.value = "grey75") +
+  scale_fill_manual(values = c("darkorange1","gold"), na.value = "grey75") +
   theme_bw()
 dev.off()
 
