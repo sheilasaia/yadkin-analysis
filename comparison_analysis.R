@@ -40,9 +40,11 @@ yadkin_subs_shp=yadkin_subs_shp %>%
 # high flow
 hiflow_hydro_rank_data = n_hiflow_10yr_hydro_change_data %>%
   group_by(dataset) %>%
-  mutate(hiflow_rank = percent_rank(perc_change_per_yr)) %>%
-  mutate(analysis = "hiflow") %>%
-  mutate(analysis_id = paste0(dataset,"_",SUB))
+  mutate(class = ifelse(perc_change_per_yr <= 25, "lower",
+                        ifelse(perc_change_per_yr > 25 & perc_change_per_yr <= 50, "moderate", "higher")))
+  #mutate(hiflow_rank = percent_rank(perc_change_per_yr)) %>%
+  #mutate(analysis = "hiflow") %>%
+  #mutate(analysis_id = paste0(dataset,"_",SUB))
 
 # low flow
 lowflow_hydro_rank_data = n_lowflow_10yr_hydro_change_data %>%
@@ -82,17 +84,18 @@ yadkin_subs_shp_hydro_rank_data = left_join(yadkin_subs_shp, hydro_rank_data, by
 
 # adjust levels
 yadkin_subs_shp_hydro_rank_data$dataset = factor(yadkin_subs_shp_hydro_rank_data$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+yadkin_subs_shp_hydro_rank_data$class = factor(yadkin_subs_shp_hydro_rank_data$class, levels = c("higher", "moderate", "lower"))
 
 
 # ---- 2.2 plot on map ----
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("hydro_analysis_total_rank_map.pdf",width=11,height=8.5)
-ggplot(yadkin_subs_shp_hydro_rank_data,aes(fill=rank_sum_scaled)) +
+ggplot(yadkin_subs_shp_hydro_rank_data,aes(fill=class)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hydro_rank_data is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Combined hydrology analysis impact", na.value = "grey75", limits = c(0,1), low = "white", high = "darkred") +
+  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_impact_vuln_hiflow_10yr_2 is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
   theme_bw()
 dev.off()
 
