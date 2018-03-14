@@ -28,6 +28,7 @@ us_sovi_data=read_csv("atsdr_us_sovi_2014_data.csv",col_names=TRUE)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
 yadkin_sub_shp_raw=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
 yadkin_tract_shp_raw=read_sf("yadkin_sovi2014_utm17N.shp",quiet=TRUE)
+yadkin_unclip_tract_shp_raw=read_sf("yadkin_counties_sovi2014_utm17N.shp", quiet = TRUE)
 # use Albers projection for calcs in ArcGIS but UTM 17N
 # here for plotting because can sf() recognizes UTM and
 # then can convert sf() is not recognizing Albers projection
@@ -46,8 +47,11 @@ sovidb_scaling_data=sovibd_scaling_raw %>% select(-X1)
 yadkin_tract_shp=yadkin_tract_shp_raw %>% 
   mutate(fips=as.numeric(FIPS)) %>% select(-FIPS)
 
+yadkin_unclip_tract_shp = yadkin_unclip_tract_shp_raw %>%
+  mutate(fips = as.numeric(FIPS)) %>% select(-FIPS)
+
 # copy census tract data to new variable
-yadkin_census_tracts_data=yadkin_tract_shp %>% 
+yadkin_census_tract_data=yadkin_tract_shp %>% 
   select(fips,E_TOTPOP:E_DAYPOP)  %>% # select only columns you need 
   st_set_geometry(NULL) # set geometry as null to get df
 
@@ -122,23 +126,25 @@ dev.off()
 
 # ---- 4.1 extract tract data to plot all themes together on one plot ----
 
+# can do this with gather?!
+
 # select out theme 1
-yadkin_sovi_theme1_tract_data=yadkin_census_tracts_data %>%
+yadkin_sovi_theme1_tract_data=yadkin_census_tract_data %>%
   select(fips,sovi=SPL_THEME1) %>%
   mutate(theme="theme1_socio_econ_demog")
 
 # select out theme 2
-yadkin_sovi_theme2_tract_data=yadkin_census_tracts_data %>%
+yadkin_sovi_theme2_tract_data=yadkin_census_tract_data %>%
   select(fips,sovi=SPL_THEME2) %>%
   mutate(theme="theme2_household_comp_ability_demog")
 
 # select out theme 1
-yadkin_sovi_theme3_tract_data=yadkin_census_tracts_data %>%
+yadkin_sovi_theme3_tract_data=yadkin_census_tract_data %>%
   select(fips,sovi=SPL_THEME3) %>%
   mutate(theme="theme3_minority_esl_demog")
 
 # select out theme 1
-yadkin_sovi_theme4_tract_data=yadkin_census_tracts_data %>%
+yadkin_sovi_theme4_tract_data=yadkin_census_tract_data %>%
   select(fips,sovi=SPL_THEME4) %>%
   mutate(theme="theme4_housing_transportation_demog")
 
@@ -652,7 +658,7 @@ write_csv(lowflow_10yr_change_data_sel_2,"num_lowflow_change_10yr_with_sovi_calc
 # ---- 8.1 reformat census data for pca analysis ----
 
 # select only estimate columns
-yadkin_tract_est_data = yadkin_census_tracts_data %>% 
+yadkin_tract_est_data = yadkin_census_tract_data %>% 
   select(fips, contains("E_")) %>%
   rename_all(tolower)
 
@@ -687,6 +693,55 @@ summary(sovi_pca_no_income)
 # this is slightly higher than the pca with income included but not much more
 sovi_pca_results_no_income=data.frame(var=names(yadkin_tract_est_data_zscore_no_income),pc1_loadings=sovi_pca_no_income$rotation[1:14],pc2_loadings=sovi_pca_no_income$rotation[15:28])
 biplot(sovi_pca_no_income)
+# ---- 9.1 zoom in subbasin theme analysis ----
+
+# reformat unclipped data
+yadkin_unclip_tract_shp_sel = yadkin_unclip_tract_shp %>%
+  select(fips, County = COUNTY, ST_ABBR, SPL_THEME1, SPL_THEME2, SPL_THEME3, SPL_THEME4, geometry) %>%
+  gather.sf(key = "theme", value = "sovi", SPL_THEME1:SPL_THEME4)
+
+# select subbasin of interest
+my_sel_sub = 24
+yadkin_sub_shp_sel = yadkin_sub_shp %>%
+  filter(SUB == my_sel_sub)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse = yadkin_sub_shp_sel %>%
+  st_join(yadkin_unclip_tract_shp_sel)
+
+# look at counties that are included
+unique(my_glimpse$County)
+min(my_glimpse$sovi)
+
+# select 
+yadkin_tract_sel_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+filter(County == "Anson" |
+         County == "Union")
+# have to manually enter county names you want to select (use results from unique() above)
+
+# make a theme column in my_glimpse
+yadkin_sub_shp_sel_for_plot = yadkin_sub_shp_sel %>%
+  mutate(SPL_THEME1 = 1, SPL_THEME2 = 1, SPL_THEME3 = 1, SPL_THEME4 = 1) %>%
+  gather.sf(key = "theme", value = "sovi", SPL_THEME1:SPL_THEME4)
+  
+
+# plot
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sub24.pdf",width=11,height=8.5,pointsize=18)
+ggplot() + 
+  geom_sf(data = yadkin_tract_sel_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_sub_shp_sel_for_plot, color = "black", alpha = 0, size = 1.5) +
+  facet_wrap(~theme) +
+  coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_themes is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI (2010-2014)",high="grey10", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Anson" = "#fc8d62", "Union" = "#8da0cb")) +   theme_bw()
+dev.off()
+
+# colorblind friendly: http://colorbrewer2.org/#type=qualitative&scheme=Set2&n=3
+# colorblink frieldly: http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/
+
+
+
 # ---- 7.x basic gradiation ----
 
 # 10yr hiflow data (basic gradation)
