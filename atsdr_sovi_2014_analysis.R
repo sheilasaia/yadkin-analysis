@@ -7,91 +7,103 @@ rm(list = ls())
 
 # load libraries
 library(tidyverse)
-#devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
-#library(ggplot2)
+# devtools::install_github("tidyverse/ggplot2") # sf requires newest ggplot2 version
+# library(ggplot2)
 library(sf)
 
 # load home-made functions 
-functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
-source(paste0(functions_path,"multiplot.R")) # for creating plots with multiple figures
+functions_path = "/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
+source(paste0(functions_path, "multiplot.R")) # for creating plots with multiple figures
 
 # atsdr sovi 2010-2014 tract scaling data
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/sovibd_scaling_calculations")
-sovibd_scaling_raw=read_csv("sovibd_2014_scaling_allsubs.csv",col_names=TRUE)
-#don't need tract column?
+sovibd_scaling_raw = read_csv("sovibd_2014_scaling_allsubs.csv", col_names = TRUE)
+# don't need tract column?
 
 # atsdr sovi 2010-2014 data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-us_sovi_data=read_csv("atsdr_us_sovi_2014_data.csv",col_names=TRUE)
+us_sovi_data = read_csv("atsdr_us_sovi_2014_data.csv", col_names = TRUE)
 
 # gis data
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
-yadkin_sub_shp_raw=read_sf("yadkin_subs_utm17N.shp",quiet=TRUE)
-yadkin_tract_shp_raw=read_sf("yadkin_sovi2014_utm17N.shp",quiet=TRUE)
-yadkin_unclip_tract_shp_raw=read_sf("yadkin_counties_sovi2014_utm17N.shp", quiet = TRUE)
+yadkin_sub_shp_raw = read_sf("yadkin_subs_utm17N.shp", quiet = TRUE)
+yadkin_tract_shp_raw = read_sf("yadkin_sovi2014_utm17N.shp", quiet = TRUE)
+yadkin_unclip_tract_shp_raw = read_sf("yadkin_counties_sovi2014_utm17N.shp", quiet = TRUE)
 # use Albers projection for calcs in ArcGIS but UTM 17N
 # here for plotting because can sf() recognizes UTM and
 # then can convert sf() is not recognizing Albers projection
 
 # looking at gis data
-#yadkin_sub_shp_raw_geom=st_geometry(yadkin_sub_shp_raw)
-#attributes(yadkin_sub_shp_raw) # this has an epsg code!
+# yadkin_sub_shp_raw_geom = st_geometry(yadkin_sub_shp_raw)
+# attributes(yadkin_sub_shp_raw) # this has an epsg code!
 
 
 # ---- 2 reformat data -----
 
 # remove X1 column in scaling data
-sovidb_scaling_data=sovibd_scaling_raw %>% select(-X1)
+sovidb_scaling_data = sovibd_scaling_raw %>% 
+  select(-X1)
 
 # make sure fips columns are same name and are as.numeric()
-yadkin_tract_shp=yadkin_tract_shp_raw %>% 
-  mutate(fips=as.numeric(FIPS)) %>% select(-FIPS)
+yadkin_tract_shp = yadkin_tract_shp_raw %>% 
+  mutate(fips = as.numeric(FIPS)) %>% 
+  select(-FIPS)
 
+# census tracts in yadkin counties (not clipped to watershed bounds)
 yadkin_unclip_tract_shp = yadkin_unclip_tract_shp_raw %>%
-  mutate(fips = as.numeric(FIPS)) %>% select(-FIPS)
+  mutate(fips = as.numeric(FIPS)) %>% 
+  select(-FIPS)
 
 # copy census tract data to new variable
-yadkin_census_tract_data=yadkin_tract_shp %>% 
-  select(fips,E_TOTPOP:E_DAYPOP)  %>% # select only columns you need 
+yadkin_census_tract_data = yadkin_tract_shp %>% 
+  select(fips, E_TOTPOP:E_DAYPOP)  %>% # select only columns you need 
   st_set_geometry(NULL) # set geometry as null to get df
 
 # change subbasin id column to match other files
-yadkin_sub_shp=yadkin_sub_shp_raw %>% 
-  mutate(SUB=Subbasin) %>% 
+yadkin_sub_shp = yadkin_sub_shp_raw %>% 
+  mutate(SUB = Subbasin) %>% 
   select(-Subbasin)
 
 # select atsdr data for yadkin
-yadkin_sovi_data=left_join(sovidb_scaling_data,us_sovi_data,by="fips")
+yadkin_sovi_data = left_join(sovidb_scaling_data, us_sovi_data, by = "fips")
 
 
 # ---- 3.1 combine us, nc, and yadkin tract sovi data for histogram ----
 
 # find unique fips id's for yadkin
-yadkin_unique_fips=sovidb_scaling_data %>% select(fips) %>% distinct()
+yadkin_unique_fips = sovidb_scaling_data %>% 
+  select(fips) %>% distinct()
 
 # find unique fips id's for nc
-nc_unique_fips=us_sovi_data %>% filter(state_abbrev=="NC") %>% select(fips) %>% distinct()
+nc_unique_fips = us_sovi_data %>% 
+  filter(state_abbrev == "NC") %>% 
+  select(fips) %>% distinct()
 
 # select sovi data for yadkin using unique fips id's
-yadkin_sovi_hist=us_sovi_data %>% select(fips,sovi_total) %>% 
-  right_join(yadkin_unique_fips,by="fips") %>% mutate(dataset="UYPD")
+yadkin_sovi_hist = us_sovi_data %>% 
+  select(fips, sovi_total) %>% 
+  right_join(yadkin_unique_fips, by = "fips") %>% 
+  mutate(dataset = "UYPD")
 
 # select sovi data for nc using unique fips id's
-nc_sovi_hist=us_sovi_data %>% select(fips,sovi_total) %>% 
-  right_join(nc_unique_fips,by="fips") %>% mutate(dataset="NC")
+nc_sovi_hist = us_sovi_data %>% select(fips, sovi_total) %>% 
+  right_join(nc_unique_fips, by = "fips") %>% 
+  mutate(dataset = "NC")
 
 # select sovi data for us using unique fips id's
-us_sovi_hist=us_sovi_data %>% select(fips,sovi_total) %>% mutate(dataset="US")
-
+us_sovi_hist = us_sovi_data %>% select(fips, sovi_total) %>% 
+  mutate(dataset = "US")
+ 
 # bind all together
-sovi_hist=bind_rows(yadkin_sovi_hist,nc_sovi_hist,us_sovi_hist)
+sovi_hist = bind_rows(yadkin_sovi_hist, nc_sovi_hist, us_sovi_hist)
+
 
 # ---- 3.2 plot us, nc, yadkin tract sovi data as histogram ----
 
-#setwd("/Users/ssaia/Desktop")
-#cairo_pdf("atsdr_sovi2014_hist.pdf",width=11,height=8.5)
-sovi_hist$dataset=factor(sovi_hist$dataset,levels=c("US","NC","UYPD"))
-ggplot(sovi_hist,aes(sovi_total,fill=dataset,color=dataset)) +
+# setwd("/Users/ssaia/Desktop")
+# cairo_pdf("atsdr_sovi2014_hist.pdf", width = 11, height = 8.5)
+sovi_hist$dataset = factor(sovi_hist$dataset, levels = c("US", "NC", "UYPD"))
+ggplot(sovi_hist, aes(sovi_total, fill = dataset, color = dataset)) +
   geom_histogram(binwidth=.5, alpha=0.5) +
   xlab("SoVI (Census Tract Scale)") +
   ylab("Count") +
@@ -103,7 +115,7 @@ ggplot(sovi_hist,aes(sovi_total,fill=dataset,color=dataset)) +
   theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
         text=element_text(size=16),panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),panel.background = element_blank())
-#dev.off()
+# dev.off()
 
 # zoom
 setwd("/Users/ssaia/Desktop")
@@ -124,40 +136,7 @@ ggplot(sovi_hist,aes(sovi_total,fill=dataset,color=dataset)) +
 dev.off()
 
 
-# ---- 4.1 extract tract data to plot all themes together on one plot ----
-
-# can do this with gather?!
-
-# select out theme 1
-yadkin_sovi_theme1_tract_data=yadkin_census_tract_data %>%
-  select(fips,sovi=SPL_THEME1) %>%
-  mutate(theme="theme1_socio_econ_demog")
-
-# select out theme 2
-yadkin_sovi_theme2_tract_data=yadkin_census_tract_data %>%
-  select(fips,sovi=SPL_THEME2) %>%
-  mutate(theme="theme2_household_comp_ability_demog")
-
-# select out theme 1
-yadkin_sovi_theme3_tract_data=yadkin_census_tract_data %>%
-  select(fips,sovi=SPL_THEME3) %>%
-  mutate(theme="theme3_minority_esl_demog")
-
-# select out theme 1
-yadkin_sovi_theme4_tract_data=yadkin_census_tract_data %>%
-  select(fips,sovi=SPL_THEME4) %>%
-  mutate(theme="theme4_housing_transportation_demog")
-
-# bind
-yadkin_sovi_themes_tract_data=bind_rows(yadkin_sovi_theme1_tract_data,
-                                        yadkin_sovi_theme2_tract_data,
-                                        yadkin_sovi_theme3_tract_data,
-                                        yadkin_sovi_theme4_tract_data)
-
-yadkin_tract_shp_sovi_theme1to4=left_join(yadkin_tract_shp,yadkin_sovi_themes_tract_data,by="fips")
-#glimpse(yadkin_tract_shp_sovi_theme1to4)
-
-# ---- 4.2 plot sovi data by tract ----
+# ---- 3.3 plot yadkin total sovi by tract on map ----
 
 # total sovi by tract
 setwd("/Users/ssaia/Desktop")
@@ -169,45 +148,23 @@ ggplot(yadkin_tract_shp, aes(fill = SPL_THEMES)) +
   theme_bw()
 dev.off()
 
-# sovi theme 1 (socioeconomic status) by tract
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_theme1_by_tract.pdf", width = 11, height = 8.5)
-ggplot(yadkin_tract_shp, aes(fill = SPL_THEME1)) +
-  geom_sf(color = "grey30") +
-  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_lowflow_outliers_using_bcbaseline is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI Theme 1", high = "grey10", low = "white", limits = c(0, 5)) +
-  theme_bw()
-dev.off()
 
-# sovi theme 2 (household make-up & disability) by tract
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_theme2_by_tract.pdf",width=11,height=8.5)
-ggplot(yadkin_tract_shp,aes(fill=SPL_THEME2)) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI Theme 2",high="grey10",low="white",limits=c(0,5)) +
-  theme_bw()
-dev.off()
+# ---- 4.1 gather four sovi themes together ----
 
-# sovi theme 3 (minority status & knowledge of english) by tract
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_theme3_by_tract.pdf",width=11,height=8.5)
-ggplot(yadkin_tract_shp,aes(fill=SPL_THEME3)) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI Theme 3",high="grey10",low="white",limits=c(0,5)) +
-  theme_bw()
-dev.off()
+yadkin_sovi_themes_tract_data = yadkin_census_tract_data %>%
+  select(fips, SPL_THEME1, SPL_THEME2, SPL_THEME3, SPL_THEME4) %>%
+  gather(key = "theme", value = "sovi", SPL_THEME1:SPL_THEME4)
 
-# sovi theme 4 (housing and transportation) by tract
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_theme4_by_tract.pdf",width=11,height=8.5)
-ggplot(yadkin_tract_shp,aes(fill=SPL_THEME4)) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI Theme 4",high="grey10",low="white",limits=c(0,5)) +
-  theme_bw()
-dev.off()
+# theme1 - socio-economic vulnerability
+# theme2 - household composition and diability vulnerability
+# theme3 - minority status and esl speakers vulnerability
+# theme4 - housing and transportation vulnerability
+
+yadkin_tract_shp_sovi_theme1to4=left_join(yadkin_tract_shp,yadkin_sovi_themes_tract_data,by="fips")
+# glimpse(yadkin_tract_shp_sovi_theme1to4)
+
+
+# ---- 4.2 plot four sovi themes by tract on map ----
 
 # all four themes together in one plot
 setwd("/Users/ssaia/Desktop")
@@ -225,44 +182,49 @@ dev.off()
 
 # scale to subbasin
 # total sovi
-yadkin_sovi_total_sub_data=yadkin_sovi_data %>%
-  select(SUB,fips,tract_perc,sub_perc,sovi_total) %>%
-  mutate(wt_sovi_total=round(sovi_total*sub_perc,3)) %>%
-  group_by(SUB) %>% summarize(area_wt_sovi=sum(wt_sovi_total))
+yadkin_sovi_total_sub_data = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_total) %>%
+  mutate(wt_sovi_total = round(sovi_total * sub_perc, 3)) %>%
+  group_by(SUB) %>% 
+  summarize(area_wt_sovi = sum(wt_sovi_total))
 
 # sovi theme 1
-yadkin_sovi_theme1_sub_data=yadkin_sovi_data %>%
-  select(SUB,fips,tract_perc,sub_perc,sovi_theme1) %>%
-  mutate(wt_sovi_theme1=round(sovi_theme1*sub_perc,3)) %>%
-  group_by(SUB) %>% summarize(area_wt_sovi=sum(wt_sovi_theme1)) %>%
-  mutate(theme="theme1_socio_econ_demog")
+yadkin_sovi_theme1_sub_data = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_theme1) %>%
+  mutate(wt_sovi_theme1 = round(sovi_theme1 * sub_perc, 3)) %>%
+  group_by(SUB) %>% 
+  summarize(area_wt_sovi = sum(wt_sovi_theme1)) %>%
+  mutate(theme = "theme1_socio_econ_demog")
 
 # sovi theme 2
-yadkin_sovi_theme2_sub_data=yadkin_sovi_data %>%
-  select(SUB,fips,tract_perc,sub_perc,sovi_theme2) %>%
-  mutate(wt_sovi_theme2=round(sovi_theme2*sub_perc,3)) %>%
-  group_by(SUB) %>% summarize(area_wt_sovi=sum(wt_sovi_theme2)) %>%
-  mutate(theme="theme2_household_ability_demog")
+yadkin_sovi_theme2_sub_data = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_theme2) %>%
+  mutate(wt_sovi_theme2 = round(sovi_theme2 * sub_perc, 3)) %>%
+  group_by(SUB) %>% 
+  summarize(area_wt_sovi = sum(wt_sovi_theme2)) %>%
+  mutate(theme = "theme2_household_ability_demog")
 
 # sovi theme 3
-yadkin_sovi_theme3_sub_data=yadkin_sovi_data %>%
-  select(SUB,fips,tract_perc,sub_perc,sovi_theme3) %>%
-  mutate(wt_sovi_theme3=round(sovi_theme3*sub_perc,3)) %>%
-  group_by(SUB) %>% summarize(area_wt_sovi=sum(wt_sovi_theme3)) %>%
-  mutate(theme="theme3_minority_esl_demog")
+yadkin_sovi_theme3_sub_data = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_theme3) %>%
+  mutate(wt_sovi_theme3 = round(sovi_theme3 * sub_perc, 3)) %>%
+  group_by(SUB) %>% 
+  summarize(area_wt_sovi = sum(wt_sovi_theme3)) %>%
+  mutate(theme = "theme3_minority_esl_demog")
 
 # sovi theme 4
-yadkin_sovi_theme4_sub_data=yadkin_sovi_data %>%
-  select(SUB,fips,tract_perc,sub_perc,sovi_theme4) %>%
-  mutate(wt_sovi_theme4=round(sovi_theme4*sub_perc,3)) %>%
-  group_by(SUB) %>% summarize(area_wt_sovi=sum(wt_sovi_theme4)) %>%
-  mutate(theme="theme4_housing_transportation_demog")
+yadkin_sovi_theme4_sub_data = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_theme4) %>%
+  mutate(wt_sovi_theme4 = round(sovi_theme4 * sub_perc, 3)) %>%
+  group_by(SUB) %>% 
+  summarize(area_wt_sovi = sum(wt_sovi_theme4)) %>%
+  mutate(theme = "theme4_housing_transportation_demog")
 
 # themes 1 to 4 together
-yadkin_sovi_themes_sub_data=bind_rows(yadkin_sovi_theme1_sub_data,
-                                      yadkin_sovi_theme2_sub_data,
-                                      yadkin_sovi_theme3_sub_data,
-                                      yadkin_sovi_theme4_sub_data)
+yadkin_sovi_themes_sub_data = bind_rows(yadkin_sovi_theme1_sub_data,
+                                        yadkin_sovi_theme2_sub_data,
+                                        yadkin_sovi_theme3_sub_data,
+                                        yadkin_sovi_theme4_sub_data)
 
 # join with gis data
 yadkin_sub_shp_sovi_total=left_join(yadkin_sub_shp,yadkin_sovi_total_sub_data,by="SUB")
@@ -271,12 +233,12 @@ yadkin_sub_shp_sovi_theme2=left_join(yadkin_sub_shp,yadkin_sovi_theme2_sub_data,
 yadkin_sub_shp_sovi_theme3=left_join(yadkin_sub_shp,yadkin_sovi_theme3_sub_data,by="SUB")
 yadkin_sub_shp_sovi_theme4=left_join(yadkin_sub_shp,yadkin_sovi_theme4_sub_data,by="SUB")
 yadkin_sub_shp_sovi_theme1to4=left_join(yadkin_sub_shp,yadkin_sovi_themes_sub_data,by="SUB")
-#glimpse(yadkin_sub_shp_sovi_total)
-#glimpse(yadkin_sub_shp_sovi_theme1)
-#glimpse(yadkin_sub_shp_sovi_theme2)
-#glimpse(yadkin_sub_shp_sovi_theme3)
-#glimpse(yadkin_sub_shp_sovi_theme4)
-#glimpse(yadkin_sub_shp_sovi_theme1to4)
+# glimpse(yadkin_sub_shp_sovi_total)
+# glimpse(yadkin_sub_shp_sovi_theme1)
+# glimpse(yadkin_sub_shp_sovi_theme2)
+# glimpse(yadkin_sub_shp_sovi_theme3)
+# glimpse(yadkin_sub_shp_sovi_theme4)
+# glimpse(yadkin_sub_shp_sovi_theme1to4)
 
 
 # ---- 5.2 plot subbasin scaled sovi data ----
@@ -359,148 +321,205 @@ dev.off()
 
 # set working directory and import data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-hiflow_outlier_change_data=read_csv("hiflow_outlier_perc_change_data.csv",col_names=TRUE)
-lowflow_outlier_change_data=read_csv("lowflow_outlier_perc_change_data.csv",col_names=TRUE)
+hiflow_outlier_change_data = read_csv("hiflow_outlier_perc_change_data.csv", col_names = TRUE)
+# lowflow_outlier_change_data = read_csv("lowflow_outlier_perc_change_data.csv", col_names = TRUE)
 
 
 # ---- 6.2 reclass hydrology and sovi data for plotting ----
 
 # calculate mean sovi for us
-mean_us_sovi=mean(us_sovi_hist$sovi_total)
-sd_us_sovi=sd(us_sovi_hist$sovi_total)
-mean_yadkin_sovi=mean(yadkin_sovi_hist$sovi_total)
-sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
+mean_us_sovi = mean(us_sovi_hist$sovi_total)
+sd_us_sovi = sd(us_sovi_hist$sovi_total)
+mean_yadkin_sovi = mean(yadkin_sovi_hist$sovi_total)
+sd_yadkin_sovi = sd(yadkin_sovi_hist$sovi_total)
 
-# high flow data
-hiflow_outlier_change_data_sel=hiflow_outlier_change_data %>%
-  select(SUB:minor_outlier_perc_change_per_yr) %>% # select minor outliers from flow data 
-  left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
-  mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"higher","lower")) %>% # make new class variable based on us sovi mean
-  mutate(impact_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
-  mutate(impact_vuln_class=ifelse(vuln_class=="higher"&impact_class=="higher","higher",
-                                ifelse(vuln_class=="lower"&impact_class=="lower","lower",
-                                       ifelse(vuln_class=="lower"&impact_class=="higher","moderate",
-                                              ifelse(vuln_class=="higher"&impact_class=="lower","moderate","NA"))))) # combine impact and vulnerability
+# high flow data (hydro plus demographics)
+hiflow_outlier_reclass_hydrodemo = hiflow_outlier_change_data %>%
+  select(SUB, minor_outlier_perc_change_per_yr, dataset) %>%
+  left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
+  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi + sd_us_sovi, 1, 
+                             ifelse(area_wt_sovi > mean_us_sovi + sd_us_sovi & area_wt_sovi <= mean_us_sovi + 2 * sd_us_sovi, 2, 3))) %>%
+  mutate(impact_class = ifelse(minor_outlier_perc_change_per_yr <= 25, 1, 
+                               ifelse(minor_outlier_perc_change_per_yr > 25 & minor_outlier_perc_change_per_yr <= 50, 2, 3))) %>%
+  mutate(impact_vuln_class_num = impact_class + vuln_class) %>%
+  mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 2, "lower",
+                                    ifelse(impact_vuln_class_num == 3 , "moderate", "higher")))
+
+# high flow data (hyrology only)
+hiflow_outlier_reclass_hydro = hiflow_outlier_change_data %>%
+  select(SUB, minor_outlier_perc_change_per_yr, dataset) %>%
+  left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
+  mutate(impact_class = ifelse(minor_outlier_perc_change_per_yr <= 25, "lower", 
+                               ifelse(minor_outlier_perc_change_per_yr > 25 & minor_outlier_perc_change_per_yr <= 50, "moderate", "higher")))
+
 # low flow data
-lowflow_outlier_change_data_sel=lowflow_outlier_change_data %>%
-  select(SUB:minor_outlier_perc_change_per_yr) %>% # select minor outliers from flow data 
-  left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
-  mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"higher","lower")) %>% # make new class variable based on us sovi mean
-  mutate(impact_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
-  mutate(impact_vuln_class=ifelse(vuln_class=="higher"&impact_class=="higher","higher",
-                                ifelse(vuln_class=="lower"&impact_class=="lower","lower",
-                                       ifelse(vuln_class=="lower"&impact_class=="higher","moderate",
-                                              ifelse(vuln_class=="higher"&impact_class=="lower","moderate","NA"))))) # combine impact and vulnerability
+# lowflow_outlier_change_data_sel = lowflow_outlier_change_data %>%
+#   select(SUB:minor_outlier_perc_change_per_yr) %>% # select minor outliers from flow data 
+#   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
+#   mutate(vuln_class = ifelse(area_wt_sovi > mean_us_sovi, "higher", "lower")) %>% # make new class variable based on us sovi mean
+#   mutate(impact_class = ifelse(minor_outlier_perc_change_per_yr > 0, "higher", "lower")) %>% # make new class variable based on outlier flows
+#   mutate(impact_vuln_class = ifelse(vuln_class == "higher" & impact_class == "higher", "higher",
+#                                 ifelse(vuln_class == "lower" & impact_class == "lower", "lower",
+#                                        ifelse(vuln_class == "lower" & impact_class == "higher", "moderate",
+#                                               ifelse(vuln_class == "higher" & impact_class == "lower", "moderate", "NA"))))) # combine impact and vulnerability
 
 
 # ---- 6.3 plot on matrix ----
 
 # omit na's for plotting
-hiflow_outlier_change_data_sel_naomit=hiflow_outlier_change_data_sel %>% na.omit()
-lowflow_outlier_change_data_sel_naomit=lowflow_outlier_change_data_sel %>% na.omit()
+hiflow_outlier_reclass_hydrodemo_naomit = hiflow_outlier_reclass_hydrodemo %>% na.omit()
+hiflow_outlier_reclass_hydro_naomit = hiflow_outlier_reclass_hydro %>% na.omit()
+# lowflow_outlier_change_data_sel_naomit = lowflow_outlier_change_data_sel %>% na.omit()
 
 # define factor levels
-hiflow_outlier_change_data_sel_naomit$impact_vuln_class=factor(hiflow_outlier_change_data_sel_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
-hiflow_outlier_change_data_sel_naomit$dataset=factor(hiflow_outlier_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-lowflow_outlier_change_data_sel_naomit$impact_vuln_class=factor(lowflow_outlier_change_data_sel_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
-lowflow_outlier_change_data_sel_naomit$dataset=factor(lowflow_outlier_change_data_sel_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+hiflow_outlier_reclass_hydrodemo_naomit$impact_vuln_class = factor(hiflow_outlier_reclass_hydrodemo_naomit$impact_vuln_class, levels = c("higher", "moderate", "lower"))
+hiflow_outlier_reclass_hydrodemo_naomit$dataset = factor(hiflow_outlier_reclass_hydrodemo_naomit$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+hiflow_outlier_reclass_hydro_naomit$impact_class = factor(hiflow_outlier_reclass_hydro_naomit$impact_class, levels = c("higher", "moderate", "lower"))
+hiflow_outlier_reclass_hydro_naomit$dataset = factor(hiflow_outlier_reclass_hydro_naomit$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+# lowflow_outlier_change_data_sel_naomit$impact_vuln_class = factor(lowflow_outlier_change_data_sel_naomit$impact_vuln_class, levels = c("higher", "moderate", "lower"))
+# lowflow_outlier_change_data_sel_naomit$dataset = factor(lowflow_outlier_change_data_sel_naomit$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
 
-# high flow data
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_impact_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
-ggplot(data=hiflow_outlier_change_data_sel_naomit,
-       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class)) +
-  geom_point(aes(shape=dataset),size=5,alpha=0.75) +
-  geom_hline(yintercept=0) +
-  geom_vline(xintercept=mean_us_sovi) +
-  labs(x="Subbasin SoVI",y="% Change in Number of Minor HOFs/yr",
+# make a list to hold plots
+my_outlier_point_plots = list()
+
+# high flow data (hydrology plus demographics)
+my_outlier_point_plots[[1]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
+       mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
+  geom_point(size = 5, alpha = 0.75) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 50, linetype = "dashed") +
+  geom_hline(yintercept = 25, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
+  labs(x="Subbasin SoVI",y="% change/yr",
        color="Class",shape="Dataset") +
   xlim(0,14) +
-  ylim(-10,60) +
+  ylim(-5,60) +
   theme_bw() +
   scale_shape_manual(values=c(15,16,17,18)) +
-  scale_color_manual(values=c("red","orange","gold")) +
+  scale_color_manual(values=c("darkblue", "steelblue3", "lightblue")) +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=18))
+
+# high flow data (hydrology only)
+my_outlier_point_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydro_naomit,
+       mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_class, shape = dataset)) +
+  geom_point(size = 5, alpha = 0.75) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 50, linetype = "dashed") +
+  geom_hline(yintercept = 25, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  annotate("text", x = 4, y = 55, label = "Hydrology") +  
+  labs(x="Subbasin SoVI",y="% change/yr",
+       color="Class",shape="Dataset") +
+  xlim(0,14) +
+  ylim(-5,60) +
+  theme_bw() +
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("darkblue", "steelblue3", "lightblue")) +
   #scale_fill_manual(values=rep("black",4)) +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),text=element_text(size=18))
+
+# high flow data (comparison)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_outlier_pointplot.pdf", width = 8.5, height = 15, pointsize = 18)
+multiplot(plotlist = my_outlier_point_plots, cols = 1)
 dev.off()
 
-# low flow data
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_impact_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
-ggplot(data=lowflow_outlier_change_data_sel_naomit,
-       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
-  geom_point(size=5,alpha=0.75) +
-  #geom_point(shape=1,size=3,color="black") +
-  geom_hline(yintercept=0) +
-  geom_vline(xintercept=mean_us_sovi) +
-  labs(x="Subbasin SoVI",y="% Change in Number of Minor LOFs/yr",
-       color="Class",shape="Dataset") +
-  xlim(0,14) +
-  ylim(-10,220) +
-  scale_shape_manual(values=c(15,16,17,18)) +
-  scale_color_manual(values=c("red","orange","gold")) +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
-        panel.background=element_blank(),text=element_text(size=18))
-dev.off()
-
-# zoom
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_impact_vuln_per_yr_pointplot_zoom.pdf",width=11,height=8.5)
-ggplot(data=lowflow_outlier_change_data_sel_naomit,
-       mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
-  geom_point(size=4,alpha=0.75) +
-  #geom_point(shape=1,size=3,color="black") +
-  geom_hline(yintercept=0) +
-  geom_vline(xintercept=mean_us_sovi) +
-  labs(x="Subbasin SoVI",y="% Change in Number of Minor LOFs/yr",
-       color="Class",shape="Dataset") +
-  xlim(0,14) +
-  ylim(-10,100) +
-  scale_shape_manual(values=c(15,16,17,18)) +
-  scale_color_manual(values=c("black","grey50","grey75")) +
-  theme_bw() +
-  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
-        panel.background=element_blank(),text=element_text(size=16))
-dev.off()
+# # low flow data
+# setwd("/Users/ssaia/Desktop")
+# cairo_pdf("lowflow_impact_vuln_per_yr_pointplot.pdf",width=11,height=8.5,pointsize=18)
+# ggplot(data=lowflow_outlier_change_data_sel_naomit,
+#        mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
+#   geom_point(size=5,alpha=0.75) +
+#   #geom_point(shape=1,size=3,color="black") +
+#   geom_hline(yintercept=0) +
+#   geom_vline(xintercept=mean_us_sovi) +
+#   labs(x="Subbasin SoVI",y="% Change in Number of Minor LOFs/yr",
+#        color="Class",shape="Dataset") +
+#   xlim(0,14) +
+#   ylim(-10,220) +
+#   scale_shape_manual(values=c(15,16,17,18)) +
+#   scale_color_manual(values=c("red","orange","gold")) +
+#   theme_bw() +
+#   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+#         panel.background=element_blank(),text=element_text(size=18))
+# dev.off()
+# 
+# # zoom
+# setwd("/Users/ssaia/Desktop")
+# cairo_pdf("lowflow_impact_vuln_per_yr_pointplot_zoom.pdf",width=11,height=8.5)
+# ggplot(data=lowflow_outlier_change_data_sel_naomit,
+#        mapping=aes(x=area_wt_sovi,y=minor_outlier_perc_change_per_yr,color=impact_vuln_class,shape=dataset)) +
+#   geom_point(size=4,alpha=0.75) +
+#   #geom_point(shape=1,size=3,color="black") +
+#   geom_hline(yintercept=0) +
+#   geom_vline(xintercept=mean_us_sovi) +
+#   labs(x="Subbasin SoVI",y="% Change in Number of Minor LOFs/yr",
+#        color="Class",shape="Dataset") +
+#   xlim(0,14) +
+#   ylim(-10,100) +
+#   scale_shape_manual(values=c(15,16,17,18)) +
+#   scale_color_manual(values=c("black","grey50","grey75")) +
+#   theme_bw() +
+#   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+#         panel.background=element_blank(),text=element_text(size=16))
+# dev.off()
 
 
 # ---- 6.4 plot on map ----
 
 # add to shp file
-yadkin_sub_shp_impact_vuln_hiflow=left_join(yadkin_sub_shp,hiflow_outlier_change_data_sel,by="SUB")
-#glimpse(yadkin_sub_shp_impact_vuln_hiflow)
-yadkin_sub_shp_impact_vuln_lowflow=left_join(yadkin_sub_shp,lowflow_outlier_change_data_sel,by="SUB")
-#glimpse(yadkin_sub_shp_impact_vuln_lowflow)
+yadkin_sub_shp_hiflow_outlier_hydrodemo = left_join(yadkin_sub_shp, hiflow_outlier_reclass_hydrodemo, by = "SUB")
+yadkin_sub_shp_hiflow_outlier_hydro = left_join(yadkin_sub_shp, hiflow_outlier_reclass_hydro, by = "SUB")
+# yadkin_sub_shp_impact_vuln_lowflow = left_join(yadkin_sub_shp,lowflow_outlier_change_data_sel, by = "SUB")
+
 
 # define factor levels
-yadkin_sub_shp_impact_vuln_hiflow$impact_vuln_class=factor(yadkin_sub_shp_impact_vuln_hiflow$impact_vuln_class,levels=c("higher","moderate","lower"))
-yadkin_sub_shp_impact_vuln_hiflow$dataset=factor(yadkin_sub_shp_impact_vuln_hiflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-yadkin_sub_shp_impact_vuln_lowflow$impact_vuln_class=factor(yadkin_sub_shp_impact_vuln_lowflow$impact_vuln_class,levels=c("higher","moderate","lower"))
-yadkin_sub_shp_impact_vuln_lowflow$dataset=factor(yadkin_sub_shp_impact_vuln_lowflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+yadkin_sub_shp_hiflow_outlier_hydrodemo$impact_vuln_class = factor(yadkin_sub_shp_hiflow_outlier_hydrodemo$impact_vuln_class, levels = c("higher", "moderate", "lower"))
+yadkin_sub_shp_hiflow_outlier_hydrodemo$dataset = factor(yadkin_sub_shp_hiflow_outlier_hydrodemo$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+yadkin_sub_shp_hiflow_outlier_hydro$impact_class = factor(yadkin_sub_shp_hiflow_outlier_hydro$impact_class, levels = c("higher", "moderate", "lower"))
+yadkin_sub_shp_hiflow_outlier_hydro$dataset = factor(yadkin_sub_shp_hiflow_outlier_hydro$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
+# yadkin_sub_shp_impact_vuln_lowflow$impact_vuln_class=factor(yadkin_sub_shp_impact_vuln_lowflow$impact_vuln_class,levels=c("higher","moderate","lower"))
+# yadkin_sub_shp_impact_vuln_lowflow$dataset=factor(yadkin_sub_shp_impact_vuln_lowflow$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
-# high flow data
+# high flow data (hydrology plus demographics)
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_impact_vuln_hiflow,aes(fill=impact_vuln_class)) +
+cairo_pdf("hiflow_outlier_impact_hydrodemo_map.pdf", width = 11, height = 8.5, pointsize = 18)
+ggplot(yadkin_sub_shp_hiflow_outlier_hydrodemo, aes(fill = impact_vuln_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_hiflow is base utm 17N so convert to Albers for CONUS
-  scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
+  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_hiflow_outlier_hydrodemo is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
+  theme_bw()
+dev.off()
+
+# high flow data (hydrology)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_outlier_impact_hydro_map.pdf", width = 11, height = 8.5, pointsize = 18)
+ggplot(yadkin_sub_shp_hiflow_outlier_hydro, aes(fill = impact_class)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_hiflow_outlier_hydro is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
   theme_bw()
 dev.off()
 
 # low flow data
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("lowflow_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_impact_vuln_lowflow,aes(fill=impact_vuln_class)) +
-  facet_wrap(~dataset) +
-  geom_sf() +
-  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_lowflow is base utm 17N so convert to Albers for CONUS
-  scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
-  theme_bw()
-dev.off()
+# setwd("/Users/ssaia/Desktop")
+# cairo_pdf("lowflow_impact_vuln_per_yr_map.pdf",width=11,height=8.5,pointsize=18)
+# ggplot(yadkin_sub_shp_impact_vuln_lowflow,aes(fill=impact_vuln_class)) +
+#   facet_wrap(~dataset) +
+#   geom_sf() +
+#   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_impact_vuln_lowflow is base utm 17N so convert to Albers for CONUS
+#   scale_fill_manual(values=c("red","orange","gold"),na.value="grey75") +
+#   theme_bw()
+# dev.off()
 
 
 # ---- 7.1 import % change in NUMBER OF FLOWS at/above a given return period data ----
@@ -508,11 +527,11 @@ dev.off()
 # set working directory and import data
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 hiflow_10yr_change_data = read_csv("num_hiflow_change_10yr_calcs.csv", col_names = TRUE)
-#hiflow_25yr_change_data = read_csv("num_hiflow_change_25yr_calcs.csv", col_names = TRUE)
-lowflow_10yr_change_data = read_csv("num_lowflow_change_10yr_calcs.csv", col_names = TRUE)
-#lowflow_25yr_change_data = read_csv("num_lowflow_change_25yr_calcs.csv", col_names = TRUE)
+# hiflow_25yr_change_data = read_csv("num_hiflow_change_25yr_calcs.csv", col_names = TRUE)
+# lowflow_10yr_change_data = read_csv("num_lowflow_change_10yr_calcs.csv", col_names = TRUE)
+# lowflow_25yr_change_data = read_csv("num_lowflow_change_25yr_calcs.csv", col_names = TRUE)
 
-# ---- 7.2 reclass hydrology and sovi data for plotting ----
+# ---- 7.2 reclass data for plotting ----
 
 # calculate mean sovi for us
 mean_us_sovi = mean(us_sovi_hist$sovi_total)
@@ -520,7 +539,10 @@ sd_us_sovi = sd(us_sovi_hist$sovi_total)
 mean_yadkin_sovi=mean(yadkin_sovi_hist$sovi_total)
 sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
 
-# 10yr hiflow data (more gradation)
+# 10yr high flow data (hydrology only)
+
+
+# 10yr hiflow data (hydrology + demographics)
 hiflow_10yr_change_data_sel_2 = hiflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>%
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
@@ -533,7 +555,7 @@ hiflow_10yr_change_data_sel_2 = hiflow_10yr_change_data %>%
                                     ifelse(impact_vuln_class_num == 3 , "moderate", "higher")))
 
 
-# 10yr lowflow data (more gradation)
+# 10yr lowflow data (hydro + demographics)
 lowflow_10yr_change_data_sel_2 = lowflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>% 
   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>% # join area weighted sovi
@@ -550,13 +572,13 @@ lowflow_10yr_change_data_sel_2 = lowflow_10yr_change_data %>%
 
 # omit na's for plotting
 hiflow_10yr_change_data_sel_2_naomit = hiflow_10yr_change_data_sel_2 %>% na.omit()
-lowflow_10yr_change_data_sel_2_naomit = lowflow_10yr_change_data_sel_2 %>% na.omit()
+# lowflow_10yr_change_data_sel_2_naomit = lowflow_10yr_change_data_sel_2 %>% na.omit()
 
 # define factor levels
 hiflow_10yr_change_data_sel_2_naomit$impact_vuln_class=factor(hiflow_10yr_change_data_sel_2_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
 hiflow_10yr_change_data_sel_2_naomit$dataset=factor(hiflow_10yr_change_data_sel_2_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
-lowflow_10yr_change_data_sel_2_naomit$impact_vuln_class=factor(lowflow_10yr_change_data_sel_2_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
-lowflow_10yr_change_data_sel_2_naomit$dataset=factor(lowflow_10yr_change_data_sel_2_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+# lowflow_10yr_change_data_sel_2_naomit$impact_vuln_class=factor(lowflow_10yr_change_data_sel_2_naomit$impact_vuln_class,levels=c("higher","moderate","lower"))
+# lowflow_10yr_change_data_sel_2_naomit$dataset=factor(lowflow_10yr_change_data_sel_2_naomit$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 # make a list to hold plots
 my_point_plots = list()
@@ -583,25 +605,25 @@ my_point_plots[[1]] = ggplot(data = hiflow_10yr_change_data_sel_2_naomit,
         panel.background = element_blank(), text = element_text(size = 18))
 
 # 10yr lowflow data (more gradation)
-my_point_plots[[2]] = ggplot(data = lowflow_10yr_change_data_sel_2_naomit,
-       mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
-  geom_point(size = 5, alpha = 0.75) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_hline(yintercept = 25, linetype = "dashed") +
-  geom_hline(yintercept = 50, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
-  labs(x = "Subbasin SoVI", y = "% change in number of days/yr with flows <= 10-yr flow", 
-       color = "Class", shape = "Dataset") +
-  xlim(0, 14) +
-  ylim(-10, 150) +
-  theme_bw() +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
-  #scale_color_manual(values = c("black", "grey50", "grey75")) +
-  scale_color_manual(values = c("darkorange1","gold")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), text = element_text(size = 18))
+# my_point_plots[[2]] = ggplot(data = lowflow_10yr_change_data_sel_2_naomit,
+#        mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
+#   geom_point(size = 5, alpha = 0.75) +
+#   geom_hline(yintercept = 0, linetype = "dashed") +
+#   geom_hline(yintercept = 25, linetype = "dashed") +
+#   geom_hline(yintercept = 50, linetype = "dashed") +
+#   geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+#   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+#   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+#   labs(x = "Subbasin SoVI", y = "% change in number of days/yr with flows <= 10-yr flow", 
+#        color = "Class", shape = "Dataset") +
+#   xlim(0, 14) +
+#   ylim(-10, 150) +
+#   theme_bw() +
+#   scale_shape_manual(values = c(15, 16, 17, 18)) +
+#   #scale_color_manual(values = c("black", "grey50", "grey75")) +
+#   scale_color_manual(values = c("darkorange1","gold")) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+#         panel.background = element_blank(), text = element_text(size = 18))
 
 # plot together
 setwd("/Users/ssaia/Desktop")
@@ -869,3 +891,16 @@ lines(testx3, testy3)
 lines(testx4, testy4)
 lines(testx5, testy5)
 
+
+# ---- x.x extra ----
+
+# high flow data
+hiflow_outlier_change_data_sel=hiflow_outlier_change_data %>%
+  select(SUB:minor_outlier_perc_change_per_yr) %>% # select minor outliers from flow data 
+  left_join(yadkin_sovi_total_sub_data,by="SUB") %>% # join area weighted sovi
+  mutate(vuln_class=ifelse(area_wt_sovi>mean_us_sovi,"higher","lower")) %>% # make new class variable based on us sovi mean
+  mutate(impact_class=ifelse(minor_outlier_perc_change_per_yr>0,"higher","lower")) %>% # make new class variable based on outlier flows
+  mutate(impact_vuln_class=ifelse(vuln_class=="higher"&impact_class=="higher","higher",
+                                  ifelse(vuln_class=="lower"&impact_class=="lower","lower",
+                                         ifelse(vuln_class=="lower"&impact_class=="higher","moderate",
+                                                ifelse(vuln_class=="higher"&impact_class=="lower","moderate","NA"))))) # combine impact and vulnerability
