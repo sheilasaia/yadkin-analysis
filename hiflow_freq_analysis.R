@@ -460,10 +460,12 @@ n_flow_change_25yr_projection_summary=n_flow_change_25yr_projection %>%
 
 # 10yr flow
 # make a list to hold plots
-my_10yr_plots = list()
+# my_10yr_plots = list()
+my_fig3_plots = list()
 
 # backcast baselines variation plot
-my_10yr_plots[[1]] = ggplot() +
+# my_10yr_plots[[1]] = ggplot() +
+my_fig3_plots[[1]] = ggplot() +
   geom_pointrange(data=n_flow_change_10yr_baseline_summary,
                   aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
   geom_point(data=n_flow_change_10yr_baseline,aes(x=SUB,y=baseline_n_flows_per_yr,color=dataset),
@@ -481,7 +483,8 @@ my_10yr_plots[[1]] = ggplot() +
         legend.position = c(0.2, 0.8))
 
 # projection variation plot
-my_10yr_plots[[2]] = ggplot() +
+# my_10yr_plots[[2]] = ggplot() +
+my_fig3_plots[[3]] = ggplot() +
   geom_pointrange(data=n_flow_change_10yr_projection_summary,
                   aes(x=SUB,y=mean_n_flows_per_yr,ymin=min_n_flows_per_yr,ymax=max_n_flows_per_yr),shape=32) +
   geom_point(data=n_flow_change_10yr_projection,aes(x=SUB,y=projection_n_flows_per_yr,color=dataset),
@@ -959,7 +962,8 @@ hiflow_change_projection_summary=hiflow_change_projection %>%
 my_outlier_plots = list()
 
 # backcast baselines plot
-my_outlier_plots[[1]] = ggplot() +
+# my_outlier_plots[[1]] = ggplot() +
+my_fig3_plots[[2]] = ggplot() +
   geom_pointrange(data=hiflow_change_baseline_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),shape=32) +
   geom_point(data=hiflow_change_baseline,aes(x=SUB,y=baseline_sum_n_minor_outliers_per_yr,color=dataset),
@@ -973,10 +977,12 @@ my_outlier_plots[[1]] = ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=18))
+        text=element_text(size=18),
+        legend.position = c(0.8, 0.8))
 
 # projections plot
-my_outlier_plots[[2]] = ggplot() +
+# my_outlier_plots[[2]] = ggplot() +
+my_fig3_plots[[4]] = ggplot() +
   geom_pointrange(data=hiflow_change_projection_summary,
                   aes(x=SUB,y=mean_n_minor_outliers_per_yr,ymin=min_n_minor_outliers_per_yr,ymax=max_n_minor_outliers_per_yr),
                   shape=32) +
@@ -991,12 +997,19 @@ my_outlier_plots[[2]] = ggplot() +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),
         axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
-        text=element_text(size=18))
+        text=element_text(size=18),
+        legend.position = c(0.8, 0.8))
 
 # save plots
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("num_outlier_hiflows_variation.pdf",width=15,height=8.5,pointsize=18)
 multiplot(plotlist=my_outlier_plots,cols=2)
+dev.off()
+
+# save plots
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_3.pdf", width=14, height=14, pointsize=18)
+multiplot(plotlist=my_fig3_plots, cols = 2)
 dev.off()
 
 # ---- 6.7 export results ----
