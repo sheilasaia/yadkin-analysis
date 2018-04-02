@@ -29,6 +29,7 @@ setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
 yadkin_sub_shp_raw = read_sf("yadkin_subs_utm17N.shp", quiet = TRUE)
 yadkin_tract_shp_raw = read_sf("yadkin_sovi2014_utm17N.shp", quiet = TRUE)
 yadkin_unclip_tract_shp_raw = read_sf("yadkin_counties_sovi2014_utm17N.shp", quiet = TRUE)
+yadkin_river_shp = read_sf("river_utm17N.shp", quiet = TRUE)
 # use Albers projection for calcs in ArcGIS but UTM 17N
 # here for plotting because can sf() recognizes UTM and
 # then can convert sf() is not recognizing Albers projection
@@ -138,15 +139,18 @@ dev.off()
 
 # ---- 3.3 plot yadkin total sovi by tract on map ----
 
+# make a list to hold plots
+my_total_sovi_plots = list()
+
 # total sovi by tract
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_total_by_tract.pdf", width = 11, height = 8.5, pointsize = 18)
-ggplot(yadkin_tract_shp, aes(fill = SPL_THEMES)) +
-  geom_sf(color = "grey70") +
+# setwd("/Users/ssaia/Desktop")
+# cairo_pdf("yadkin_sovi2014_total_by_tract.pdf", width = 11, height = 8.5, pointsize = 18)
+my_total_sovi_plots[[1]] = ggplot(yadkin_tract_shp, aes(fill = SPL_THEMES)) +
+  geom_sf(color = "black") +
   coord_sf(crs = st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Total SoVI (2010-2014)", high = "grey10", low = "white", limits = c(2, 13)) +
+  scale_fill_gradient2("Total SoVI", high = "darkred", low = "white", limits = c(0, 15)) +
   theme_bw()
-dev.off()
+# dev.off()
 
 
 # ---- 4.1 gather four sovi themes together ----
@@ -168,12 +172,13 @@ yadkin_tract_shp_sovi_theme1to4=left_join(yadkin_tract_shp,yadkin_sovi_themes_tr
 
 # all four themes together in one plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_theme1to4_by_tract.pdf",width=11,height=8.5,pointsize=18)
+#cairo_pdf("yadkin_sovi2014_theme1to4_by_tract.pdf",width=11,height=8.5,pointsize=18)
+cairo_pdf("fig_s3.pdf",width=11,height=8.5,pointsize=18)
 ggplot(yadkin_tract_shp_sovi_theme1to4,aes(fill=sovi)) +
-  geom_sf() +
+  geom_sf(color = "grey10") +
   facet_wrap(~theme) +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme4 is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI (2010-2014)",high="grey10",low="white",limit=c(0,5)) +
+  scale_fill_gradient2("SoVI",high="darkred",low="white",limit=c(0,5)) +
   theme_bw()
 dev.off()
 
@@ -247,15 +252,21 @@ yadkin_sub_shp_sovi_theme1to4=left_join(yadkin_sub_shp,yadkin_sovi_themes_sub_da
 # ---- 5.2 plot subbasin scaled sovi data ----
 
 # total sovi by sub
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_total_by_sub.pdf",width=11,height=8.5,pointsize=18)
-ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi)) +
-  geom_sf(color = "grey70") +
+# setwd("/Users/ssaia/Desktop")
+# cairo_pdf("yadkin_sovi2014_total_by_sub.pdf",width=11,height=8.5,pointsize=18)
+my_total_sovi_plots[[2]] = ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi)) +
+  geom_sf(color = "black") +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_total is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Area Wtd Total SoVI (2010-2014)",high="grey10",low="white",limits=c(2,13)) +
+  scale_fill_gradient2("Total SoVI",high="darkred",low="white",limits=c(0,15)) +
   theme_bw() #+
 #  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
 #        text=element_text(size=16))
+# dev.off()
+
+# plot tract and subbasin scaled together
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_4.pdf", width = 16, height = 8, pointsize = 18)
+multiplot(plotlist = my_total_sovi_plots, cols = 2)
 dev.off()
 
 # theme 1 sovi by sub
@@ -308,15 +319,14 @@ dev.off()
 
 # all four themes together in one plot
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sovi2014_theme1to4_by_sub.pdf",width=11,height=8.5,pointsize=18)
+#cairo_pdf("yadkin_sovi2014_theme1to4_by_sub.pdf",width=11,height=8.5,pointsize=18)
+cairo_pdf("fig_s3.pdf",width=11,height=8.5,pointsize=18)
 ggplot(yadkin_sub_shp_sovi_theme1to4,aes(fill=area_wt_sovi)) +
-  geom_sf() +
+  geom_sf(color = "black") +
   facet_wrap(~theme) +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_theme4 is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Area Wtd SoVI",high="grey10",low="white",limit=c(0,5)) +
-  theme_bw() #+
-# theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
-#       text=element_text(size=16))
+  scale_fill_gradient2("SoVI",high="darkred",low="white",limit=c(0,5)) +
+  theme_bw()
 dev.off()
 
 
@@ -406,20 +416,20 @@ hiflow_outlier_reclass_hydro_naomit$dataset = factor(hiflow_outlier_reclass_hydr
 my_outlier_point_plots = list()
 
 # high flow data (hydrology plus demographics)
-my_outlier_point_plots[[1]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
+my_matrix_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
        mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
-  #geom_hline(yintercept = 0, linetype = "dashed") +
+  # geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  #geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
-  annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
+  # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
   labs(x="Subbasin SoVI",y="% change/yr",
        color="Class",shape="Dataset") +
-  xlim(0,14) +
-  ylim(-5,60) +
+  xlim(0,15) +
+  ylim(-10,150) +
   theme_bw() +
   scale_shape_manual(values=c(15,16,17,18)) +
   scale_color_manual(values=c("darkblue", "steelblue3", "lightblue")) +
@@ -524,21 +534,21 @@ dev.off()
 my_outlier_range_point_plots = list()
 
 # high flow data (hydrology plus demographics, with min/max sovi for subbasin)
-my_outlier_range_point_plots[[1]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
+my_matrix_plots[[4]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
                                      mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
   geom_errorbarh(aes(xmax = max_sovi, xmin = min_sovi, height = 0)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
+  # geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
-  annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
+  # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
   labs(x="Subbasin SoVI",y="% change/yr",
        color="Class",shape="Dataset") +
-  xlim(0,14) +
-  ylim(-5,60) +
+  xlim(0,15) +
+  ylim(-10,150) +
   theme_bw() +
   scale_shape_manual(values=c(15,16,17,18)) +
   scale_color_manual(values=c("darkblue", "steelblue3", "lightblue")) +
@@ -567,10 +577,10 @@ my_outlier_range_point_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrode
         panel.background=element_blank(),text=element_text(size=18))
 
 
-# setwd("/Users/ssaia/Desktop")
-# cairo_pdf("hiflow_outlier_pointplot.pdf", width = 8.5, height = 15, pointsize = 18)
-# multiplot(plotlist = my_outlier_range_point_plots, cols = 1)
-# dev.off()
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_s4.pdf", width = 18, height = 16, pointsize = 18)
+multiplot(plotlist = my_matrix_plots, cols = 2)
+dev.off()
 
 
 # ---- 6.5 plot on map ----
@@ -593,7 +603,7 @@ yadkin_sub_shp_hiflow_outlier_hydro$dataset = factor(yadkin_sub_shp_hiflow_outli
 
 # high flow data (hydrology plus demographics)
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("hiflow_outlier_impact_hydrodemo_map.pdf", width = 11, height = 8.5, pointsize = 18)
+cairo_pdf("fig_s5.pdf", width = 11, height = 8.5, pointsize = 18)
 ggplot(yadkin_sub_shp_hiflow_outlier_hydrodemo, aes(fill = impact_vuln_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
@@ -668,7 +678,7 @@ ggplot(data = hiflow_outlier_reclass_hydrodemo_sel,
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),text=element_text(size=18))
 
-# subbasins 8, 11, 14, 18, and 20 all have vulnerable communities but are indicated
+# subbasins 8, 11, 14, 18 (just one model sim), and 20 all have vulnerable communities but are indicated
 # in the "lower" class
 
 
@@ -736,26 +746,26 @@ hiflow_10yr_reclass_hydro_naomit$dataset=factor(hiflow_10yr_reclass_hydro_naomit
 # ---- 7.3 plot on matrix ----
 
 # make a list to hold plots
-my_10yr_point_plots = list()
+my_matrix_plots = list()
 
 # 10yr high flow data (hydrology plus demographics)
-my_10yr_point_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
+my_matrix_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
        mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
-  #geom_hline(yintercept = 0, linetype = "dashed") +
+  # geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  #geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
-  annotate("text", x = 4, y = 150, label = "Hydrology+Demographics") +  
+  # annotate("text", x = 2, y = 150, label = "Hydrology+Demographics") +  
   labs(x = "Subbasin SoVI", y = "% change/yr", 
        color = "Class", shape = "Dataset") +
-  xlim(0, 14) +
+  xlim(0, 15) +
   ylim(-10, 150) +
   theme_bw() +
   scale_shape_manual(values = c(15, 16, 17, 18)) +
-  #scale_color_manual(values = c("black", "grey50", "grey75")) +
+  # scale_color_manual(values = c("black", "grey50", "grey75")) +
   scale_color_manual(values = c("darkblue", "steelblue3", "lightblue")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 18))
@@ -764,10 +774,10 @@ my_10yr_point_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
 my_10yr_point_plots[[2]] = ggplot(data = hiflow_10yr_reclass_hydro_naomit,
                              mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
-  #geom_hline(yintercept = 0, linetype = "dashed") +
+  # geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  #geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   annotate("text", x = 4, y = 150, label = "Hydrology") + 
@@ -777,7 +787,7 @@ my_10yr_point_plots[[2]] = ggplot(data = hiflow_10yr_reclass_hydro_naomit,
   ylim(-10, 150) +
   theme_bw() +
   scale_shape_manual(values = c(15, 16, 17, 18)) +
-  #scale_color_manual(values = c("black", "grey50", "grey75")) +
+  # scale_color_manual(values = c("black", "grey50", "grey75")) +
   scale_color_manual(values = c("darkblue", "steelblue3", "lightblue")) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 18))
@@ -816,7 +826,7 @@ dev.off()
 my_10yr_range_point_plots = list()
 
 # 10yr high flow data (hydrology plus demographics)
-my_10yr_range_point_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
+my_matrix_plots[[3]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
                                   mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
   geom_errorbarh(aes(xmax = max_sovi, xmin = min_sovi, height = 0)) +
@@ -826,10 +836,10 @@ my_10yr_range_point_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_nao
   #geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
-  annotate("text", x = 4, y = 150, label = "Hydrology+Demographics") +  
+  # annotate("text", x = 2, y = 150, label = "Hydrology+Demographics") +  
   labs(x = "Subbasin SoVI", y = "% change/yr", 
        color = "Class", shape = "Dataset") +
-  xlim(0, 14) +
+  xlim(0, 15) +
   ylim(-10, 150) +
   theme_bw() +
   scale_shape_manual(values = c(15, 16, 17, 18)) +
@@ -924,7 +934,7 @@ ggplot(data = hiflow_10yr_reclass_hydrodemo_sel,
 
 
 
-# ---- 7.6 export results ----
+# ---- 7.7 export results ----
 
 # export results
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
@@ -976,45 +986,292 @@ yadkin_unclip_tract_shp_sel = yadkin_unclip_tract_shp %>%
   select(fips, County = COUNTY, ST_ABBR, SPL_THEME1, SPL_THEME2, SPL_THEME3, SPL_THEME4, geometry) %>%
   gather.sf(key = "theme", value = "sovi", SPL_THEME1:SPL_THEME4)
 
+# select 8
 # select subbasin of interest
-my_sel_sub = 24
-yadkin_sub_shp_sel = yadkin_sub_shp %>%
-  filter(SUB == my_sel_sub)
+my_sub8 = 8
+yadkin_sub8_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub8)
 
 # select tract sovi theme data for subbasin of interest
-my_glimpse = yadkin_sub_shp_sel %>%
+my_glimpse_sub8 = yadkin_sub8_shp %>%
   st_join(yadkin_unclip_tract_shp_sel)
 
+# select river for area of interest
+yadkin_river_sub8_shp = yadkin_sub8_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
 # look at counties that are included
-unique(my_glimpse$County)
-min(my_glimpse$sovi)
+unique(my_glimpse_sub8$County)
+min(my_glimpse_sub8$sovi)
 
-# select 
-yadkin_tract_sel_sovi_themes = yadkin_unclip_tract_shp_sel %>%
-filter(County == "Anson" |
-         County == "Union")
-# have to manually enter county names you want to select (use results from unique() above)
+yadkin_tract_sub8_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+  filter(County == "Davidson" |
+           County == "Forsyth" |
+           County == "Stokes")
 
-# make a theme column in my_glimpse
-yadkin_sub_shp_sel_for_plot = yadkin_sub_shp_sel %>%
+yadkin_sub8_shp_for_plot = yadkin_sub8_shp %>%
+  mutate(SPL_THEME1 = 1, SPL_THEME2 = 1, SPL_THEME3 = 1, SPL_THEME4 = 1) %>%
+  gather.sf(key = "theme", value = "sovi", SPL_THEME1:SPL_THEME4)
+
+yadkin_river_sub8_shp_for_plot = yadkin_river_sub8_shp %>%
   mutate(SPL_THEME1 = 1, SPL_THEME2 = 1, SPL_THEME3 = 1, SPL_THEME4 = 1) %>%
   gather.sf(key = "theme", value = "sovi", SPL_THEME1:SPL_THEME4)
   
-
-# plot
+# plot 8
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("yadkin_sub24.pdf",width=11,height=8.5,pointsize=18)
+cairo_pdf("yadkin_sub8.pdf",width=10,height=10,pointsize=18)
 ggplot() + 
-  geom_sf(data = yadkin_tract_sel_sovi_themes, aes(fill = sovi, color = County)) + 
-  geom_sf(data = yadkin_sub_shp_sel_for_plot, color = "black", alpha = 0, size = 1.5) +
+  geom_sf(data = yadkin_tract_sub8_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_river_sub8_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub8_shp_for_plot, color = "black", alpha = 0, size = 1) +
   facet_wrap(~theme) +
-  coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_themes is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("SoVI (2010-2014)",high="grey10", low="white", limits = c(0,5)) +
-  scale_color_manual(values=c("Anson" = "#fc8d62", "Union" = "#8da0cb")) +   theme_bw()
+  coord_sf(crs=st_crs(102003)) + # is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Davidson" = "#fc8d62", 
+                              "Forsyth" = "#8da0cb", 
+                              "Stokes" = "#66c2a5")) +   theme_bw()
 dev.off()
 
+
+# select 10 and 11
+# select subbasin of interest
+my_sub10and11 = 11
+yadkin_sub10and11_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub10and11 | SUB == 10)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub10and11 = yadkin_sub10and11_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel)
+
+# look at counties that are included
+unique(my_glimpse_sub10and11$County)
+min(my_glimpse_sub10and11$sovi)
+
+# select river for area of interest
+yadkin_river_sub10and11_shp = yadkin_sub10and11_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub10and11_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+  filter(County == "Alexander" |
+           County == "Davidson" |
+           County == "Davie" |
+           County == "Iredell" |
+           County == "Rowan" |
+           County == "Wilkes" |
+           County == "Yadkin")
+
+# plot 10 and 11
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sub10and11.pdf",width=10,height=10,pointsize=18)
+ggplot() + 
+  geom_sf(data = yadkin_tract_sub10and11_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_river_sub10and11_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub10and11_shp, color = "black", alpha = 0, size = 1) +
+  facet_wrap(~theme) +
+  coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_themes is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Alexander" = "#66c2a5", 
+                              "Davidson" = "#fc8d62", 
+                              "Davie" = "#8da0cb",
+                              "Iredell" = "#e78ac3",
+                              "Rowan" = "#a6d854",
+                              "Wilkes" = "#ffd92f",
+                              "Yadkin" = "#e5c494")) +
+    theme_bw()
+dev.off()
+
+
+# select 14
+# select subbasin of interest
+my_sub14 = 14
+yadkin_sub14_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub14)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub14 = yadkin_sub14_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel)
+
+# look at counties that are included
+unique(my_glimpse_sub14$County)
+min(my_glimpse_sub14$sovi)
+
+# select river for area of interest
+yadkin_river_sub14_shp = yadkin_sub14_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub14_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+  filter(County == "Cabarrus" |
+           County == "Davidson" |
+           County == "Forsyth" |
+           County == "Guilford" |
+           County == "Randolph" |
+           County == "Rowan")
+
+# plot 14
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sub14.pdf",width=10,height=10,pointsize=18)
+ggplot() + 
+  geom_sf(data = yadkin_tract_sub14_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_river_sub14_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub14_shp, color = "black", alpha = 0, size = 1) +
+  facet_wrap(~theme) +
+  coord_sf(crs=st_crs(102003)) + # is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Cabarrus" = "#66c2a5", 
+                              "Davidson" = "#fc8d62", 
+                              "Forsyth" = "#8da0cb",
+                              "Guilford" = "#e78ac3",
+                              "Randolph" = "#ffd92f",
+                              "Rowan" = "#a6d854")) +   theme_bw()
+dev.off()
+
+
+# select 18
+# select subbasin of interest
+my_sub18 = 18
+yadkin_sub18_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub18)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub18 = yadkin_sub18_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel)
+
+# look at counties that are included
+unique(my_glimpse_sub18$County)
+min(my_glimpse_sub18$sovi)
+
+# select river for area of interest
+yadkin_river_sub18_shp = yadkin_sub18_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub18_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+  filter(County == "Davidson" |
+           County == "Guilford" |
+           County == "Montgomery" |
+           County == "Randolph")
+
+# plot 18
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sub18.pdf",width=10,height=10,pointsize=18)
+ggplot() + 
+  geom_sf(data = yadkin_tract_sub18_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_river_sub18_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub18_shp, color = "black", alpha = 0, size = 1) +
+  facet_wrap(~theme) +
+  coord_sf(crs=st_crs(102003)) + # is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Davidson" = "#fc8d62",
+                              "Guilford" = "#e78ac3",
+                              "Montgomery" = "#8da0cb", 
+                              "Randolph" = "#ffd92f")) +
+  theme_bw()
+dev.off()
+
+
+# select 20
+# select subbasin of interest
+my_sub20 = 20
+yadkin_sub20_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub20)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub20 = yadkin_sub20_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel)
+
+# look at counties that are included
+unique(my_glimpse_sub20$County)
+min(my_glimpse_sub20$sovi)
+
+# select river for area of interest
+yadkin_river_sub20_shp = yadkin_sub20_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub20_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+  filter(County == "Anson" |
+           County == "Cabarrus" |
+           County == "Iredell" |
+           County == "Mecklenburg" |
+           County == "Rowan" |
+           County == "Stanly" |
+           County == "Union")
+
+# plot 20
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sub20.pdf",width=10,height=10,pointsize=20)
+ggplot() + 
+  geom_sf(data = yadkin_tract_sub20_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_river_sub20_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub20_shp, color = "black", alpha = 0, size = 1) +
+  facet_wrap(~theme) +
+  coord_sf(crs=st_crs(102003)) + # is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Anson" = "#fc8d62",
+                              "Cabarrus" = "#66c2a5",
+                              "Iredell" = "#e78ac3",
+                              "Mecklenburg" = "#8da0cb",
+                              "Rowan" = "#a6d854",
+                              "Stanly" = "#ffd92f",
+                              "Union" = "#e5c494")) +
+  theme_bw()
+dev.off()
+
+
+# select 25
+# select subbasin of interest
+my_sub25 = 25
+yadkin_sub25_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub25)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub25 = yadkin_sub25_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel)
+
+# look at counties that are included
+unique(my_glimpse_sub25$County)
+min(my_glimpse_sub25$sovi)
+
+# select river for area of interest
+yadkin_river_sub25_shp = yadkin_sub25_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub25_sovi_themes = yadkin_unclip_tract_shp_sel %>%
+  filter(County == "Montgomery" |
+           County == "Randolph" |
+           County == "Richmond")
+
+# plot 25
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sub25.pdf",width=10,height=10,pointsize=25)
+ggplot() + 
+  geom_sf(data = yadkin_tract_sub25_sovi_themes, aes(fill = sovi, color = County)) + 
+  geom_sf(data = yadkin_river_sub25_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub25_shp, color = "black", alpha = 0, size = 1) +
+  facet_wrap(~theme) +
+  coord_sf(crs=st_crs(102003)) + # is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,5)) +
+  scale_color_manual(values=c("Montgomery" = "#8da0cb",
+                              "Randolph" = "#ffd92f",
+                              "Richmond" = "#e78ac3")) +
+  theme_bw()
+dev.off()
+
+#fc8d62
+#8da0cb
+#66c2a5
+#e78ac3
+#a6d854
+#ffd92f
+#e5c494
+
+
 # colorblind friendly: http://colorbrewer2.org/#type=qualitative&scheme=Set2&n=3
-# colorblink frieldly: http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/
+# colorblind frieldly: http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/
 
 
 
