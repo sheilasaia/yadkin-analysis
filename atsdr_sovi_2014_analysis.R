@@ -1275,6 +1275,22 @@ dev.off()
 
 
 
+# ---- 9.2 subbasin sovi distributions ----
+
+blah = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_total) %>%
+  mutate(sovi_total_int = round(sovi_total,0))
+
+ggplot(data = blah) +
+  geom_bar(aes(x = as.factor(sovi_total_int), y = sub_perc), stat = "identity") +
+  facet_wrap(~SUB, ncol = 7, nrow = 4) +
+  xlab("SoVI Bin") +
+  ylab("Percent of Subbasin") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 12))
+
+
 # ---- 7.x basic gradiation ----
 
 # 10yr hiflow data (basic gradation)
