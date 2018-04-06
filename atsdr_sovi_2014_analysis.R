@@ -29,7 +29,7 @@ setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
 yadkin_sub_shp_raw = read_sf("yadkin_subs_utm17N.shp", quiet = TRUE)
 yadkin_tract_shp_raw = read_sf("yadkin_sovi2014_utm17N.shp", quiet = TRUE)
 yadkin_unclip_tract_shp_raw = read_sf("yadkin_counties_sovi2014_utm17N.shp", quiet = TRUE)
-yadkin_river_shp = read_sf("river_utm17N.shp", quiet = TRUE)
+yadkin_river_shp = read_sf("yadkin_majortribs_utm17N.shp", quiet = TRUE)
 # use Albers projection for calcs in ArcGIS but UTM 17N
 # here for plotting because can sf() recognizes UTM and
 # then can convert sf() is not recognizing Albers projection
@@ -419,10 +419,10 @@ my_outlier_point_plots = list()
 my_matrix_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
        mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
-  # geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
@@ -538,10 +538,10 @@ my_matrix_plots[[4]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
                                      mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
   geom_errorbarh(aes(xmax = max_sovi, xmin = min_sovi, height = 0)) +
-  # geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
@@ -575,7 +575,6 @@ my_outlier_range_point_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrode
   scale_color_manual(values=c("darkblue", "steelblue3", "lightblue")) +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),text=element_text(size=18))
-
 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("fig_s4.pdf", width = 18, height = 16, pointsize = 18)
@@ -752,10 +751,10 @@ my_matrix_plots = list()
 my_matrix_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
        mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
-  # geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  # geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   # annotate("text", x = 2, y = 150, label = "Hydrology+Demographics") +  
@@ -830,10 +829,10 @@ my_matrix_plots[[3]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
                                   mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
   geom_point(size = 5, alpha = 0.75) +
   geom_errorbarh(aes(xmax = max_sovi, xmin = min_sovi, height = 0)) +
-  #geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
   geom_hline(yintercept = 50, linetype = "dashed") +
   geom_hline(yintercept = 25, linetype = "dashed") +
-  #geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   # annotate("text", x = 2, y = 150, label = "Hydrology+Demographics") +  
