@@ -1290,6 +1290,57 @@ ggplot(data = blah) +
         panel.background = element_blank(), text = element_text(size = 12))
 
 
+# ---- 10.1 cdf's of sovi by subbasin ----
+
+# one sub
+blah = yadkin_sovi_data %>% 
+  filter(SUB == 1) %>%
+  select(SUB, fips, sub_perc, sovi_total) %>%
+  arrange(sovi_total) %>%
+  mutate(sovi_total_wtd = sub_perc * sovi_total,
+         cumul_sum_sovi_total = cumsum(sovi_total_wtd) / sum(sovi_total_wtd))
+
+ggplot(data = blah) +
+  geom_point(aes(x = sovi_total, y = cumul_sum_sovi_total))
+
+# all together sovi total
+blah2 = yadkin_sovi_data %>%
+  select(SUB, fips, sub_perc, sovi_total) %>%
+  arrange(SUB, sovi_total) %>%
+  group_by(SUB) %>%
+  mutate(sovi_total_wtd = sub_perc * sovi_total,
+         cumul_sum_sovi_total = cumsum(sovi_total_wtd) / sum(sovi_total_wtd))
+
+blah2_sel = blah2 %>%
+  filter(SUB == 8 | SUB == 11 | SUB ==14 | SUB == 18 |
+           SUB == 20 | SUB == 25)
+
+ggplot(data = blah2) +
+  geom_line(aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+  facet_wrap(~SUB, ncol = 7) +
+  xlab("SoVI (tract-scale)") +
+  ylab("Cumulative Weighted Frequency") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 10))
+
+ggplot(data = blah2_sel) +
+  geom_line(aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+  facet_wrap(~SUB) +
+  xlab("SoVI (tract-scale)") +
+  ylab("Cumulative Weighted Frequency") +
+  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 10))
+  
+#
+
 # ---- 7.x basic gradiation ----
 
 # 10yr hiflow data (basic gradation)
