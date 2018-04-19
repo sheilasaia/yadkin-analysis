@@ -1311,8 +1311,36 @@ ggplot(data = cdf_calcs_total_sovi, aes(x = sovi_total, y = cumul_sum_sovi_total
         panel.background = element_blank(), text = element_text(size = 10))
 
 # all subs, sovi themes
-cdf_calcs_sovi_themes = 
-
+cdf_calcs_sovi_themes = yadkin_sovi_data %>%
+  select(SUB, fips, sub_perc, sovi_theme1, sovi_theme2, sovi_theme3, sovi_theme4) %>%
+  group_by(SUB) %>%
+  arrange(SUB, sovi_theme1) %>%
+  mutate(sovi_theme1_wtd = sub_perc * sovi_theme1,
+         cumul_sum_sovi_theme1 = cumsum(sovi_theme1_wtd) / sum(sovi_theme1_wtd)) %>%
+  arrange(SUB, sovi_theme2) %>%
+  mutate(sovi_theme2_wtd = sub_perc * sovi_theme2,
+         cumul_sum_sovi_theme2 = cumsum(sovi_theme2_wtd) / sum(sovi_theme2_wtd)) %>%
+  arrange(SUB, sovi_theme3) %>%
+  mutate(sovi_theme3_wtd = sub_perc * sovi_theme3,
+         cumul_sum_sovi_theme3 = cumsum(sovi_theme3_wtd) / sum(sovi_theme3_wtd)) %>%
+  arrange(SUB, sovi_theme4) %>%
+  mutate(sovi_theme4_wtd = sub_perc * sovi_theme4,
+         cumul_sum_sovi_theme4 = cumsum(sovi_theme4_wtd) / sum(sovi_theme4_wtd)) %>%
+  ungroup() %>%
+  select(SUB, sovi_theme1:sovi_theme4, cumul_sum_sovi_theme1, cumul_sum_sovi_theme2, cumul_sum_sovi_theme3, cumul_sum_sovi_theme4) # %>%
+  #gather(key = "key", value = "value", sovi_theme1:cumul_sum_sovi_theme4)
+  
+ggplot(data = cdf_calcs_sovi_themes) +
+  geom_line(aes(x = sovi_theme1, y = cumul_sum_sovi_theme1), color = "green") +
+  geom_line(aes(x = sovi_theme2, y = cumul_sum_sovi_theme2), color = "black") +
+  geom_line(aes(x = sovi_theme3, y = cumul_sum_sovi_theme3), color = "blue") +
+  geom_line(aes(x = sovi_theme4, y = cumul_sum_sovi_theme4), color = "red") +
+  facet_wrap(~SUB, ncol = 7) +
+  xlab("SoVI") +
+  ylab("CDF (Weighted)") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 10))
 
 
 blah2_sel = blah2 %>%
