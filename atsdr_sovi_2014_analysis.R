@@ -94,8 +94,14 @@ nc_sovi_hist = us_sovi_data %>% select(fips, sovi_total) %>%
 # select sovi data for us using unique fips id's
 us_sovi_hist = us_sovi_data %>% select(fips, sovi_total) %>% 
   mutate(dataset = "US")
+
+# calculate mean sovi for us and yadkin
+mean_us_sovi = mean(us_sovi_hist$sovi_total)
+sd_us_sovi = sd(us_sovi_hist$sovi_total)
+mean_yadkin_sovi=mean(yadkin_sovi_hist$sovi_total)
+sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
  
-# bind all together
+# bind yadkin, nc, and us together
 sovi_hist = bind_rows(yadkin_sovi_hist, nc_sovi_hist, us_sovi_hist)
 
 
@@ -692,12 +698,6 @@ hiflow_10yr_change_data = read_csv("num_hiflow_change_10yr_calcs.csv", col_names
 
 # ---- 7.2 reclass data for plotting ----
 
-# calculate mean sovi for us
-mean_us_sovi = mean(us_sovi_hist$sovi_total)
-sd_us_sovi = sd(us_sovi_hist$sovi_total)
-mean_yadkin_sovi=mean(yadkin_sovi_hist$sovi_total)
-sd_yadkin_sovi=sd(yadkin_sovi_hist$sovi_total)
-
 # 10yr hiflow data (hydrology + demographics)
 hiflow_10yr_reclass_hydrodemo = hiflow_10yr_change_data %>%
   select(SUB, perc_change_per_yr, dataset) %>%
@@ -1274,52 +1274,35 @@ dev.off()
 
 
 
-# ---- 9.2 subbasin sovi distributions ----
+# ---- 9.2 cdf's of sovi by subbasin ----
 
-blah = yadkin_sovi_data %>%
-  select(SUB, fips, tract_perc, sub_perc, sovi_total) %>%
-  mutate(sovi_total_int = round(sovi_total,0))
-
-ggplot(data = blah) +
-  geom_bar(aes(x = as.factor(sovi_total_int), y = sub_perc), stat = "identity") +
-  facet_wrap(~SUB, ncol = 7, nrow = 4) +
-  xlab("SoVI Bin") +
-  ylab("Percent of Subbasin") +
-  theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), text = element_text(size = 12))
-
-
-# ---- 10.1 cdf's of sovi by subbasin ----
-
-# one sub
-blah = yadkin_sovi_data %>% 
+# one sub, total sovi
+cdf_calcs_total_sovi_subsel = yadkin_sovi_data %>% 
   filter(SUB == 1) %>%
   select(SUB, fips, sub_perc, sovi_total) %>%
   arrange(sovi_total) %>%
   mutate(sovi_total_wtd = sub_perc * sovi_total,
          cumul_sum_sovi_total = cumsum(sovi_total_wtd) / sum(sovi_total_wtd))
 
-ggplot(data = blah) +
+# plot
+ggplot(data = cdf_calcs_total_sovi_subsel) +
   geom_point(aes(x = sovi_total, y = cumul_sum_sovi_total))
 
-# all together sovi total
-blah2 = yadkin_sovi_data %>%
+# all subs, total sovi
+cdf_calcs_total_sovi = yadkin_sovi_data %>%
   select(SUB, fips, sub_perc, sovi_total) %>%
   arrange(SUB, sovi_total) %>%
   group_by(SUB) %>%
   mutate(sovi_total_wtd = sub_perc * sovi_total,
          cumul_sum_sovi_total = cumsum(sovi_total_wtd) / sum(sovi_total_wtd))
 
-blah2_sel = blah2 %>%
-  filter(SUB == 8 | SUB == 11 | SUB ==14 | SUB == 18 |
-           SUB == 20 | SUB == 25)
-
-ggplot(data = blah2) +
-  geom_line(aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+# plot
+ggplot(data = cdf_calcs_total_sovi, aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+  #geom_smooth(se = FALSE) +
+  geom_point() +
   facet_wrap(~SUB, ncol = 7) +
-  xlab("SoVI (tract-scale)") +
-  ylab("Cumulative Weighted Frequency") +
+  xlab("SoVI") +
+  ylab("CDF (Weighted)") +
   geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
@@ -1327,11 +1310,19 @@ ggplot(data = blah2) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 10))
 
+# all subs, sovi themes
+cdf_calcs_sovi_themes = 
+
+
+
+blah2_sel = blah2 %>%
+  filter(SUB == 8 | SUB == 11 | SUB ==14 | SUB == 18 |
+           SUB == 20 | SUB == 25)
 ggplot(data = blah2_sel) +
-  geom_line(aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+  geom_point(aes(x = sovi_total, y = cumul_sum_sovi_total)) +
   facet_wrap(~SUB) +
-  xlab("SoVI (tract-scale)") +
-  ylab("Cumulative Weighted Frequency") +
+  xlab("SoVI") +
+  ylab("CDF (Weighted)") +
   geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
@@ -1339,7 +1330,9 @@ ggplot(data = blah2_sel) +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 10))
   
-#
+# do the same thing for the different themes
+# do the same thing for subbasins (1) always in implement and (2) in watch but high (mean + 2sd) sovi
+
 
 # ---- 7.x basic gradiation ----
 
@@ -1481,3 +1474,18 @@ hiflow_outlier_change_data_sel=hiflow_outlier_change_data %>%
                                   ifelse(vuln_class=="lower"&impact_class=="lower","lower",
                                          ifelse(vuln_class=="lower"&impact_class=="higher","moderate",
                                                 ifelse(vuln_class=="higher"&impact_class=="lower","moderate","NA"))))) # combine impact and vulnerability
+
+# ---- 9.x subbasin sovi distributions ----
+
+blah = yadkin_sovi_data %>%
+  select(SUB, fips, tract_perc, sub_perc, sovi_total) %>%
+  mutate(sovi_total_int = round(sovi_total,0))
+
+ggplot(data = blah) +
+  geom_bar(aes(x = as.factor(sovi_total_int), y = sub_perc), stat = "identity") +
+  facet_wrap(~SUB, ncol = 7, nrow = 4) +
+  xlab("SoVI Bin") +
+  ylab("Percent of Subbasin") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 12))
