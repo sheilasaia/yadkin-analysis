@@ -1362,6 +1362,61 @@ ggplot(data = blah2_sel) +
 # do the same thing for subbasins (1) always in implement and (2) in watch but high (mean + 2sd) sovi
 
 
+# ---- 10.1 plot summary of matrix data on map ----
+
+# make a list to hold plots
+my_matrix_sub_sum_plot = list()
+
+# summarize 10-yr data
+hiflow_10yr_reclass_hydrodemo_sum = hiflow_10yr_reclass_hydrodemo %>%
+  na.omit() %>%
+  mutate(impact_vuln_class_num = recode(impact_vuln_class, lower = 1, moderate = 2, higher = 3)) %>%
+  group_by(SUB) %>%
+  summarize(impact_vuln_class_max = max(impact_vuln_class_num)) %>%
+  ungroup() %>%
+  mutate(impact_vuln_class_max = recode(impact_vuln_class_max, `1` = "lower", `2` = "moderate", `3` = "higher"))
+
+# add to shp file
+yadkin_sub_shp_hiflow_10yr_hydrodemo_sum = left_join(yadkin_sub_shp, hiflow_10yr_reclass_hydrodemo_sum, by = "SUB")
+
+# define factor levels
+yadkin_sub_shp_hiflow_10yr_hydrodemo_sum$impact_vuln_class_max = factor(yadkin_sub_shp_hiflow_10yr_hydrodemo_sum$impact_vuln_class_max, levels = c("higher", "moderate", "lower"))
+
+# 10yr high flow data (hydrology plus demographics)
+my_matrix_sub_sum_plot[[1]] = ggplot(yadkin_sub_shp_hiflow_10yr_hydrodemo_sum, aes(fill = impact_vuln_class_max)) +
+  geom_sf() +
+  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_hiflow_10yr_hydrodemo_sum is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
+  theme_bw()
+
+# summarize extreme high flow data
+hiflow_outlier_reclass_hydrodemo_sum = hiflow_outlier_reclass_hydrodemo %>%
+  na.omit() %>%
+  mutate(impact_vuln_class_num = recode(impact_vuln_class, lower = 1, moderate = 2, higher = 3)) %>%
+  group_by(SUB) %>%
+  summarize(impact_vuln_class_max = max(impact_vuln_class_num)) %>%
+  ungroup() %>%
+  mutate(impact_vuln_class_max = recode(impact_vuln_class_max, `1` = "lower", `2` = "moderate", `3` = "higher"))
+
+# add to shp file
+yadkin_sub_shp_hiflow_outlier_hydrodemo_sum = left_join(yadkin_sub_shp, hiflow_outlier_reclass_hydrodemo_sum, by = "SUB")
+
+# define factor levels
+yadkin_sub_shp_hiflow_outlier_hydrodemo_sum$impact_vuln_class_max = factor(yadkin_sub_shp_hiflow_outlier_hydrodemo_sum$impact_vuln_class_max, levels = c("higher", "moderate", "lower"))
+
+# 10yr high flow data (hydrology plus demographics)
+my_matrix_sub_sum_plot[[2]] = ggplot(yadkin_sub_shp_hiflow_outlier_hydrodemo_sum, aes(fill = impact_vuln_class_max)) +
+  geom_sf() +
+  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_hiflow_outlier_hydrodemo_sum is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
+  theme_bw()
+
+# plot together
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("hiflow_impact_hydrodemo_sum_map.pdf", width = 11, height = 8.5, pointsize = 18)
+multiplot(plotlist = my_matrix_sub_sum_plot, cols = 2)
+dev.off()
+
 # ---- 7.x basic gradiation ----
 
 # 10yr hiflow data (basic gradation)
