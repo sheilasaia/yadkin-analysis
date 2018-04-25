@@ -1022,7 +1022,7 @@ yadkin_river_sub8_shp_for_plot = yadkin_river_sub8_shp %>%
   
 # plot 8
 my_zoom_sovi_plots[[1]] = ggplot() + 
-  geom_sf(data = yadkin_tract_sub8_sovi_themes, aes(fill = sovi, color = County), size = 1) + 
+  geom_sf(data = yadkin_tract_sub8_sovi_themes, aes(fill = sovi, color = County), size = 0.5) + 
   geom_sf(data = yadkin_river_sub8_shp, color = "blue", alpha = 0, size = 1) +
   geom_sf(data = yadkin_sub8_shp_for_plot, color = "black", alpha = 0, size = 1) +
   facet_wrap(~theme) +
@@ -1063,7 +1063,7 @@ yadkin_tract_sub10and11_sovi_themes = yadkin_unclip_tract_shp_sel %>%
 
 # plot 10 and 11
 my_zoom_sovi_plots[[2]] = ggplot() + 
-  geom_sf(data = yadkin_tract_sub10and11_sovi_themes, aes(fill = sovi, color = County), size = 1) + 
+  geom_sf(data = yadkin_tract_sub10and11_sovi_themes, aes(fill = sovi, color = County), size = 0.5) + 
   geom_sf(data = yadkin_river_sub10and11_shp, color = "blue", alpha = 0, size = 1) +
   geom_sf(data = yadkin_sub10and11_shp, color = "black", alpha = 0, size = 1) +
   facet_wrap(~theme) +
@@ -1152,7 +1152,7 @@ yadkin_tract_sub18_sovi_themes = yadkin_unclip_tract_shp_sel %>%
 
 # plot 18
 my_zoom_sovi_plots[[3]] = ggplot() + 
-  geom_sf(data = yadkin_tract_sub18_sovi_themes, aes(fill = sovi, color = County), size = 1) + 
+  geom_sf(data = yadkin_tract_sub18_sovi_themes, aes(fill = sovi, color = County), size = 0.5) + 
   geom_sf(data = yadkin_river_sub18_shp, color = "blue", alpha = 0, size = 1) +
   geom_sf(data = yadkin_sub18_shp, color = "black", alpha = 0, size = 1) +
   facet_wrap(~theme) +
@@ -1239,7 +1239,7 @@ yadkin_tract_sub24_sovi_themes = yadkin_unclip_tract_shp_sel %>%
 
 # plot 24
 my_zoom_sovi_plots[[4]] = ggplot() + 
-  geom_sf(data = yadkin_tract_sub24_sovi_themes, aes(fill = sovi, color = County), size = 1) + 
+  geom_sf(data = yadkin_tract_sub24_sovi_themes, aes(fill = sovi, color = County), size = 0.5) + 
   geom_sf(data = yadkin_river_sub24_shp, color = "blue", alpha = 0, size = 1) +
   geom_sf(data = yadkin_sub24_shp, color = "black", alpha = 0, size = 1) +
   facet_wrap(~theme) +
@@ -1304,7 +1304,7 @@ dev.off()
 
 # plot 8, 10&11, 18, and 24 together
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("case_studies_sovi_themes.pdf", width = 15, height = 15, pointsize = 24)
+cairo_pdf("case_studies_sovi_themes.pdf", width = 18, height = 18, pointsize = 24)
 multiplot(plotlist = my_zoom_sovi_plots, cols = 2)
 dev.off()
 
@@ -1331,6 +1331,8 @@ cdf_calcs_total_sovi = yadkin_sovi_data %>%
          cumul_sum_sovi_total = cumsum(sovi_total_wtd) / sum(sovi_total_wtd))
 
 # plot
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("cdf_total_sovi_by_sub.pdf", width = 12, height = 12, pointsize = 18)
 ggplot(data = cdf_calcs_total_sovi, aes(x = sovi_total, y = cumul_sum_sovi_total)) +
   #geom_smooth(se = FALSE) +
   geom_point() +
@@ -1343,6 +1345,8 @@ ggplot(data = cdf_calcs_total_sovi, aes(x = sovi_total, y = cumul_sum_sovi_total
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 10))
+dev.off()
+
 
 # all subs, sovi themes
 cdf_calcs_sovi_themes = yadkin_sovi_data %>%
@@ -1364,18 +1368,21 @@ cdf_calcs_sovi_themes = yadkin_sovi_data %>%
   select(SUB, sovi_theme1:sovi_theme4, cumul_sum_sovi_theme1, cumul_sum_sovi_theme2, cumul_sum_sovi_theme3, cumul_sum_sovi_theme4) # %>%
   #gather(key = "key", value = "value", sovi_theme1:cumul_sum_sovi_theme4)
   
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("cdf_theme_sovi_by_sub.pdf", width = 12, height = 12, pointsize = 18)
 ggplot(data = cdf_calcs_sovi_themes) +
-  geom_line(aes(x = sovi_theme1, y = cumul_sum_sovi_theme1), color = "green") +
-  geom_line(aes(x = sovi_theme2, y = cumul_sum_sovi_theme2), color = "black") +
-  geom_line(aes(x = sovi_theme3, y = cumul_sum_sovi_theme3), color = "blue") +
-  geom_line(aes(x = sovi_theme4, y = cumul_sum_sovi_theme4), color = "red") +
+  geom_line(aes(x = sovi_theme1, y = cumul_sum_sovi_theme1), color = "#a6cee3") +
+  geom_line(aes(x = sovi_theme2, y = cumul_sum_sovi_theme2), color = "#1f78b4") +
+  geom_line(aes(x = sovi_theme3, y = cumul_sum_sovi_theme3), color = "#b2df8a") +
+  geom_line(aes(x = sovi_theme4, y = cumul_sum_sovi_theme4), color = "#33a02c") +
+  xlim(0,5) +
   facet_wrap(~SUB, ncol = 7) +
-  xlab("SoVI") +
+  xlab("SoVI (by theme)") +
   ylab("CDF (Weighted)") +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 10))
-
+dev.off()
 
 blah2_sel = blah2 %>%
   filter(SUB == 8 | SUB == 11 | SUB ==14 | SUB == 18 |
