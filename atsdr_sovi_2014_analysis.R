@@ -686,6 +686,17 @@ ggplot(data = hiflow_outlier_reclass_hydrodemo_sel,
 # subbasins 8, 11, 14, 18 (just one model sim), and 20 all have vulnerable communities but are indicated
 # in the "lower" class
 
+# select subbasins where max census tract scale sovi is greater than mean+2sd
+hiflow_outlier_reclass_hydrodemo_sel_high = hiflow_outlier_reclass_hydrodemo %>%
+  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "higher") %>%
+  na.omit()
+# subbasin 24
+
+# select subbasins where max census tract scale sovi is greater than mean+2sd
+hiflow_outlier_reclass_hydrodemo_sel_mod = hiflow_outlier_reclass_hydrodemo %>%
+  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "moderate") %>%
+  na.omit()
+# subbasin 18
 
 # ---- 7.1 import % change in NUMBER OF FLOWS at/above a given return period data ----
 
@@ -930,8 +941,17 @@ ggplot(data = hiflow_10yr_reclass_hydrodemo_sel,
 
 # subbasins 8, 11, 14, 18, and 20 all have vulnerable communities but are rated as being in the "lower" class
 
+# select subbasins where max census tract scale sovi is greater than mean+2sd
+hiflow_10yr_reclass_hydrodemo_sel_high = hiflow_10yr_reclass_hydrodemo %>%
+  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "higher") %>%
+  na.omit()
+# subbasins 11, 14, 18, 24
 
-
+# select subbasins where max census tract scale sovi is greater than mean+2sd
+hiflow_10yr_reclass_hydrodemo_sel_mod = hiflow_10yr_reclass_hydrodemo %>%
+  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "moderate") %>%
+  na.omit()
+# subbasins 20 and 24
 
 # ---- 7.7 export results ----
 
