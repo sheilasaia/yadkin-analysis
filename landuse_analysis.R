@@ -201,6 +201,23 @@ yadlu_reclass_baseline_summary = yadlu_reclass_data %>%
   group_by(DESCRIPTION) %>%
   summarize(sum_area_perc = sum(AREA_PERC))
 
+# summarize baseline % landuse for each subbasin
+sublu_reclass_baseline_summary = sublu_reclass_data %>% 
+  filter(dataset == "baseline") %>%
+  mutate(baseline_perc = AREA_PERC) %>%
+  ungroup() %>%
+  select(-AREA_PERC, -dataset)
+
+# summarize projections % landuse for each subbasin
+sublu_reclass_projection_summary = sublu_reclass_data %>% 
+  filter(dataset != "baseline") %>% 
+  group_by(DESCRIPTION, SUB) %>%
+  summarize(projection_perc = round(mean(AREA_PERC), 3)) %>%
+  ungroup() %>%
+  mutate(sub_id = paste0("subid_", SUB, "_", DESCRIPTION)) %>%
+  select(-DESCRIPTION, -SUB)
+  
+
 # ---- 4.2 plot watershed wide data (reclassified categories) ----
 
 setwd("/Users/ssaia/Desktop")
@@ -228,6 +245,29 @@ ggplot(sublu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
   theme_bw() +
   scale_fill_manual(values=c("orange", "grey75", "forestgreen","green","blue")) +
   theme(axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
+
+
+
+# ---- 4.4 plot subbasin data (summary) ----
+
+blah = left_join(sublu_reclass_baseline_summary, sublu_reclass_projection_summary, by = "sub_id") %>%
+  gather(key = sub_id, value = perc, baseline_perc:projection_perc) %>%
+  filter(DESCRIPTION != "wetlands_and_water") # some small changes but basically the same
+  
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sublu_comparision.pdf",width=11,height=8.5, pointsize=20)
+ggplot(blah,aes(x=as.factor(SUB),y=perc, fill = sub_id)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~DESCRIPTION) +
+  xlab("Subbasin") +
+  ylab("Area (%)") +
+  ylim(0, 100) +
+  scale_fill_manual(values=c("grey75", "black")) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 18),
+        axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
+dev.off()
 
 
 # ----- 5.1 function: find % change in landuse betwn. baseline and projection ----
