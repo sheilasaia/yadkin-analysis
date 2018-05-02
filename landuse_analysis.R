@@ -13,6 +13,10 @@ library(sf)
 #library(tmap)
 #vignette("tmap-nutshell")
 
+# load home-made functions 
+functions_path="/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
+source(paste0(functions_path,"reformat_rch_file.R")) # reformat SWAT .rch file
+
 # set directory and load watershed wide percent use
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers")
 
@@ -84,6 +88,14 @@ hadley4_5_lu_temp=read_csv("luD2060_allsubs.csv",col_names=TRUE) %>%
   mutate(sub_id=paste0("subid_",SUB,"_",VALUE)) %>%
   select(sub_id,AREA_PERC)
 
+# contributing area data
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/raw_data/kelly_results/baseline82-08_daily")
+baseline_rch_raw_data=read_table2("output.rch",col_names=FALSE,skip=9) # basline .rch file from SWAT
+
+# join areas
+blah=miroc_baseline_outlier_cutoff_rp %>%
+  left_join(contributing_areas,by='RCH')
+
 # gis data
 # set directory and load county bounds (.shp file)
 setwd("/Users/ssaia/Documents/ArcGIS/yadkin_arcgis_analysis_albers/")
@@ -140,6 +152,16 @@ sublu_data=bind_rows(baseline_lu_sub,
                      csiro4_5_lu_sub,
                      hadley4_5_lu_sub) %>%
   left_join(yadlu_descriptions,by="VALUE") # add description in
+
+# contributing area data
+baseline_rch_data=reformat_rch_file(baseline_rch_raw_data) %>% 
+  filter(YR<2003)
+
+# make dataframe with contributing errors to can use to plot
+contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+  distinct() %>% 
+  mutate(SUB=RCH) %>%
+  select(-RCH)
 
 # shape file (.shp)
 # add SUB column to .shp file
@@ -211,7 +233,8 @@ sublu_reclass_baseline_summary = sublu_reclass_data %>%
 # summarize projections % landuse for each subbasin
 sublu_reclass_projection_summary = sublu_reclass_data %>% 
   filter(dataset != "baseline") %>% 
-  group_by(DESCRIPTION, SUB) %>%
+  left_join(contributing_areas, by = "SUB") %>%
+  group_by(DESCRIPTION, SUB, AREAkm2) %>%
   summarize(projection_perc = round(mean(AREA_PERC), 3)) %>%
   ungroup() %>%
   mutate(sub_id = paste0("subid_", SUB, "_", DESCRIPTION)) %>%
@@ -251,12 +274,16 @@ ggplot(sublu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
 # ---- 4.4 plot subbasin data (summary) ----
 
 blah = left_join(sublu_reclass_baseline_summary, sublu_reclass_projection_summary, by = "sub_id") %>%
-  gather(key = sub_id, value = perc, baseline_perc:projection_perc) %>%
-  filter(DESCRIPTION != "wetlands_and_water") # some small changes but basically the same
-  
+  select(SUB, sub_id, AREAkm2, DESCRIPTION, baseline_perc, projection_perc) %>%
+  gather(key = dataset, value = perc, baseline_perc:projection_perc) %>%
+  filter(DESCRIPTION != "wetlands_and_water") %>% # some small changes but basically the same
+  arrange(AREAkm2)
+
+blah$SUB = factor(blah$SUB, levels = contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("sublu_comparision.pdf",width=11,height=8.5, pointsize=20)
-ggplot(blah,aes(x=as.factor(SUB),y=perc, fill = sub_id)) +
+ggplot(blah,aes(x=as.factor(SUB),y=perc, fill = dataset)) +
   geom_col(position = "dodge") +
   facet_wrap(~DESCRIPTION) +
   xlab("Subbasin") +
