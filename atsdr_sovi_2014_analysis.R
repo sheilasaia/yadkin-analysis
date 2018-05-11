@@ -692,11 +692,10 @@ hiflow_outlier_reclass_hydrodemo_sel_high = hiflow_outlier_reclass_hydrodemo %>%
   na.omit()
 # subbasin 24
 
-# select subbasins where max census tract scale sovi is greater than mean+2sd
-hiflow_outlier_reclass_hydrodemo_sel_mod = hiflow_outlier_reclass_hydrodemo %>%
-  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "moderate") %>%
+# select subbasins where max percent change is greater than 50%
+hiflow_outlier_reclass_hydrodemo_sel_hydrohigh = hiflow_outlier_reclass_hydrodemo %>%
+  filter(minor_outlier_perc_change_per_yr >= 50 & impact_vuln_class == "higher") %>%
   na.omit()
-# subbasin 18
 
 # ---- 7.1 import % change in NUMBER OF FLOWS at/above a given return period data ----
 
@@ -947,11 +946,11 @@ hiflow_10yr_reclass_hydrodemo_sel_high = hiflow_10yr_reclass_hydrodemo %>%
   na.omit()
 # subbasins 11, 14, 18, 24
 
-# select subbasins where max census tract scale sovi is greater than mean+2sd
-hiflow_10yr_reclass_hydrodemo_sel_mod = hiflow_10yr_reclass_hydrodemo %>%
-  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "moderate") %>%
+# select subbasins where max percent change is greater than 50%
+hiflow_10yr_reclass_hydrodemo_sel_hydrohigh = hiflow_10yr_reclass_hydrodemo %>%
+  filter(perc_change_per_yr >= 50 & impact_vuln_class == "higher") %>%
   na.omit()
-# subbasins 20 and 24
+
 
 # ---- 7.7 export results ----
 
@@ -998,6 +997,7 @@ summary(sovi_pca_no_income)
 # this is slightly higher than the pca with income included but not much more
 sovi_pca_results_no_income=data.frame(var=names(yadkin_tract_est_data_zscore_no_income),pc1_loadings=sovi_pca_no_income$rotation[1:14],pc2_loadings=sovi_pca_no_income$rotation[15:28])
 biplot(sovi_pca_no_income)
+
 # ---- 9.1 zoom in subbasin theme analysis ----
 
 # reformat unclipped data
