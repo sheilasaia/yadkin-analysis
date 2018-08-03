@@ -200,7 +200,9 @@ yadkin_sovi_total_sub_data = yadkin_sovi_data %>%
   summarize(area_wt_sovi = sum(wt_sovi_total),
             median_sovi = median(sovi_total),
             min_sovi = min(sovi_total),
-            max_sovi = max(sovi_total))
+            max_sovi = max(sovi_total)) #%>%
+  #mutate(range_sovi = max_sovi - min_sovi) %>% # calculate range
+  #mutate(range_adj_sovi = range_sovi/sum(range_sovi))
 
 # sovi theme 1
 yadkin_sovi_theme1_sub_data = yadkin_sovi_data %>%
@@ -366,6 +368,9 @@ hiflow_outlier_reclass_hydrodemo = hiflow_outlier_change_data %>%
   mutate(impact_vuln_class_num = impact_class + vuln_class) %>%
   mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 2, "lower",
                                     ifelse(impact_vuln_class_num == 3 , "moderate", "higher")))
+
+# high flow data (hydro plus demographics for map)
+hiflow_outlier_reclass_hydrodemo_map = hiflow_outlier_reclass_hydrodemo 
 
 # high flow data and max sovi (hydro plus demographics)
 hiflow_outlier_reclass_hydrodemo_max = hiflow_outlier_change_data %>%
@@ -535,29 +540,28 @@ dev.off()
 
 # ---- 6.4 plot on matrix with error bars ----
 
-
 # make a list to hold plots
-my_outlier_range_point_plots = list()
+my_fig_5_plots = list()
 
 # high flow data (hydrology plus demographics, with min/max sovi for subbasin)
-my_matrix_plots[[4]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
-                                     mapping = aes(x = area_wt_sovi, y = minor_outlier_perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
+my_fig_5_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
+                                     mapping = aes(x = minor_outlier_perc_change_per_yr, y = area_wt_sovi, color = impact_vuln_class, shape = dataset)) +
+  geom_errorbar(aes(ymax = max_sovi, ymin = min_sovi, height = 0)) +
   geom_point(size = 5, alpha = 0.75) +
-  geom_errorbarh(aes(xmax = max_sovi, xmin = min_sovi, height = 0)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_hline(yintercept = 50, linetype = "dashed") +
-  geom_hline(yintercept = 25, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 50, linetype = "dashed") +
+  geom_vline(xintercept = 25, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
   # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
-  labs(x="Subbasin SoVI",y="% change/yr",
+  labs(x = "PCext", y = "Subbasin SoVI",
        color="Class",shape="Dataset") +
-  xlim(0,15) +
-  ylim(-10,150) +
+  xlim(-5,150) +
+  ylim(0,15) +
   theme_bw() +
   scale_shape_manual(values=c(15,16,17,18)) +
-  scale_color_manual(values=c("darkblue", "steelblue3", "lightblue")) +
+  scale_color_manual(values=c("red", "orange", "gold")) +
   theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
         panel.background=element_blank(),text=element_text(size=18))
 
@@ -583,8 +587,8 @@ my_outlier_range_point_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrode
         panel.background=element_blank(),text=element_text(size=18))
 
 setwd("/Users/ssaia/Desktop")
-cairo_pdf("fig_s4.pdf", width = 18, height = 16, pointsize = 18)
-multiplot(plotlist = my_matrix_plots, cols = 2)
+cairo_pdf("fig_5.pdf", width = 10, height = 16, pointsize = 18)
+multiplot(plotlist = my_fig_5_plots, cols = 1)
 dev.off()
 
 
@@ -655,7 +659,7 @@ dev.off()
 
 # select subbasins where max census tract scale sovi is greater than mean+2sd
 hiflow_outlier_reclass_hydrodemo_sel = hiflow_outlier_reclass_hydrodemo %>%
-  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "lower") %>%
+  filter(area_wt_sovi >= mean_us_sovi + 2 * sd_us_sovi & impact_vuln_class == "higher") %>%
   na.omit()
 
 hiflow_outlier_reclass_hydrodemo_sel$impact_vuln_class = factor(hiflow_outlier_reclass_hydrodemo_sel$impact_vuln_class, levels = c("higher", "moderate", "lower"))
@@ -692,10 +696,23 @@ hiflow_outlier_reclass_hydrodemo_sel_high = hiflow_outlier_reclass_hydrodemo %>%
   na.omit()
 # subbasin 24
 
+# select subbasins where max census tract scale sovi is greater than mean+2sd
+hiflow_outlier_reclass_hydrodemo_sel_high_sovi = hiflow_outlier_reclass_hydrodemo %>%
+  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi) %>%
+  na.omit()
+
 # select subbasins where max percent change is greater than 50%
 hiflow_outlier_reclass_hydrodemo_sel_hydrohigh = hiflow_outlier_reclass_hydrodemo %>%
-  filter(minor_outlier_perc_change_per_yr >= 50 & impact_vuln_class == "higher") %>%
+  filter(minor_outlier_perc_change_per_yr >= 25 & impact_vuln_class == "higher") %>%
   na.omit()
+
+# final 
+hiflow_outlier_reclass_hydrodemo %>%
+  filter(impact_vuln_class == "higher" & max_sovi >= mean_us_sovi + 2 * sd_us_sovi)
+# 24
+hiflow_outlier_reclass_hydrodemo %>%
+  filter(impact_vuln_class == "higher" & max_sovi >= mean_us_sovi + 1 * sd_us_sovi & minor_outlier_perc_change_per_yr < 50)
+# 25
 
 # ---- 7.1 import % change in NUMBER OF FLOWS at/above a given return period data ----
 
@@ -835,27 +852,26 @@ dev.off()
 my_10yr_range_point_plots = list()
 
 # 10yr high flow data (hydrology plus demographics)
-my_matrix_plots[[3]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
-                                  mapping = aes(x = area_wt_sovi, y = perc_change_per_yr, color = impact_vuln_class, shape = dataset)) +
+my_fig_5_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
+                             mapping = aes(x = perc_change_per_yr, y = area_wt_sovi, color = impact_vuln_class, shape = dataset)) +
+  geom_errorbar(aes(ymax = max_sovi, ymin = min_sovi, height = 0)) +
   geom_point(size = 5, alpha = 0.75) +
-  geom_errorbarh(aes(xmax = max_sovi, xmin = min_sovi, height = 0)) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_hline(yintercept = 50, linetype = "dashed") +
-  geom_hline(yintercept = 25, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
-  geom_vline(xintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
-  # annotate("text", x = 2, y = 150, label = "Hydrology+Demographics") +  
-  labs(x = "Subbasin SoVI", y = "% change/yr", 
-       color = "Class", shape = "Dataset") +
-  xlim(0, 15) +
-  ylim(-10, 150) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 50, linetype = "dashed") +
+  geom_vline(xintercept = 25, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
+  labs(x = "PC10yr", y = "Subbasin SoVI",
+       color="Class",shape="Dataset") +
+  xlim(-5,150) +
+  ylim(0,15) +
   theme_bw() +
-  scale_shape_manual(values = c(15, 16, 17, 18)) +
-  #scale_color_manual(values = c("black", "grey50", "grey75")) +
-  scale_color_manual(values = c("darkblue", "steelblue3", "lightblue")) +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), text = element_text(size = 18))
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("red", "orange", "gold")) +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=18))
 
 # ---- 7.5 plot on map ----
 
@@ -946,10 +962,23 @@ hiflow_10yr_reclass_hydrodemo_sel_high = hiflow_10yr_reclass_hydrodemo %>%
   na.omit()
 # subbasins 11, 14, 18, 24
 
+# select subbasins where max census tract scale sovi is greater than mean+2sd
+hiflow_10yr_reclass_hydrodemo_sel_high_sovi = hiflow_10yr_reclass_hydrodemo %>%
+  filter(max_sovi >= mean_us_sovi + 2 * sd_us_sovi) %>%
+  na.omit()
+
 # select subbasins where max percent change is greater than 50%
 hiflow_10yr_reclass_hydrodemo_sel_hydrohigh = hiflow_10yr_reclass_hydrodemo %>%
   filter(perc_change_per_yr >= 50 & impact_vuln_class == "higher") %>%
   na.omit()
+
+# final 
+blah = hiflow_10yr_reclass_hydrodemo %>%
+  filter(impact_vuln_class == "higher" & max_sovi >= mean_us_sovi + 2 * sd_us_sovi)
+# 11, 14, 18, 24
+blah2 = hiflow_10yr_reclass_hydrodemo %>%
+  filter(impact_vuln_class == "higher" & area_wt_sovi >= mean_us_sovi + 1 * sd_us_sovi) # & minor_outlier_perc_change_per_yr < 50)
+# 25
 
 
 # ---- 7.7 export results ----
@@ -1477,6 +1506,62 @@ setwd("/Users/ssaia/Desktop")
 cairo_pdf("hiflow_impact_hydrodemo_sum_map.pdf", width = 11, height = 8.5, pointsize = 18)
 multiplot(plotlist = my_matrix_sub_sum_plot, cols = 2)
 dev.off()
+
+# ---- 11.1 paper plots ----
+
+# make a list to hold plots
+my_fig_5_plots = list()
+
+# 10yr high flow data (hydrology plus demographics)
+my_fig_5_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
+                             mapping = aes(x = perc_change_per_yr, y = area_wt_sovi, color = impact_vuln_class, shape = dataset)) +
+  geom_errorbar(aes(ymax = max_sovi, ymin = min_sovi, height = 0)) +
+  geom_point(size = 5, alpha = 1) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 50, linetype = "dashed") +
+  geom_vline(xintercept = 25, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
+  labs(x = "PC10yr", y = "Subbasin SoVI",
+       color="Class",shape="Dataset") +
+  xlim(-5,150) +
+  ylim(0,15) +
+  theme_bw() +
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("red", "orange", "gold")) +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=18))
+
+# high flow data (hydrology plus demographics, with min/max sovi for subbasin)
+my_fig_5_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
+                             mapping = aes(x = minor_outlier_perc_change_per_yr, y = area_wt_sovi, color = impact_vuln_class, shape = dataset)) +
+  geom_errorbar(aes(ymax = max_sovi, ymin = min_sovi, height = 0)) +
+  geom_point(size = 5, alpha = 1) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = 50, linetype = "dashed") +
+  geom_vline(xintercept = 25, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
+  geom_hline(yintercept = mean_us_sovi + 2 * sd_us_sovi, linetype = "dashed") +
+  # annotate("text", x = 4, y = 55, label = "Hydrology+Demographics") +
+  labs(x = "PCext", y = "Subbasin SoVI",
+       color="Class",shape="Dataset") +
+  xlim(-5,65) +
+  ylim(0,15) +
+  theme_bw() +
+  scale_shape_manual(values=c(15,16,17,18)) +
+  scale_color_manual(values=c("red", "orange", "gold")) +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=18))
+
+# plot fig 5 to desktop
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_5.pdf", width = 20, height = 8, pointsize = 18)
+multiplot(plotlist = my_fig_5_plots, cols = 2)
+dev.off()
+
 
 # ---- 7.x basic gradiation ----
 
