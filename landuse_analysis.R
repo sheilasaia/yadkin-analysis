@@ -271,7 +271,7 @@ ggplot(sublu_reclass_data,aes(x=dataset,y=AREA_PERC,fill=DESCRIPTION)) +
 
 
 
-# ---- 4.4 plot subbasin data (summary) ----
+# ---- 4.4 barplot subbasin data by subbasin id for major landuses (summary) ----
 
 blah = left_join(sublu_reclass_baseline_summary, sublu_reclass_projection_summary, by = "sub_id") %>%
   select(SUB, sub_id, AREAkm2, DESCRIPTION, baseline_perc, projection_perc) %>%
