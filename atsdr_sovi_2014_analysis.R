@@ -200,7 +200,8 @@ yadkin_sovi_total_sub_data = yadkin_sovi_data %>%
   summarize(area_wt_sovi = sum(wt_sovi_total),
             median_sovi = median(sovi_total),
             min_sovi = min(sovi_total),
-            max_sovi = max(sovi_total)) #%>%
+            max_sovi = max(sovi_total),
+            range_sovi = max_sovi-min_sovi) #%>%
   #mutate(range_sovi = max_sovi - min_sovi) %>% # calculate range
   #mutate(range_adj_sovi = range_sovi/sum(range_sovi))
 
@@ -271,10 +272,41 @@ my_total_sovi_plots[[2]] = ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sov
 #        text=element_text(size=16))
 # dev.off()
 
+# plot total sovi range by sub
+ggplot(yadkin_sub_shp_sovi_total,aes(fill=range_sovi)) +
+  geom_sf(color = "black") +
+  coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_total is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI Range",high="grey25",low="white",limits=c(2,10)) +
+  theme_bw()
+
 # plot tract and subbasin scaled together
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("fig_4.pdf", width = 16, height = 8, pointsize = 18)
 multiplot(plotlist = my_total_sovi_plots, cols = 2)
+dev.off()
+
+# plot total sovi range by sub (bar chart inset)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_4_inset.pdf", width = 11, height = 8.8, pointsize = 18)
+ggplot(yadkin_sovi_total_sub_data, aes(x = as.factor(SUB), y = range_sovi)) +
+  geom_col(fill = "grey50", color = "white") +
+  xlab("Subbains ID") +
+  ylab("Census Tract SoVI Range") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_blank(), text = element_text(size = 18))
+dev.off()
+
+# plot total sovi range by sub (box plot inset)
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_4_inset2.pdf", width = 11, height = 8.8, pointsize = 18)
+ggplot(yadkin_sovi_data, aes(x = as.factor(SUB), y = sovi_total)) +
+  ylim(0, 15) +
+  geom_boxplot() +
+  xlab("Subbains ID") +
+  ylab("Census Tract SoVI") +
+  theme_bw() +
+  theme(panel.background = element_blank(), text = element_text(size = 18))
 dev.off()
 
 # theme 1 sovi by sub
@@ -639,7 +671,7 @@ ggplot(yadkin_sub_shp_hiflow_outlier_hydro, aes(fill = impact_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_hiflow_outlier_hydro is base utm 17N so convert to Albers for CONUS
-  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
+  scale_fill_manual(values = c("red", "orange", "gold"), na.value = "grey75") +
   theme_bw()
 dev.off()
 
@@ -906,7 +938,7 @@ ggplot(yadkin_sub_shp_hiflow_10yr_hydro, aes(fill = impact_class)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_hiflow_outlier_hydro is base utm 17N so convert to Albers for CONUS
-  scale_fill_manual(values = c("darkblue", "steelblue3", "lightblue"), na.value = "grey75") +
+  scale_fill_manual(values = c("red", "orange", "gold"), na.value = "grey75") +
   theme_bw()
 dev.off()
 
@@ -1357,7 +1389,138 @@ cairo_pdf("case_studies_sovi_themes.pdf", width = 18, height = 18, pointsize = 2
 multiplot(plotlist = my_zoom_sovi_plots, cols = 2)
 dev.off()
 
-# ---- 9.2 cdf's of sovi by subbasin ----
+# ---- 9.2 zoom in subbasin total sovi analysis ----
+
+# reformat unclipped data
+yadkin_unclip_tract_shp_sel_total = yadkin_unclip_tract_shp %>%
+  select(fips, County = COUNTY, ST_ABBR, sovi = SPL_THEMES, geometry) 
+
+# make a list to hold plots
+my_zoom_sovi_plots = list()
+
+# select 1
+# select subbasin of interest
+my_sub1 = 1
+yadkin_sub1_shp = yadkin_sub_shp %>%
+  filter(SUB == 1)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub1 = yadkin_sub1_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel_total)
+
+# look at counties that are included
+unique(my_glimpse_sub1$County)
+min(my_glimpse_sub1$sovi)
+
+# select river for area of interest
+yadkin_river_sub1_shp = yadkin_sub1_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub1_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
+  filter(County == "Stokes" |
+           County == "Surry" |
+           County == "Yadkin" |
+           County == "Carroll" |
+           County == "Patrick")
+
+# plot 1
+my_zoom_sovi_plots[[1]] = ggplot() + 
+  geom_sf(data = yadkin_tract_sub1_sovi_total, aes(fill = sovi, color = County), size = 0.5) + 
+  geom_sf(data = yadkin_river_sub1_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub1_shp, color = "black", alpha = 0, size = 1) +
+  coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_total is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,15)) +
+  scale_color_manual(values=c("Stokes" = "#66c2a5",
+                              "Surry" = "#e78ac3",
+                              "Patrick" = "#a6d854",
+                              "Carroll" = "#fc8d62",
+                              "Yadkin" = "#8da0cb")) +
+  theme_bw()
+
+
+# select 8
+# select subbasin of interest
+my_sub8 = 8
+yadkin_sub8_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub8)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub8 = yadkin_sub8_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel_total)
+
+# select river for area of interest
+yadkin_river_sub8_shp = yadkin_sub8_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+# look at counties that are included
+unique(my_glimpse_sub8$County)
+min(my_glimpse_sub8$sovi)
+
+yadkin_tract_sub8_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
+  filter(County == "Davidson" |
+           County == "Forsyth" |
+           County == "Stokes")
+
+# plot 8
+my_zoom_sovi_plots[[2]] = ggplot() + 
+  geom_sf(data = yadkin_tract_sub8_sovi_total, aes(fill = sovi, color = County), size = 0.5) + 
+  geom_sf(data = yadkin_river_sub8_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub8_shp, color = "black", alpha = 0, size = 1) +
+  coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_total is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,15)) +
+  scale_color_manual(values=c("Davidson" = "#fc8d62", 
+                              "Forsyth" = "#8da0cb", 
+                              "Stokes" = "#66c2a5")) +
+  theme_bw()
+
+
+# select 24
+# select subbasin of interest
+my_sub24 = 24
+yadkin_sub24_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub24)
+
+# select tract sovi theme data for subbasin of interest
+my_glimpse_sub24 = yadkin_sub24_shp %>%
+  st_join(yadkin_unclip_tract_shp_sel_total)
+
+# look at counties that are included
+unique(my_glimpse_sub24$County)
+min(my_glimpse_sub24$sovi)
+
+# select river for area of interest
+yadkin_river_sub24_shp = yadkin_sub24_shp %>%
+  select(geometry) %>%
+  st_intersection(yadkin_river_shp)
+
+yadkin_tract_sub24_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
+  filter(County == "Anson" |
+           County == "Union")
+
+# plot 24
+my_zoom_sovi_plots[[3]] = ggplot() + 
+  geom_sf(data = yadkin_tract_sub24_sovi_total, aes(fill = sovi, color = County), size = 0.5) + 
+  geom_sf(data = yadkin_river_sub24_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_sub24_shp, color = "black", alpha = 0, size = 1) +
+  coord_sf(crs=st_crs(102003)) + # is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,15)) +
+  scale_color_manual(values=c("Anson" = "#fc8d62",
+                              "Union" = "#8da0cb")) +
+  theme_bw()
+
+# colorblind friendly: http://colorbrewer2.org/#type=qualitative&scheme=Set2&n=3
+# colorblind frieldly: http://bconnelly.net/2013/10/creating-colorblind-friendly-figures/
+
+# plot 1, 8, and 24 together
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("case_studies_sovi_total.pdf", width = 18, height = 18, pointsize = 24)
+multiplot(plotlist = my_zoom_sovi_plots, cols = 2)
+dev.off()
+
+
+# ---- 9.3 cdf's of sovi by subbasin ----
 
 # one sub, total sovi
 cdf_calcs_total_sovi_subsel = yadkin_sovi_data %>% 
