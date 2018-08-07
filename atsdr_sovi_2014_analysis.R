@@ -145,18 +145,15 @@ dev.off()
 
 # ---- 3.3 plot yadkin total sovi by tract on map ----
 
-# make a list to hold plots
-my_total_sovi_plots = list()
-
 # total sovi by tract
-# setwd("/Users/ssaia/Desktop")
-# cairo_pdf("yadkin_sovi2014_total_by_tract.pdf", width = 11, height = 8.5, pointsize = 18)
-my_total_sovi_plots[[1]] = ggplot(yadkin_tract_shp, aes(fill = SPL_THEMES)) +
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("yadkin_sovi2014_total_by_tract.pdf", width = 10, height = 10, pointsize = 18)
+ggplot(yadkin_tract_shp, aes(fill = SPL_THEMES)) +
   geom_sf(color = "black") +
   coord_sf(crs = st_crs(102003)) + # yadkin_tract_shp is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("Total SoVI", high = "darkred", low = "white", limits = c(0, 15)) +
   theme_bw()
-# dev.off()
+dev.off()
 
 
 # ---- 4.1 gather four sovi themes together ----
@@ -260,10 +257,14 @@ yadkin_sub_shp_sovi_theme1to4=left_join(yadkin_sub_shp,yadkin_sovi_themes_sub_da
 
 # ---- 5.2 plot subbasin scaled sovi data ----
 
+
+# make a list to hold plots
+my_total_sovi_plots = list()
+
 # total sovi by sub
 # setwd("/Users/ssaia/Desktop")
 # cairo_pdf("yadkin_sovi2014_total_by_sub.pdf",width=11,height=8.5,pointsize=18)
-my_total_sovi_plots[[2]] = ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi)) +
+my_total_sovi_plots[[1]] = ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi)) +
   geom_sf(color = "black") +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_total is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("Total SoVI",high="darkred",low="white",limits=c(0,15)) +
@@ -279,15 +280,7 @@ ggplot(yadkin_sub_shp_sovi_total,aes(fill=range_sovi)) +
   scale_fill_gradient2("SoVI Range",high="grey25",low="white",limits=c(2,10)) +
   theme_bw()
 
-# plot tract and subbasin scaled together
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("fig_4.pdf", width = 16, height = 8, pointsize = 18)
-multiplot(plotlist = my_total_sovi_plots, cols = 2)
-dev.off()
-
 # plot total sovi range by sub (bar chart inset)
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("fig_4_inset.pdf", width = 11, height = 8.8, pointsize = 18)
 ggplot(yadkin_sovi_total_sub_data, aes(x = as.factor(SUB), y = range_sovi)) +
   geom_col(fill = "grey50", color = "white") +
   xlab("Subbains ID") +
@@ -295,18 +288,25 @@ ggplot(yadkin_sovi_total_sub_data, aes(x = as.factor(SUB), y = range_sovi)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
         panel.background = element_blank(), text = element_text(size = 18))
-dev.off()
 
 # plot total sovi range by sub (box plot inset)
-setwd("/Users/ssaia/Desktop")
-cairo_pdf("fig_4_inset2.pdf", width = 11, height = 8.8, pointsize = 18)
-ggplot(yadkin_sovi_data, aes(x = as.factor(SUB), y = sovi_total)) +
-  ylim(0, 15) +
+#setwd("/Users/ssaia/Desktop")
+#cairo_pdf("fig_4_inset.pdf", width = 11, height = 8.8, pointsize = 18)
+my_total_sovi_plots[[2]] = ggplot(yadkin_sovi_data, aes(x = as.factor(SUB), y = sovi_total)) +
   geom_boxplot() +
+  geom_point(size = 1, alpha = 0.25) +
+  ylim(0, 15) +
   xlab("Subbains ID") +
   ylab("Census Tract SoVI") +
   theme_bw() +
-  theme(panel.background = element_blank(), text = element_text(size = 18))
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), text = element_text(size = 18))
+#dev.off()
+
+# plot tract and subbasin scaled together
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("fig_4.pdf", width = 20, height = 10, pointsize = 18)
+multiplot(plotlist = my_total_sovi_plots, cols = 2)
 dev.off()
 
 # theme 1 sovi by sub
