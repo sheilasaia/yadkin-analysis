@@ -29,8 +29,7 @@ sovibd_scaling_raw <- read_csv("sovibd_2014_scaling_allsubs.csv", col_names = TR
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 contributing_areas <- read_csv("subbasin_contributing_areas_data.csv")
 
-
-# ---- 2.2 reformat data ----
+# ---- 2.3 reformat data ----
 
 # select only tract scaling data that is needed
 yadkin_fips_data <- sovibd_scaling_raw %>%
@@ -108,6 +107,26 @@ yadkin_damage_data_lowflows <- left_join(yadkin_fips_summary_data, damage_data,b
   left_join(contributing_areas, by = "SUB") %>%
   left_join(lowflow_change_data_summary, by = "SUB") %>%
   na.omit()
+
+
+# ---- 3.1 compare damage data for US and Yadkin ----
+
+
+# us data
+mean(damage_data_raw$total_damages_perc_county_income)
+sd(damage_data_raw$total_damages_perc_county_income)
+
+# select yadkin data
+yadkin_counties <- sovibd_scaling_raw %>%
+  select(fips) %>%
+  mutate(county_fips = as.integer(str_sub(fips, start = 1, end = 5))) %>%
+  select(county_fips)
+
+damage_data_yadkin <- damage_data_raw %>%
+  right_join(yadkin_counties, by = "county_fips")
+
+mean(damage_data_yadkin$total_damages_perc_county_income)
+sd(damage_data_yadkin$total_damages_perc_county_income)
 
 # ---- 3.1 check for statisical relationship ----
 
