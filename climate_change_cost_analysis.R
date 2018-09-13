@@ -111,7 +111,6 @@ yadkin_damage_data_lowflows <- left_join(yadkin_fips_summary_data, damage_data,b
 
 # ---- 3.1 compare damage data for US and Yadkin ----
 
-
 # us data
 mean(damage_data_raw$total_damages_perc_county_income)
 sd(damage_data_raw$total_damages_perc_county_income)
@@ -121,6 +120,12 @@ yadkin_counties <- sovibd_scaling_raw %>%
   select(fips) %>%
   mutate(county_fips = as.integer(str_sub(fips, start = 1, end = 5))) %>%
   select(county_fips)
+
+# number of counties in yadkin
+length(unique(yadkin_counties$county_fips))
+
+# number of tracts in yadkin
+length(unique(sovibd_scaling_raw$fips))
 
 damage_data_yadkin <- damage_data_raw %>%
   right_join(yadkin_counties, by = "county_fips")
