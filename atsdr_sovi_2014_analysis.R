@@ -202,6 +202,17 @@ yadkin_sovi_total_sub_data = yadkin_sovi_data %>%
   #mutate(range_sovi = max_sovi - min_sovi) %>% # calculate range
   #mutate(range_adj_sovi = range_sovi/sum(range_sovi))
 
+# reclassify subbasin sovi for map plotting
+sovi_reclass = yadkin_sovi_total_sub_data %>%
+  mutate(vuln_class = ifelse(area_wt_sovi <= mean_us_sovi + sd_us_sovi, "lower", 
+                             ifelse(area_wt_sovi > mean_us_sovi + sd_us_sovi & area_wt_sovi <= mean_us_sovi + 2 * sd_us_sovi, "moderate", "higher"))) %>%
+  mutate(vuln_class = ifelse(max_sovi <= mean_us_sovi + sd_us_sovi, "lower", 
+                             ifelse(max_sovi > mean_us_sovi + sd_us_sovi & max_sovi <= mean_us_sovi + 2 * sd_us_sovi, "moderate", "higher")))
+sovi_reclass$vuln_class = factor(sovi_reclass$vuln_class, levels = c("higher", "moderate", "lower"))
+yadkin_sub_shp_sovi_reclass=left_join(yadkin_sub_shp,sovi_reclass,by="SUB")
+# NOTE that 25 is turning orange! need to fix this!
+
+
 # sovi theme 1
 yadkin_sovi_theme1_sub_data = yadkin_sovi_data %>%
   select(SUB, fips, tract_perc, sub_perc, sovi_theme1) %>%
@@ -257,7 +268,6 @@ yadkin_sub_shp_sovi_theme1to4=left_join(yadkin_sub_shp,yadkin_sovi_themes_sub_da
 
 # ---- 5.2 plot subbasin scaled sovi data ----
 
-
 # make a list to hold plots
 my_total_sovi_plots = list()
 
@@ -267,7 +277,7 @@ my_total_sovi_plots = list()
 my_total_sovi_plots[[1]] = ggplot(yadkin_sub_shp_sovi_total,aes(fill=area_wt_sovi)) +
   geom_sf(color = "black") +
   coord_sf(crs=st_crs(102003)) + # yadkin_sub_shp_sovi_total is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("Total SoVI",high="darkred",low="white",limits=c(0,15)) +
+  scale_fill_gradient2("Total SoVI",high="darkred",low="white", midpoint = 6, limits=c(5, 10)) +
   theme_bw() #+
 #  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
 #        text=element_text(size=16))
@@ -307,6 +317,16 @@ my_total_sovi_plots[[2]] = ggplot(yadkin_sovi_data, aes(x = as.factor(SUB), y = 
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("fig_4.pdf", width = 20, height = 10, pointsize = 18)
 multiplot(plotlist = my_total_sovi_plots, cols = 2)
+dev.off()
+
+# sovi risk matrix coloring
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("sovi_risk_map.pdf", width = 11, height = 8.5, pointsize = 18)
+ggplot(yadkin_sub_shp_sovi_reclass, aes(fill = vuln_class)) +
+  geom_sf() +
+  coord_sf(crs = st_crs(102003)) + # yadkin_sub_shp_sovi_reclass is base utm 17N so convert to Albers for CONUS
+  scale_fill_manual(values = c("red", "orange", "gold"), na.value = "grey75") +
+  theme_bw()
 dev.off()
 
 # theme 1 sovi by sub
@@ -579,7 +599,7 @@ my_fig_5_plots = list()
 my_fig_5_plots[[2]] = ggplot(data = hiflow_outlier_reclass_hydrodemo_naomit,
                                      mapping = aes(x = minor_outlier_perc_change_per_yr, y = area_wt_sovi, color = impact_vuln_class, shape = dataset)) +
   geom_errorbar(aes(ymax = max_sovi, ymin = min_sovi, height = 0)) +
-  geom_point(size = 5, alpha = 0.75) +
+  geom_point(size = 5, alpha = 1) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_vline(xintercept = 50, linetype = "dashed") +
   geom_vline(xintercept = 25, linetype = "dashed") +
@@ -887,7 +907,7 @@ my_10yr_range_point_plots = list()
 my_fig_5_plots[[1]] = ggplot(data = hiflow_10yr_reclass_hydrodemo_naomit,
                              mapping = aes(x = perc_change_per_yr, y = area_wt_sovi, color = impact_vuln_class, shape = dataset)) +
   geom_errorbar(aes(ymax = max_sovi, ymin = min_sovi, height = 0)) +
-  geom_point(size = 5, alpha = 0.75) +
+  geom_point(size = 5, alpha = 1) +
   geom_vline(xintercept = 0, linetype = "dashed") +
   geom_vline(xintercept = 50, linetype = "dashed") +
   geom_vline(xintercept = 25, linetype = "dashed") +
@@ -1400,9 +1420,9 @@ my_zoom_sovi_plots = list()
 
 # select 1
 # select subbasin of interest
-my_sub1 = 1
+my_sub1 = 27
 yadkin_sub1_shp = yadkin_sub_shp %>%
-  filter(SUB == 1)
+  filter(SUB == 27)
 
 # select tract sovi theme data for subbasin of interest
 my_glimpse_sub1 = yadkin_sub1_shp %>%
@@ -1418,11 +1438,16 @@ yadkin_river_sub1_shp = yadkin_sub1_shp %>%
   st_intersection(yadkin_river_shp)
 
 yadkin_tract_sub1_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
-  filter(County == "Stokes" |
-           County == "Surry" |
-           County == "Yadkin" |
-           County == "Carroll" |
-           County == "Patrick")
+  filter(County == "Anson" |
+           County == "Montgomery" |
+           County == "Richmond")
+
+#yadkin_tract_sub1_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
+#  filter(County == "Stokes" |
+#           County == "Surry" |
+#           County == "Yadkin" |
+#           County == "Carroll" |
+#           County == "Patrick")
 
 # plot 1
 my_zoom_sovi_plots[[1]] = ggplot() + 
@@ -1431,12 +1456,16 @@ my_zoom_sovi_plots[[1]] = ggplot() +
   geom_sf(data = yadkin_sub1_shp, color = "black", alpha = 0, size = 1) +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_total is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,15)) +
-  scale_color_manual(values=c("Stokes" = "#66c2a5",
-                              "Surry" = "#e78ac3",
-                              "Patrick" = "#a6d854",
-                              "Carroll" = "#fc8d62",
-                              "Yadkin" = "#8da0cb")) +
+  scale_color_manual(values=c("Anson" = "#fc8d62",
+                              "Montgomery" = "#8da0cb",
+                              "Richmond" = "#66c2a5")) +
+#  scale_color_manual(values=c("Stokes" = "#66c2a5",
+#                              "Surry" = "#e78ac3",
+#                              "Patrick" = "#a6d854",
+#                              "Carroll" = "#fc8d62",
+#                              "Yadkin" = "#8da0cb")) +
   theme_bw()
+
 
 
 # select 8
