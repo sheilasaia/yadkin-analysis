@@ -775,6 +775,9 @@ dev.off()
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 write_csv(n_no_flow_change_area,"num_no_flow_change_calcs.csv")
 
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/hydrology_change")
+st_write(yadkin_subs_shp_no_flow_using_baseline, "perc_change_zero_flows.shp")
+write_csv(n_no_flow_change, "perc_change_zero_flows.csv")
 
 # ---- 7.1 calculate NUMBER OF CONSECUTIVE DAYS with no flow (backcast) ----
 
