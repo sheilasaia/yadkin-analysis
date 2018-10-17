@@ -297,7 +297,7 @@ ggplot(blah,aes(x=as.factor(SUB),y=perc, fill = dataset)) +
 dev.off()
 
 
-# ----- 5.1 function: find % change in landuse betwn. baseline and projection ----
+# ---- 5.1 function: find % change in landuse betwn. baseline and projection ----
 
 lu_diff=function(input_sublu_data) {
   
@@ -342,7 +342,7 @@ lu_diff=function(input_sublu_data) {
 }
 
 
-# ----- 5.2 calculate % change in landuse and reformat data ----
+# ---- 5.2 calculate % change in landuse and reformat data ----
 
 # calculate % difference between 1992 baseline and 2060 projections
 all_models_lu_diff=lu_diff(sublu_reclass_data)
@@ -469,4 +469,14 @@ ggplot(yadkin_subs_shp_dev,aes(fill=perc_diff_na)) +
   scale_fill_gradient2("% Change Developed",na.value="darkblue") +
   theme_bw()
 dev.off()
+
+
+# ---- 5.4 save plot and datatable (for jenni) ----
+
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/lc_change")
+st_write(yadkin_subs_shp_forest, "yadkin_forest_perc_change.shp")
+st_write(yadkin_subs_shp_dev, "yadkin_developed_perc_change.shp")
+write_csv(forest_projections, "yadkin_forest_perc_change.csv")
+write_csv(dev_projections, "yadkin_developed_perc_change.csv")
+write_csv(sublu_reclass_data, "yadkin_landcover_data.csv")
 
