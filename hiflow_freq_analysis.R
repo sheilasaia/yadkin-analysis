@@ -172,6 +172,7 @@ ggplot() +
 
 # plot observations and models together
 ggplot() +
+  geom_point(aes(x=obs_return_period_yr,y=obs_max_flow_cms_adj),csiro_baseline_obs_calcs,size=1) +
   geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc_baseline_model_calcs,color="green",linetype=2) +
   geom_line(aes(x=model_return_period_yr,y=model_flow_cms),miroc8_5_model_calcs,color="green",linetype=1) +
   geom_line(aes(x=model_return_period_yr,y=model_flow_cms),csiro_baseline_model_calcs,color="red",linetype=2,size=0.75) +
@@ -267,7 +268,7 @@ ggplot(yadkin_subs_shp_hiflow_10yr_bc,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_10yr_bc is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change 10yr Flow",na.value="grey75",limits=c(-50,250)) +
+  scale_fill_gradient2("% Change 10yr Flow",na.value="grey75", limits = c(-50, 250)) +
   theme_bw() #+
   #theme(axis.text = element_text(size = 20)) +
   #theme(axis.title = element_text(size = 20)) +
@@ -281,7 +282,7 @@ ggplot(yadkin_subs_shp_hiflow_100yr_bc,aes(fill=perc_change)) +
   facet_wrap(~dataset) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_hiflow_100yr_bc is base utm 17N so convert to Albers for CONUS
-  scale_fill_gradient2("% Change 100yr Flow",na.value="grey75",limits=c(-55,505)) +
+  scale_fill_gradient2("% Change 100yr Flow",na.value="grey75", limits = c(-55, 505)) +
   theme_bw()
 dev.off()
 
@@ -292,6 +293,13 @@ dev.off()
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 #write_csv(hiflow_10yr_projections_bc,"hiflow_10yr_perc_change_bc.csv")
 #write_csv(hiflow_10yr_projections_bc,"hiflow_100yr_perc_change_bc.csv")
+
+setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/hydrology_change")
+st_write(yadkin_subs_shp_hiflow_10yr_bc, "perc_change_mag_10yr_flow.shp")
+st_write(yadkin_subs_shp_hiflow_100yr_bc, "perc_change_mag_100yr_flow.shp")
+write_csv(hiflow_10yr_projections_bc, "perc_change_mag_10yr_flow.csv")
+write_csv(hiflow_100yr_projections_bc, "perc_change_mag_100yr_flow.csv")
+
 
 # ---- 5.1 calculate % change in NUMBER OF FLOWS at/above a given return period (backcast) ----
 
@@ -315,6 +323,16 @@ csiro8_5_25yr_n_flow_change = rp_n_flow_change(25, csiro_baseline_model_calcs, c
 hadley4_5_25yr_n_flow_change = rp_n_flow_change(25, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = 'hiflow') %>%
   mutate(dataset = "hadley4_5")
 
+# 100 yr
+miroc8_5_100yr_n_flow_change = rp_n_flow_change(100, miroc_baseline_model_calcs, miroc_baseline_rch_data, miroc8_5_rch_data, flow_option = 'hiflow') %>%
+  mutate(dataset = "miroc8_5")
+csiro4_5_100yr_n_flow_change = rp_n_flow_change(100, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro4_5_rch_data, flow_option = 'hiflow') %>%
+  mutate(dataset = "csiro4_5")
+csiro8_5_100yr_n_flow_change = rp_n_flow_change(100, csiro_baseline_model_calcs, csiro_baseline_rch_data, csiro8_5_rch_data, flow_option = 'hiflow') %>%
+  mutate(dataset = "csiro8_5")
+hadley4_5_100yr_n_flow_change = rp_n_flow_change(100, hadley_baseline_model_calcs, hadley_baseline_rch_data, hadley4_5_rch_data, flow_option = 'hiflow') %>%
+  mutate(dataset = "hadley4_5")
+
 
 # ---- 5.2 reformat calcs for plots (backcast) ----
 
@@ -331,9 +349,16 @@ n_flow_change_25yr = rbind(miroc8_5_25yr_n_flow_change,
                            hadley4_5_25yr_n_flow_change) %>%
   mutate(SUB = RCH)
 
+n_flow_change_100yr = rbind(miroc8_5_100yr_n_flow_change,
+                           csiro4_5_100yr_n_flow_change,
+                           csiro8_5_100yr_n_flow_change,
+                           hadley4_5_100yr_n_flow_change) %>%
+  mutate(SUB = RCH)
+
 # add to shp file
 yadkin_subs_shp_n_flow_change_10yr=left_join(yadkin_subs_shp,n_flow_change_10yr,by="SUB")
 yadkin_subs_shp_n_flow_change_25yr=left_join(yadkin_subs_shp,n_flow_change_25yr,by="SUB")
+yadkin_subs_shp_n_flow_change_100yr=left_join(yadkin_subs_shp,n_flow_change_100yr,by="SUB")
 
 
 # ---- 5.3 plot on map (backcast) ----
@@ -359,6 +384,18 @@ ggplot(yadkin_subs_shp_n_flow_change_25yr,aes(fill=perc_change_per_yr)) +
   geom_sf() +
   coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_25yr is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("% change in number of days with flow/yr >= 25yr flow",na.value="grey75", limits = c(-5,90), high="darkblue",low="darkred") +
+  theme_bw()
+dev.off()
+
+# 100 yr
+yadkin_subs_shp_n_flow_change_100yr$dataset=factor(yadkin_subs_shp_n_flow_change_100yr$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("change_num_hiflows_100yr_map.pdf",width=11,height=8.5)
+ggplot(yadkin_subs_shp_n_flow_change_100yr,aes(fill=perc_change_per_yr)) +
+  facet_wrap(~dataset) +
+  geom_sf() +
+  coord_sf(crs=st_crs(102003)) + # yadkin_subs_shp_n_flow_change_100yr is base utm 17N so convert to Albers for CONUS
+  scale_fill_gradient2("% change in number of days/yr with flows >= 100yr flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
   theme_bw()
 dev.off()
 
