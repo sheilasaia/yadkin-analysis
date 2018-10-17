@@ -10,8 +10,10 @@ flow_change=function(return_period,baseline_model_calcs,projection_model_calcs) 
   # return_period must correspond to a return_period_yr entry in both model_freq_calcs_all_rchs() outputs
   
   # select only data for return period of interest
-  baseline_return_period_sel=baseline_model_calcs %>% filter(round(model_return_period_yr,4)==return_period)
-  projection_return_period_sel=projection_model_calcs %>% filter(round(model_return_period_yr,4)==return_period)
+  baseline_return_period_sel=baseline_model_calcs %>% 
+    filter(round(model_return_period_yr,4)==return_period)
+  projection_return_period_sel=projection_model_calcs %>% 
+    filter(round(model_return_period_yr,4)==return_period)
   
   # define variables and output dataframe
   num_rchs=length(unique(baseline_model_calcs$RCH))
@@ -26,11 +28,13 @@ flow_change=function(return_period,baseline_model_calcs,projection_model_calcs) 
   for (i in 1:num_rchs) {
     
     # baseline data for specified return period and subbasin
-    baseline_rch_temp=baseline_return_period_sel %>% filter(RCH==i)
+    baseline_rch_temp=baseline_return_period_sel %>% 
+      filter(RCH==i)
     baseline_rch_flow_temp=baseline_rch_temp$model_flow_cms
     
     # projection data for specified return period and subbasin
-    projection_rch_temp=projection_return_period_sel %>% filter(RCH==i)
+    projection_rch_temp=projection_return_period_sel %>% 
+      filter(RCH==i)
     projection_rch_flow_temp=projection_rch_temp$model_flow_cms
     
     # find percent change
