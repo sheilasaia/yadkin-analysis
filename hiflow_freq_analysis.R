@@ -294,11 +294,11 @@ dev.off()
 #write_csv(hiflow_10yr_projections_bc,"hiflow_10yr_perc_change_bc.csv")
 #write_csv(hiflow_10yr_projections_bc,"hiflow_100yr_perc_change_bc.csv")
 
-setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/hydrology_change")
-st_write(yadkin_subs_shp_hiflow_10yr_bc, "perc_change_mag_10yr_flow.shp")
-st_write(yadkin_subs_shp_hiflow_100yr_bc, "perc_change_mag_100yr_flow.shp")
-write_csv(hiflow_10yr_projections_bc, "perc_change_mag_10yr_flow.csv")
-write_csv(hiflow_100yr_projections_bc, "perc_change_mag_100yr_flow.csv")
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/hydrology_change")
+#st_write(yadkin_subs_shp_hiflow_10yr_bc, "perc_change_mag_10yr_flow.shp")
+#st_write(yadkin_subs_shp_hiflow_100yr_bc, "perc_change_mag_100yr_flow.shp")
+#write_csv(hiflow_10yr_projections_bc, "perc_change_mag_10yr_flow.csv")
+#write_csv(hiflow_100yr_projections_bc, "perc_change_mag_100yr_flow.csv")
 
 
 # ---- 5.1 calculate % change in NUMBER OF FLOWS at/above a given return period (backcast) ----
@@ -597,6 +597,13 @@ dev.off()
 #setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
 #write_csv(n_flow_change_10yr_area,"num_hiflow_change_10yr_calcs.csv")
 #write_csv(n_flow_change_25yr_area,"num_hiflow_change_25yr_calcs.csv")
+
+# setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/hydrology_change")
+# n_flow_change_10yr_for_jenni <- n_flow_change_10yr %>%
+#   select(SUB, dataset, perc_change_per_yr)
+# yadkin_subs_shp_n_flow_change_10yr_for_jenni <- left_join(yadkin_subs_shp,n_flow_change_10yr_for_jenni,by="SUB")
+# st_write(yadkin_subs_shp_n_flow_change_10yr, "perc_change_freq_10yr_flow.shp")
+# write_csv(n_flow_change_10yr_for_jenni, "perc_change_freq_10yr_flow.csv")
 
 # ---- 6.1 check normality of data (backcast) ----
 

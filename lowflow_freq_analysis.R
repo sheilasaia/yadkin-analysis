@@ -772,10 +772,16 @@ dev.off()
 # ---- 6.8 export results (backcast) ----
 
 # export results
-setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
-write_csv(n_no_flow_change_area,"num_no_flow_change_calcs.csv")
+#setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/r_outputs")
+#write_csv(n_no_flow_change_area,"num_no_flow_change_calcs.csv")
 
 setwd("/Users/ssaia/Documents/sociohydro_project/analysis/results/write_up/files_for_jenni/hydrology_change")
+n_no_flow_change_for_jenni <- n_no_flow_change %>%
+  select(SUB, dataset, perc_change_per_yr)
+yadkin_subs_shp_n_no_flow_change_for_jenni <- left_join(yadkin_subs_shp,n_no_flow_change_for_jenni,by="SUB")
+st_write(yadkin_subs_shp_n_no_flow_change_for_jenni, "perc_change_freq_zero_flows.shp")
+write_csv(n_no_flow_change_for_jenni, "perc_change_freq_zero_flows.csv")
+
 st_write(yadkin_subs_shp_no_flow_using_baseline, "perc_change_zero_flows.shp")
 write_csv(n_no_flow_change, "perc_change_zero_flows.csv")
 
