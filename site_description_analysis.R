@@ -9,13 +9,14 @@ rm(list = ls())
 # load libraries
 library(tidyverse)
 library(lubridate)
+library(readxl)
 
 # load home-made functions 
 functions_path = "/Users/ssaia/Documents/GitHub/yadkin-analysis/functions/"
 source(paste0(functions_path, "multiplot.R")) # for creating plots with multiple figures
 
 
-# ---- 2 import baseline data ----
+# ---- 2 import baseline weather data ----
 
 # weather stations in common
 weather_stations <- c("351-800", "354-806", "358-800", "361-816", "364-809")
@@ -59,7 +60,7 @@ temp_baseline_data <- purrr::map_dfr(temp_baseline_text_files, modified_temp_rea
   select(temp_c)
 
 
-# ---- 3 import projection data ----
+# ---- 3 import projection weather data ----
 
 # make list of days
 project_start_date <- date("2047-01-01")
@@ -114,6 +115,14 @@ temp_hadley4_5_data <- purrr::map_dfr(temp_hadley4_5_text_files, modified_temp_r
   select(temp_c)
 
 
+# ---- 3 import baseline streamflow data ----
+
+baseline_streamflow_data_path <- '/Users/ssaia/Google Drive/STOTEN/paper-yadkin-swat-study-repo/observed_data/streamflow/cms_conversions/USGS_02129000_pee_dee.xlsx'
+
+baseline_streamflow_data_raw <- read_excel(baseline_streamflow_data_path, skip = 29, col_names = FALSE)
+colnames(baseline_streamflow_data_raw) <- c("agency", "gage_id", "date", "flow_max_cfs", "flow_max_code", "flow_min_cfs", "flow_min_code", "flow_mean_cfs", "flow_mean_code", "notes", "flow_cms")
+
+
 # ---- 4 reformat data ----
 
 # bind precip and temp
@@ -142,8 +151,15 @@ hadley4_5_data <- cbind(precip_hadley4_5_data, temp_hadley4_5_data) %>%
   filter(date >= "2050-01-01" & date <= "2070-12-31") %>%
   mutate(data_type = "Hadley 4.5")
 
+# select only necessary baseline streamflow data
+baseline_streamflow_data <- baseline_streamflow_data_raw %>%
+  mutate(month = month(date), year = year(date)) %>%
+  select(date, month, year, flow_cms) %>%
+  filter(date <= "2002-12-31")
+  
 
-# ---- 5 calculate daily summaries ----
+
+# ---- 5 calculate daily weather summaries ----
 
 # calcuate average daily precip and temp for all 5 gages
 baseline_avg_daily_data <- baseline_data %>%
@@ -175,7 +191,7 @@ hadley4_5_avg_daily_data <- hadley4_5_data %>%
 climate_avg_daily_data <- rbind(baseline_avg_daily_data, miroc8_5_avg_daily_data, csiro4_5_avg_daily_data, csiro8_5_avg_daily_data, hadley4_5_avg_daily_data)
 
 
-# ---- 6 calculate annual summaries ----
+# ---- 6 calculate annual weather summaries ----
 
 # calcuate cummulative precip and average temp by year for all 5 gages
 climate_annual_data <- climate_avg_daily_data %>%
@@ -222,6 +238,17 @@ cairo_pdf("fig_x.pdf", width = 20, height = 10, pointsize = 18)
 multiplot(plotlist = my_site_desc_plots, cols = 2)
 dev.off()
 
+ggplot(data = baseline_streamflow_data) +
+  geom_boxplot(aes(x = factor(month), y = flow_cms)) +
+  #geom_point(aes(x = factor(month), y = flow_cms), alpha = 0.25, size = 3) +
+  xlab("Month") +
+  ylab("Daily Streamflow (cms)") +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),text=element_text(size=18),
+        axis.text.x = element_text(angle = 90, hjust = 1))
+
+
 # ---- 8 calculatel annual summaries for table ----
 
 # precipitation
@@ -236,3 +263,6 @@ annual_temp_data <- climate_avg_daily_data %>%
   summarize(annual_avg_temp_c = mean(daily_avg_temp_c),
             annual_sum_sd_temp_c = sd(daily_avg_temp_c))
 
+# streamflow
+mean(baseline_streamflow_data$flow_cms)
+sd(baseline_streamflow_data$flow_cms)
