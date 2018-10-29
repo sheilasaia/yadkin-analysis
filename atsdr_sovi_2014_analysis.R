@@ -409,6 +409,13 @@ mean_yadkin_sovi = mean(yadkin_sovi_hist$sovi_total)
 median_yadkin_sovi = median(yadkin_sovi_hist$sovi_total)
 sd_yadkin_sovi = sd(yadkin_sovi_hist$sovi_total)
 
+sovilow = mean_us_sovi
+sovimod = mean_us_sovi + sd_us_sovi
+sovihigh = mean_us_sovi + 2*sd_us_sovi
+pclow = 0
+pcmod = 25
+pchigh = 50
+
 # high flow data (hydro plus demographics)
 hiflow_outlier_reclass_hydrodemo = hiflow_outlier_change_data %>%
   select(SUB, minor_outlier_perc_change_per_yr, dataset) %>%
@@ -420,6 +427,14 @@ hiflow_outlier_reclass_hydrodemo = hiflow_outlier_change_data %>%
   mutate(impact_vuln_class_num = impact_class + vuln_class) %>%
   mutate(impact_vuln_class = ifelse(impact_vuln_class_num <= 2, "lower",
                                     ifelse(impact_vuln_class_num == 3 , "moderate", "higher")))
+
+# hiflow_outlier_reclass_hydrodemo = hiflow_outlier_change_data %>%
+#   select(SUB, minor_outlier_perc_change_per_yr, dataset) %>%
+#   left_join(yadkin_sovi_total_sub_data, by = "SUB") %>%
+#   mutate(impact_vuln_class = "moderate") %>%
+#   mutate(impact_vuln_class = ifelse(area_wt_sovi <= sovimod & minor_outlier_perc_change_per_yr <= pcmod, "lower",
+#                                     area_wt_sovi >= sovimod & minor_outlier_perc_change_per_yr >= pcmod, "higher",
+#                                     area_wt_sovi ))
 
 # high flow data (hydro plus demographics for map)
 hiflow_outlier_reclass_hydrodemo_map = hiflow_outlier_reclass_hydrodemo 
@@ -1753,6 +1768,47 @@ setwd("/Users/ssaia/Desktop")
 cairo_pdf("fig_5.pdf", width = 20, height = 8, pointsize = 18)
 multiplot(plotlist = my_fig_5_plots, cols = 2)
 dev.off()
+
+
+# ---- 12.1 watershed population calcs ----
+
+sovidb_scaling_data_tract_sum <- sovidb_scaling_data %>%
+  group_by(fips) %>%
+  summarize(tract_perc_fix = sum(tract_perc))
+
+yadkin_census_tract_wtd_data <- yadkin_census_tract_data %>%
+  select(fips:M_GROUPQ) %>% # don't want per capita income
+  group_by(fips) %>%
+  gather(key = acs_variable, value = value, E_TOTPOP:M_GROUPQ) %>%
+  mutate(data_type = ifelse(str_sub(acs_variable, 1, 1) == "E", "estimate", "moe"),
+         acs_variable_short = str_sub(str_to_lower(acs_variable), 3)) %>%
+  select(-acs_variable) %>%
+  ungroup() %>%
+  left_join(sovidb_scaling_data_tract_sum, by = "fips") %>%
+  na.omit() %>% # 2 census tracts with na's and they are both technically outside the YPD
+  mutate(wtd_value = ifelse(data_type == "estimate", value * tract_perc_fix, (value * tract_perc_fix)^2))
+
+yadkin_census_tract_wtd_summary_data <- yadkin_census_tract_wtd_data %>%
+  #filter(acs_variable_short == "totpop") %>%
+  #filter(data_type == "estimate") %>%
+  group_by(acs_variable_short, data_type) %>%
+  summarize(value_adj = sum(wtd_value)) %>%
+  ungroup() %>%
+  mutate(value_final = ifelse(data_type == "estimate", value_adj, sqrt(value_adj))) %>%
+  mutate(value_final_round = signif(value_final, 3)) %>%
+  select(-value_adj)
+
+# histogram of all pci data
+hist(yadkin_census_tract_wtd_data$value[yadkin_census_tract_wtd_data$acs_variable_short == "pci" & yadkin_census_tract_wtd_data$data_type == "estimate"])
+
+# average pci for all (456) census tracts
+num_tracts <- dim(yadkin_unique_fips)[1]
+pci_est_to_fix <- yadkin_census_tract_wtd_summary_data$value_final[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="estimate")]
+pci_moe_to_fix <- yadkin_census_tract_wtd_summary_data$value_final[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="moe")]
+yadkin_census_tract_wtd_summary_data$value_final[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="estimate")] = pci_est_to_fix/num_tracts
+yadkin_census_tract_wtd_summary_data$value_final[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="moe")] = pci_moe_to_fix/num_tracts
+yadkin_census_tract_wtd_summary_data$value_final_round[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="estimate")] = signif(pci_est_to_fix/num_tracts, 3)
+yadkin_census_tract_wtd_summary_data$value_final_round[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="moe")] = signif(pci_moe_to_fix/num_tracts, 3)
 
 
 # ---- 7.x basic gradiation ----
