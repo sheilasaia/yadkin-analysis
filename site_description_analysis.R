@@ -60,6 +60,49 @@ temp_baseline_data <- purrr::map_dfr(temp_baseline_text_files, modified_temp_rea
   select(temp_c)
 
 
+# ---- import backcast baseline weather data ----
+
+# make list of days
+bc_baseline_start_date <- date("1979-01-01")
+bc_baseline_end_date <- date("2002-12-31")
+
+# path to miroc backcast baseline data
+miroc_bc_baseline_data_path <- '/Users/ssaia/Google Drive/STOTEN/paper-yadkin-swat-study-repo/simulated_data/climate/backcast_climate_1982-2002/miroc/'
+precip_miroc_bc_baseline_text_files <- paste0(miroc_bc_baseline_data_path, "p", weather_stations, ".txt")
+temp_miroc_bc_baseline_text_files <- paste0(miroc_bc_baseline_data_path, "t", weather_stations, ".txt")
+
+# read each csv file into dataframe for backcast baseline data
+precip_miroc_bc_baseline_data <- purrr::map_dfr(precip_miroc_bc_baseline_text_files, modified_precip_read_csv, start_date = bc_baseline_start_date, end_date = bc_baseline_end_date) %>%
+  arrange(date, gage_id)
+temp_miroc_bc_baseline_data <- purrr::map_dfr(temp_miroc_bc_baseline_text_files, modified_temp_read_csv, start_date = bc_baseline_start_date, end_date = bc_baseline_end_date) %>%
+  arrange(date, gage_id) %>%
+  select(temp_c)
+
+# path to csiro backcast baseline data
+csiro_bc_baseline_data_path <- '/Users/ssaia/Google Drive/STOTEN/paper-yadkin-swat-study-repo/simulated_data/climate/backcast_climate_1982-2002/csiro/'
+precip_csiro_bc_baseline_text_files <- paste0(csiro_bc_baseline_data_path, "p", weather_stations, ".txt")
+temp_csiro_bc_baseline_text_files <- paste0(csiro_bc_baseline_data_path, "t", weather_stations, ".txt")
+
+# read each csv file into dataframe for backcast baseline data
+precip_csiro_bc_baseline_data <- purrr::map_dfr(precip_csiro_bc_baseline_text_files, modified_precip_read_csv, start_date = bc_baseline_start_date, end_date = bc_baseline_end_date) %>%
+  arrange(date, gage_id)
+temp_csiro_bc_baseline_data <- purrr::map_dfr(temp_csiro_bc_baseline_text_files, modified_temp_read_csv, start_date = bc_baseline_start_date, end_date = bc_baseline_end_date) %>%
+  arrange(date, gage_id) %>%
+  select(temp_c)
+
+# path to hadley backcast baseline data
+hadley_bc_baseline_data_path <- '/Users/ssaia/Google Drive/STOTEN/paper-yadkin-swat-study-repo/simulated_data/climate/backcast_climate_1982-2002/hadley/'
+precip_hadley_bc_baseline_text_files <- paste0(hadley_bc_baseline_data_path, "p", weather_stations, ".txt")
+temp_hadley_bc_baseline_text_files <- paste0(hadley_bc_baseline_data_path, "t", weather_stations, ".txt")
+
+# read each csv file into dataframe for backcast baseline data
+precip_hadley_bc_baseline_data <- purrr::map_dfr(precip_hadley_bc_baseline_text_files, modified_precip_read_csv, start_date = bc_baseline_start_date, end_date = bc_baseline_end_date) %>%
+  arrange(date, gage_id)
+temp_hadley_bc_baseline_data <- purrr::map_dfr(temp_hadley_bc_baseline_text_files, modified_temp_read_csv, start_date = bc_baseline_start_date, end_date = bc_baseline_end_date) %>%
+  arrange(date, gage_id) %>%
+  select(temp_c)
+
+
 # ---- 3 import projection weather data ----
 
 # make list of days
@@ -131,6 +174,21 @@ baseline_data <- cbind(precip_baseline_data, temp_baseline_data) %>%
   filter(date >= "1982-01-01" & date <= "2002-12-31") %>%
   mutate(data_type = "Baseline")
 
+miroc_bc_baseline_data <- cbind(precip_miroc_bc_baseline_data, temp_miroc_bc_baseline_data) %>%
+  select(date, gage_id, precip_mm, temp_c) %>%
+  filter(date >= "1982-01-01" & date <= "2002-12-31") %>%
+  mutate(data_type = "MIROC Baseline")
+
+csiro_bc_baseline_data <- cbind(precip_csiro_bc_baseline_data, temp_csiro_bc_baseline_data) %>%
+  select(date, gage_id, precip_mm, temp_c) %>%
+  filter(date >= "1982-01-01" & date <= "2002-12-31") %>%
+  mutate(data_type = "CSIRO Baseline")
+
+hadley_bc_baseline_data <- cbind(precip_hadley_bc_baseline_data, temp_hadley_bc_baseline_data) %>%
+  select(date, gage_id, precip_mm, temp_c) %>%
+  filter(date >= "1982-01-01" & date <= "2002-12-31") %>%
+  mutate(data_type = "Hadley Baseline")
+
 miroc8_5_data <- cbind(precip_miroc8_5_data, temp_miroc8_5_data) %>%
   select(date, gage_id, precip_mm, temp_c) %>%
   filter(date >= "2050-01-01" & date <= "2070-12-31") %>%
@@ -167,6 +225,21 @@ baseline_avg_daily_data <- baseline_data %>%
   summarise(daily_avg_precip_mm = mean(precip_mm), daily_avg_temp_c = mean(temp_c)) %>%
   na.omit()
 
+miroc_bc_baseline_avg_daily_data <- miroc_bc_baseline_data %>%
+  group_by(date, data_type) %>%
+  summarise(daily_avg_precip_mm = mean(precip_mm), daily_avg_temp_c = mean(temp_c)) %>%
+  na.omit()
+
+csiro_bc_baseline_avg_daily_data <- csiro_bc_baseline_data %>%
+  group_by(date, data_type) %>%
+  summarise(daily_avg_precip_mm = mean(precip_mm), daily_avg_temp_c = mean(temp_c)) %>%
+  na.omit()
+
+hadley_bc_baseline_avg_daily_data <- hadley_bc_baseline_data %>%
+  group_by(date, data_type) %>%
+  summarise(daily_avg_precip_mm = mean(precip_mm), daily_avg_temp_c = mean(temp_c)) %>%
+  na.omit()
+
 miroc8_5_avg_daily_data <- miroc8_5_data %>%
   group_by(date, data_type) %>%
   summarise(daily_avg_precip_mm = mean(precip_mm), daily_avg_temp_c = mean(temp_c)) %>%
@@ -188,7 +261,7 @@ hadley4_5_avg_daily_data <- hadley4_5_data %>%
   na.omit()
 
 # bind together
-climate_avg_daily_data <- rbind(baseline_avg_daily_data, miroc8_5_avg_daily_data, csiro4_5_avg_daily_data, csiro8_5_avg_daily_data, hadley4_5_avg_daily_data)
+climate_avg_daily_data <- rbind(baseline_avg_daily_data, miroc_bc_baseline_avg_daily_data, csiro_bc_baseline_avg_daily_data, hadley_bc_baseline_avg_daily_data, miroc8_5_avg_daily_data, csiro4_5_avg_daily_data, csiro8_5_avg_daily_data, hadley4_5_avg_daily_data)
 
 
 # ---- 6 calculate annual weather summaries ----
@@ -198,11 +271,11 @@ climate_annual_data <- climate_avg_daily_data %>%
   mutate(year = year(date)) %>%
   group_by(year, data_type) %>%
   summarize(annual_sum_precip_mm = sum(daily_avg_precip_mm), annual_avg_temp_c = mean(daily_avg_temp_c)) %>%
-  ungroup() %>%
-  mutate(period = "Baseline", simulation_year = seq(1:105))
+  ungroup() #%>%
+  #mutate(period = "Baseline", simulation_year = seq(1:168))
 
 # reorder factor
-climate_annual_data$data_type <- factor(climate_annual_data$data_type, levels = c("Baseline", "MIROC 8.5", "CSIRO 4.5", "CSIRO 8.5", "Hadley 4.5"))
+#climate_annual_data$data_type <- factor(climate_annual_data$data_type, levels = c("Baseline", "Baseline MIROC", "Baseline CSIRO", "Baseline Hadley", "MIROC 8.5", "CSIRO 4.5", "CSIRO 8.5", "Hadley 4.5"))
 
 
 # ---- 7 plot ----
@@ -249,7 +322,7 @@ ggplot(data = baseline_streamflow_data) +
         axis.text.x = element_text(angle = 90, hjust = 1))
 
 
-# ---- 8 calculatel annual summaries for table ----
+# ---- 8 calculate annual summaries for table ----
 
 # precipitation
 annual_precip_data <- climate_annual_data %>%
