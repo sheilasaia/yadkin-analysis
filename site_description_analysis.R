@@ -263,6 +263,9 @@ hadley4_5_avg_daily_data <- hadley4_5_data %>%
 # bind together
 climate_avg_daily_data <- rbind(baseline_avg_daily_data, miroc_bc_baseline_avg_daily_data, csiro_bc_baseline_avg_daily_data, hadley_bc_baseline_avg_daily_data, miroc8_5_avg_daily_data, csiro4_5_avg_daily_data, csiro8_5_avg_daily_data, hadley4_5_avg_daily_data)
 
+# reorder factor
+climate_avg_daily_data$data_type <- factor(climate_avg_daily_data$data_type, levels = c("Baseline", "MIROC Baseline", "CSIRO Baseline", "Hadley Baseline", "MIROC 8.5", "CSIRO 8.5", "CSIRO 4.5", "Hadley 4.5"))
+
 
 # ---- 6 calculate annual weather summaries ----
 
@@ -275,7 +278,7 @@ climate_annual_data <- climate_avg_daily_data %>%
   #mutate(period = "Baseline", simulation_year = seq(1:168))
 
 # reorder factor
-#climate_annual_data$data_type <- factor(climate_annual_data$data_type, levels = c("Baseline", "Baseline MIROC", "Baseline CSIRO", "Baseline Hadley", "MIROC 8.5", "CSIRO 4.5", "CSIRO 8.5", "Hadley 4.5"))
+climate_annual_data$data_type <- factor(climate_annual_data$data_type, levels = c("Baseline", "MIROC Baseline", "CSIRO Baseline", "Hadley Baseline", "MIROC 8.5", "CSIRO 8.5", "CSIRO 4.5", "Hadley 4.5"))
 
 
 # ---- 7 plot ----
