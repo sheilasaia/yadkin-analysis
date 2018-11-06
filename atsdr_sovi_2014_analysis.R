@@ -91,6 +91,8 @@ nc_sovi_hist = us_sovi_data %>% select(fips, sovi_total) %>%
   right_join(nc_unique_fips, by = "fips") %>% 
   mutate(dataset = "NC")
 
+# length(unique(nc_sovi_hist$fips[nc_sovi_hist$sovi_total>=mean_us_sovi+2*sd_us_sovi]))
+
 # select sovi data for us using unique fips id's
 us_sovi_hist = us_sovi_data %>% select(fips, sovi_total) %>% 
   mutate(dataset = "US")
@@ -735,6 +737,10 @@ yadkin_sub_shp_hiflow_outlier_hydrodemo$impact_class_sum_char = factor(yadkin_su
 yadkin_sub_shp_hiflow_outlier_hydrodemo$dataset = factor(yadkin_sub_shp_hiflow_outlier_hydrodemo$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
 
 # high outlier flow data (hydrology)
+  mean(hiflow_outlier_reclass_hydro$minor_outlier_perc_change_per_yr, na.rm = TRUE)
+sd(hiflow_outlier_reclass_hydro$minor_outlier_perc_change_per_yr, na.rm = TRUE)
+hist(na.omit(hiflow_outlier_reclass_hydro$minor_outlier_perc_change_per_yr))
+
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("hiflow_outlier_impact_hydro_map.pdf", width = 11, height = 8.5, pointsize = 18)
 ggplot(yadkin_sub_shp_hiflow_outlier_hydro, aes(fill = impact_class_hydro_char)) +
@@ -1068,6 +1074,10 @@ yadkin_sub_shp_hiflow_10yr_hydrodemo$impact_class_sum_char = factor(yadkin_sub_s
 yadkin_sub_shp_hiflow_10yr_hydrodemo$dataset = factor(yadkin_sub_shp_hiflow_10yr_hydrodemo$dataset, levels = c("miroc8_5", "csiro8_5", "csiro4_5", "hadley4_5"))
 
 # 10yr high flow data (hydrology)
+mean(hiflow_10yr_reclass_hydro$perc_change_per_yr, na.rm = TRUE)
+sd(hiflow_10yr_reclass_hydro$perc_change_per_yr, na.rm = TRUE)
+hist(na.omit(hiflow_10yr_reclass_hydro$perc_change_per_yr))
+
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("hiflow_10yr_impact_hydro_map.pdf", width = 11, height = 8.5, pointsize = 18)
 ggplot(yadkin_sub_shp_hiflow_10yr_hydro, aes(fill = impact_class_hydro_char)) +
