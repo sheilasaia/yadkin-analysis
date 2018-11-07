@@ -292,7 +292,7 @@ ggplot(blah,aes(x=as.factor(SUB),y=perc, fill = dataset)) +
   scale_fill_manual(values=c("grey75", "black")) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-        panel.background = element_blank(), text = element_text(size = 18),
+        panel.background = element_blank(), text = element_text(size = 14),
         axis.text.x=element_text(angle=90, hjust=1,vjust=0.5))
 dev.off()
 
