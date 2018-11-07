@@ -1566,29 +1566,31 @@ yadkin_unclip_tract_shp_sel_total = yadkin_unclip_tract_shp %>%
 # make a list to hold plots
 my_zoom_sovi_plots = list()
 
-# select 1
+# select 15
 # select subbasin of interest
-my_sub1 = 27
-yadkin_sub1_shp = yadkin_sub_shp %>%
-  filter(SUB == 27)
+my_sub15 = 15
+yadkin_sub15_shp = yadkin_sub_shp %>%
+  filter(SUB == my_sub15)
 
 # select tract sovi theme data for subbasin of interest
-my_glimpse_sub1 = yadkin_sub1_shp %>%
+my_glimpse_sub15 = yadkin_sub15_shp %>%
   st_join(yadkin_unclip_tract_shp_sel_total)
 
 # look at counties that are included
-unique(my_glimpse_sub1$County)
-min(my_glimpse_sub1$sovi)
+unique(my_glimpse_sub15$County)
+min(my_glimpse_sub15$sovi)
 
 # select river for area of interest
-yadkin_river_sub1_shp = yadkin_sub1_shp %>%
+yadkin_river_sub15_shp = yadkin_sub15_shp %>%
   select(geometry) %>%
   st_intersection(yadkin_river_shp)
 
-yadkin_tract_sub1_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
-  filter(County == "Anson" |
+yadkin_tract_sub15_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
+  filter(County == "Cabarrus" |
+           County == "Davidson" |
            County == "Montgomery" |
-           County == "Richmond")
+           County == "Rowan" |
+           County == "Stanly")
 
 #yadkin_tract_sub1_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
 #  filter(County == "Stokes" |
@@ -1599,14 +1601,16 @@ yadkin_tract_sub1_sovi_total = yadkin_unclip_tract_shp_sel_total %>%
 
 # plot 1
 my_zoom_sovi_plots[[1]] = ggplot() + 
-  geom_sf(data = yadkin_tract_sub1_sovi_total, aes(fill = sovi, color = County), size = 0.5) + 
-  geom_sf(data = yadkin_river_sub1_shp, color = "blue", alpha = 0, size = 1) +
+  geom_sf(data = yadkin_tract_sub15_sovi_total, aes(fill = sovi, color = County), size = 0.5) + 
+  geom_sf(data = yadkin_river_sub15_shp, color = "blue", alpha = 0, size = 1) +
   geom_sf(data = yadkin_sub1_shp, color = "black", alpha = 0, size = 1) +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_total is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,15)) +
-  scale_color_manual(values=c("Anson" = "#fc8d62",
-                              "Montgomery" = "#8da0cb",
-                              "Richmond" = "#66c2a5")) +
+  scale_color_manual(values=c("Cabarrus" = "#fc8d62",
+                              "Davidson" = "#8da0cb",
+                              "Montgomery" = "#66c2a5",
+                              "Rowan" = "#e78ac3",
+                              "Stanly" = "#a6d854")) +
 #  scale_color_manual(values=c("Stokes" = "#66c2a5",
 #                              "Surry" = "#e78ac3",
 #                              "Patrick" = "#a6d854",
@@ -1647,8 +1651,8 @@ my_zoom_sovi_plots[[2]] = ggplot() +
   geom_sf(data = yadkin_sub8_shp, color = "black", alpha = 0, size = 1) +
   coord_sf(crs=st_crs(102003)) + # yadkin_tract_sel_sovi_total is base utm 17N so convert to Albers for CONUS
   scale_fill_gradient2("SoVI",high="darkred", low="white", limits = c(0,15)) +
-  scale_color_manual(values=c("Davidson" = "#fc8d62", 
-                              "Forsyth" = "#8da0cb", 
+  scale_color_manual(values=c("Davidson" = "#8da0cb", 
+                              "Forsyth" = "#fc8d62", 
                               "Stokes" = "#66c2a5")) +
   theme_bw()
 
@@ -1965,6 +1969,31 @@ yadkin_census_tract_wtd_summary_data$value_final[(yadkin_census_tract_wtd_summar
 yadkin_census_tract_wtd_summary_data$value_final_round[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="estimate")] = signif(pci_est_to_fix/num_tracts, 3)
 yadkin_census_tract_wtd_summary_data$value_final_round[(yadkin_census_tract_wtd_summary_data$acs_variable_short == "pci")&(yadkin_census_tract_wtd_summary_data$data_type =="moe")] = signif(pci_moe_to_fix/num_tracts, 3)
 
+# number of unique tracts above mean + sd
+blah = yadkin_census_tract_data %>% 
+  filter(SPL_THEMES > mean_us_sovi+sd_us_sovi) %>%
+  select(fips)
+blah_pop = right_join(yadkin_census_tract_wtd_data, blah, by = "fips") %>%
+  filter(acs_variable_short == "totpop") %>%
+  group_by(data_type) %>%
+  summarize(value_adj = sum(wtd_value)) %>%
+  ungroup() %>%
+  mutate(value_final = ifelse(data_type == "estimate", value_adj, sqrt(value_adj))) %>%
+  mutate(value_final_round = signif(value_final, 3)) %>%
+  select(-value_adj)
+
+# number of unique tracts above mean + 2*sd
+blah2 = yadkin_census_tract_data %>%
+  filter(SPL_THEMES > mean_us_sovi+2*sd_us_sovi) %>%
+  select(fips)
+blah2_pop = right_join(yadkin_census_tract_wtd_data, blah2, by = "fips") %>%
+  filter(acs_variable_short == "totpop") %>%
+  group_by(data_type) %>%
+  summarize(value_adj = sum(wtd_value)) %>%
+  ungroup() %>%
+  mutate(value_final = ifelse(data_type == "estimate", value_adj, sqrt(value_adj))) %>%
+  mutate(value_final_round = signif(value_final, 3)) %>%
+  select(-value_adj)
 
 # ---- 7.x basic gradiation ----
 
