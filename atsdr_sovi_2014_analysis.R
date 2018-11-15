@@ -1995,6 +1995,15 @@ blah2_pop = right_join(yadkin_census_tract_wtd_data, blah2, by = "fips") %>%
   mutate(value_final_round = signif(value_final, 3)) %>%
   select(-value_adj)
 
+# find average and sd of population for tracts that are completely in the YPD
+avg_census_tract_calcs <- yadkin_census_tract_wtd_data %>%
+  filter(acs_variable_short == "totpop") %>%
+  filter(data_type == "estimate")
+  filter(tract_perc_fix == 1)
+  
+mean(avg_census_tract_calcs$value)
+sd(avg_census_tract_calcs$value)
+
 # ---- 7.x basic gradiation ----
 
 # 10yr hiflow data (basic gradation)
