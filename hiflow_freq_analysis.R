@@ -360,8 +360,31 @@ yadkin_subs_shp_n_flow_change_10yr=left_join(yadkin_subs_shp,n_flow_change_10yr,
 yadkin_subs_shp_n_flow_change_25yr=left_join(yadkin_subs_shp,n_flow_change_25yr,by="SUB")
 yadkin_subs_shp_n_flow_change_100yr=left_join(yadkin_subs_shp,n_flow_change_100yr,by="SUB")
 
+# make dataframe with contributing errors to can use to plot
+contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+  distinct() %>% 
+  mutate(SUB=RCH) %>% 
+  select(-RCH)
 
-# ---- 5.3 plot on map (backcast) ----
+# select data for scatter plot
+n_flow_change_10yr_sel <- n_flow_change_10yr %>%
+  select(SUB, dataset, perc_change_per_yr) %>%
+  left_join(contributing_areas, by = "SUB")
+
+n_flow_change_10yr_sel_summary = n_flow_change_10yr_sel %>%
+  group_by(SUB,AREAkm2) %>%
+  na.omit() %>%
+  summarize(min_perc_change_per_yr=min(perc_change_per_yr),
+            max_perc_change_per_yr=max(perc_change_per_yr),
+            mean_perc_change_per_yr=mean(perc_change_per_yr))
+
+# arrange for plotting
+n_flow_change_10yr_sel$SUB=factor(n_flow_change_10yr_sel$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_10yr_sel_summary$SUB=factor(n_flow_change_10yr_sel_summary$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+n_flow_change_10yr_sel$dataset=factor(n_flow_change_10yr_sel$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+
+
+# ---- 5.3 plot on map and as scatter plot (backcast) ----
 
 # 10 yr
 yadkin_subs_shp_n_flow_change_10yr$dataset=factor(yadkin_subs_shp_n_flow_change_10yr$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
@@ -398,6 +421,28 @@ ggplot(yadkin_subs_shp_n_flow_change_100yr,aes(fill=perc_change_per_yr)) +
   scale_fill_gradient2("% change in number of days/yr with flows >= 100yr flow",na.value="grey75", limits = c(-5, 150), high="darkblue",low="darkred") +
   theme_bw()
 dev.off()
+
+# make a list to hold scatter plots
+my_change_scatter_plots = list()
+
+# scatter plot
+my_change_scatter_plots[[1]] = ggplot() +
+  geom_pointrange(data = n_flow_change_10yr_sel_summary,
+                  aes(x = SUB,y = mean_perc_change_per_yr, ymin = min_perc_change_per_yr, ymax = max_perc_change_per_yr),
+                  shape = 32) +
+  geom_point(data = n_flow_change_10yr_sel, 
+             aes(x = SUB, y = perc_change_per_yr, color = dataset),
+             shape = 16, size = 5, alpha = 0.75, position = position_jitter(height = 0.075, width = 0)) +
+  xlab("Subbasin ID") +
+  ylab("PC10") +
+  scale_color_manual(values=c("grey75","grey50","grey25","black")) +
+  ylim(-5,140) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=18),
+        legend.position = c(0.8, 0.8))
 
 
 # ---- 5.3 calculate variation (backcast) ----
@@ -920,7 +965,31 @@ yadkin_subs_shp_hiflow_outliers_using_baseline=left_join(yadkin_subs_shp,all_mod
 yadkin_subs_shp_hiflow_outliers_using_baseline$dataset=factor(yadkin_subs_shp_hiflow_outliers_using_baseline$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
 
 
-# ---- 6.4 plot on map (backcast) ----
+# make dataframe with contributing errors to can use to plot
+contributing_areas=baseline_rch_data %>% select(RCH,AREAkm2) %>%
+  distinct() %>% 
+  mutate(SUB=RCH) %>% 
+  select(-RCH)
+
+# select data for scatter plot
+all_models_hiflow_outlier_change_sel <- all_models_hiflow_outlier_change %>%
+  select(SUB, dataset, minor_outlier_perc_change_per_yr) %>%
+  left_join(contributing_areas, by = "SUB")
+
+all_models_hiflow_outlier_change_sel_summary=all_models_hiflow_outlier_change_sel %>%
+  group_by(SUB,AREAkm2) %>%
+  na.omit() %>%
+  summarize(min_perc_change_per_yr=min(minor_outlier_perc_change_per_yr),
+            max_perc_change_per_yr=max(minor_outlier_perc_change_per_yr),
+            mean_perc_change_per_yr=mean(minor_outlier_perc_change_per_yr))
+
+# arrange for plotting
+all_models_hiflow_outlier_change_sel$SUB=factor(all_models_hiflow_outlier_change_sel$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+all_models_hiflow_outlier_change_sel_summary$SUB=factor(all_models_hiflow_outlier_change_sel_summary$SUB,levels=contributing_areas$SUB[order(contributing_areas$AREAkm2)])
+all_models_hiflow_outlier_change_sel$dataset=factor(all_models_hiflow_outlier_change_sel$dataset,levels=c("miroc8_5","csiro8_5","csiro4_5","hadley4_5"))
+  
+
+# ---- 6.4 plot on map and as scatter plot (backcast) ----
 
 # minor outliers
 setwd("/Users/ssaia/Desktop")
@@ -949,6 +1018,32 @@ ggplot(yadkin_subs_shp_hiflow_outliers_using_baseline,aes(fill=major_outlier_per
 #theme(axis.title = element_text(size = 20)) +
 #theme(text = element_text(size = 20))
 dev.off()
+
+# scatter plot
+my_change_scatter_plots[[2]] = ggplot() +
+  geom_pointrange(data = all_models_hiflow_outlier_change_sel_summary,
+                  aes(x = SUB,y = mean_perc_change_per_yr, ymin = min_perc_change_per_yr, ymax = max_perc_change_per_yr),
+                  shape = 32) +
+  geom_point(data = all_models_hiflow_outlier_change_sel, 
+             aes(x = SUB, y = minor_outlier_perc_change_per_yr, color = dataset),
+             shape = 16, size = 5, alpha = 0.75, position = position_jitter(height = 0.075, width = 0)) +
+  xlab("Subbasin ID") +
+  ylab("PCext") +
+  scale_color_manual(values=c("grey75","grey50","grey25","black")) +
+  ylim(-5,140) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        axis.text.x=element_text(angle=90,hjust=1,vjust=0.5),
+        text=element_text(size=18),
+        legend.position = c(0.8, 0.8))
+
+# save plots
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("my_change_scatter_plots.pdf", width = 15, height = 8.5, pointsize = 18)
+multiplot(plotlist = my_change_scatter_plots, cols = 2)
+dev.off()
+
 
 
 # ---- 6.5 calculate variation (backcast) ----
