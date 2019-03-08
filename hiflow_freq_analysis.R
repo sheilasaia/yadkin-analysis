@@ -1020,7 +1020,7 @@ ggplot(yadkin_subs_shp_hiflow_outliers_using_baseline,aes(fill=major_outlier_per
 dev.off()
 
 # scatter plot
-my_change_scatter_plots[[2]] = ggplot() +
+my_change_scatter_plots[[1]] = ggplot() +
   geom_pointrange(data = all_models_hiflow_outlier_change_sel_summary,
                   aes(x = SUB,y = mean_perc_change_per_yr, ymin = min_perc_change_per_yr, ymax = max_perc_change_per_yr),
                   shape = 32) +
@@ -1269,14 +1269,44 @@ ggplot(blah2,aes(x=FLOW_OUTcms,y=as.factor(MO))) +
   xlim(0,1000) +
   theme_bw()
 
-# all datasets one sub (just true and backcast baselines)
-my_sub_true_baseline_to_bcbaseline=all_rch_data_sel %>% filter(RCH==my_sub) %>% filter(datatype!="projection")
-ggplot(my_sub_true_baseline_to_bcbaseline,aes(x=FLOW_OUTcms,y=dataset,fill=datatype)) +
-  geom_density_ridges2() +
-  xlab("Flow Out (cms)") + 
-  ylab("Dataset") +
-  xlim(0,1000) +
-  theme_bw()
+# all baseline datasets for outlet
+my_sub_true_baseline_to_bcbaseline <- all_rch_data_sel %>% 
+  filter(RCH == my_sub) %>% 
+  filter(datatype != "projection") %>%
+  mutate(test = case_when(
+    dataset == "true_baseline" ~ "Observed",
+    dataset == "miroc_baseline" ~ "MIROC Baseline",
+    dataset == "csiro_baseline" ~ "CSIRO Baseline",
+    dataset == "hadley_baseline" ~ "Hadley Baseline")) #%>%
+  #mutate(log_flow_out = if_else(FLOW_OUTcms == 0, log(FLOW_OUTcms + 0.0001), log(FLOW_OUTcms)))
+
+# calculate annual average of observed
+my_sub_true_baseline_to_bcbaseline_obs_sum <- my_sub_true_baseline_to_bcbaseline %>%
+  filter(test == "Observed")
+mean(my_sub_true_baseline_to_bcbaseline_obs_sum$FLOW_OUTcms)
+# 206 cms (checks with table 1.8 in Kelly's thesis)
+
+# plot
+my_sub_true_baseline_to_bcbaseline$test = factor(my_sub_true_baseline_to_bcbaseline$test, levels = c("Hadley Baseline", "CSIRO Baseline", "MIROC Baseline", "Observed"))
+
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("baseline_density_comparison.pdf", width = 10, height = 10, pointsize = 18)
+ggplot(my_sub_true_baseline_to_bcbaseline,
+       aes(x = FLOW_OUTcms, y = test, fill = datatype)) +
+  geom_density_ridges(alpha = 0.25, scale = 0.75) +
+  geom_vline(xintercept = 206, color = "black", linetype = "longdash") +
+  xlab("Daily Streamflow") + 
+  ylab("Density") +
+  xlim(0,600) +
+  scale_fill_manual(values = c("#d95f02", "#7570b3")) +
+  theme_bw() +
+  theme(panel.grid.major=element_blank(),panel.grid.minor=element_blank(),
+        panel.background=element_blank(),
+        text=element_text(size=18),
+        legend.position="none")
+dev.off()
+
+
 
 
 # ---- 8.x plot flow distrubutions and cutoffs for outlet ----
