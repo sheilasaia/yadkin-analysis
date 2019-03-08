@@ -144,8 +144,35 @@ ggplot(sovi_hist,aes(sovi_total,fill=dataset,color=dataset)) +
         panel.grid.minor = element_blank(),panel.background = element_blank())
 dev.off()
 
+# ---- 3.3 plot plot us, nc, yadkin tract sovi data as density plots ----
 
-# ---- 3.3 plot yadkin total sovi by tract on map ----
+setwd("/Users/ssaia/Desktop")
+cairo_pdf("atsdr_sovi2014_density.pdf", width = 10, height = 10)
+sovi_hist$dataset = factor(sovi_hist$dataset, levels = c("UYPD", "NC", "US"))
+ggplot(sovi_hist, aes(x = sovi_total, y = dataset, fill = dataset)) +
+  geom_density_ridges2(scale = 0.5, alpha=0.5) +
+  geom_vline(xintercept = 7.33, linetype = "longdash") +
+  geom_vline(xintercept = 9.6) +
+  geom_vline(xintercept = 5.1) +
+  xlab("SVI (Census Tract Scale)") +
+  ylab("Density") +
+  xlim(0,15) +
+  scale_fill_manual(values=c("white", "grey75", "grey30")) +
+  theme_bw() +
+  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
+        text=element_text(size=16),panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),panel.background = element_blank(),
+        legend.position = "none")
+dev.off()
+
+# KS tests
+ks.test(us_sovi_hist$sovi_total, yadkin_sovi_hist$sovi_total, alternative = "two.sided") # p < 0.05
+
+ks.test(us_sovi_hist$sovi_total, nc_sovi_hist$sovi_total, alternative = "two.sided") # p < 0.05
+ks.test(yadkin_sovi_hist$sovi_total, nc_sovi_hist$sovi_total, alternative = "two.sided") # p = 0.58
+
+
+# ---- 3.4 plot yadkin total sovi by tract on map ----
 
 # total sovi by tract
 setwd("/Users/ssaia/Desktop")
@@ -1705,7 +1732,7 @@ dev.off()
 
 # one sub, total sovi
 cdf_calcs_total_sovi_subsel = yadkin_sovi_data %>% 
-  filter(SUB == 1) %>%
+  filter(SUB == 2) %>%
   select(SUB, fips, sub_perc, sovi_total) %>%
   arrange(sovi_total) %>%
   mutate(sovi_total_wtd = sub_perc * sovi_total,
@@ -1723,14 +1750,19 @@ cdf_calcs_total_sovi = yadkin_sovi_data %>%
   mutate(sovi_total_wtd = sub_perc * sovi_total,
          cumul_sum_sovi_total = cumsum(sovi_total_wtd) / sum(sovi_total_wtd))
 
+test <- yadkin_sovi_total_sub_data %>%
+  select(SUB, area_wt_sovi) %>%
+  mutate(mean_wt = 0.5)
+
 # plot
 setwd("/Users/ssaia/Desktop")
 cairo_pdf("cdf_total_sovi_by_sub.pdf", width = 12, height = 12, pointsize = 18)
-ggplot(data = cdf_calcs_total_sovi, aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+ggplot() +
   #geom_smooth(se = FALSE) +
-  geom_point() +
+  geom_point(data = cdf_calcs_total_sovi, aes(x = sovi_total, y = cumul_sum_sovi_total)) +
+  geom_point(data = test, aes(x = area_wt_sovi, y = mean_wt), color = "red", shape = 17, size = 3, alpha = 0.75) +
   facet_wrap(~SUB, ncol = 7) +
-  xlab("SoVI") +
+  xlab("SVI") +
   ylab("CDF (Weighted)") +
   geom_vline(xintercept = mean_us_sovi, linetype = "dashed") +
   geom_vline(xintercept = mean_us_sovi + sd_us_sovi, linetype = "dashed") +
