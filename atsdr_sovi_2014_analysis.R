@@ -167,8 +167,15 @@ dev.off()
 
 # KS tests
 ks.test(us_sovi_hist$sovi_total, yadkin_sovi_hist$sovi_total, alternative = "two.sided") # p < 0.05
+ks.test(us_sovi_hist$sovi_total, yadkin_sovi_hist$sovi_total, alternative = "less") # p = 0.9987
+ks.test(us_sovi_hist$sovi_total, yadkin_sovi_hist$sovi_total, alternative = "greater") # p < 0.05
+# shifted to the right
 
 ks.test(us_sovi_hist$sovi_total, nc_sovi_hist$sovi_total, alternative = "two.sided") # p < 0.05
+ks.test(us_sovi_hist$sovi_total, nc_sovi_hist$sovi_total, alternative = "less") # p = 0.9589
+ks.test(us_sovi_hist$sovi_total, nc_sovi_hist$sovi_total, alternative = "greater") # p < 0.05
+# shifted to the right
+
 ks.test(yadkin_sovi_hist$sovi_total, nc_sovi_hist$sovi_total, alternative = "two.sided") # p = 0.58
 
 
